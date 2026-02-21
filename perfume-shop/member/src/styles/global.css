@@ -1,0 +1,94 @@
+/* src/styles/global.css */
+
+/* Google Fonts - elegant for perfume site */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Roboto:wght@300;400&display=swap');
+
+/* Custom theme variables */
+:root {
+  --sand-100: #f9f6ed;
+  --sand-200: #f0e9d1;
+  --sand-300: #e2d3a6;
+  --sand-400: #d1b573;
+  --sand-500: #c8a45d;
+  --sand-600: #b3873f;
+  --sand-700: #9a6b34;
+  --sand-800: #7c502c;
+  --sand-900: #68432b;
+  --sand-950: #5a3929;
+  --sand-dark: #331e15;
+}
+
+/* Apply globally */
+body {
+  margin: 0;
+  font-family: 'Roboto', sans-serif;
+  background-color: var(--sand-100) !important;  /* force if needed */
+  color: var(--sand-dark);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Playfair Display', serif;
+  color: var(--sand-900);
+}
+
+/* Bootstrap overrides (these will work after variables are defined) */
+.btn-primary {
+  background-color: var(--sand-600);
+  border-color: var(--sand-600);
+}
+
+.btn-primary:hover {
+  background-color: var(--sand-700);
+  border-color: var(--sand-700);
+}
+
+/* .navbar {
+  background-color: var(--sand-300) !important;
+} */
+
+.card {
+  background-color: var(--sand-200);
+  border: none;
+}
+
+.card:hover {
+  box-shadow: 0 4px 12px rgba(51, 30, 21, 0.15);
+}
+
+.hero-carousel .carousel-item {
+  position: relative;
+}
+
+.hero-carousel .carousel-caption {
+  bottom: 40%;  /* Adjust text position */
+  transform: translateY(50%);
+}
+
+.hero-carousel .overlay {
+  background: linear-gradient(to bottom, rgba(51,30,21,0.2), rgba(51,30,21,0.6));
+}
+
+.hero-carousel .carousel-control-prev-icon,
+.hero-carousel .carousel-control-next-icon {
+  filter: invert(1) brightness(10);  /* Make arrows visible on dark bg */
+}
+
+.carousel-fade .carousel-item {
+  transition: opacity 1.2s ease-in-out !important;  /* Smoother & longer fade */
+}
+
+.carousel-fade .carousel-item.active {
+  opacity: 1;
+}
+
+.nav-item {
+    overflow: hidden;
+  }
+  .underline {
+    width: 0%;
+    left: 0;
+    transform: none;
+  }
+  .nav-link:hover .underline {
+    width: 100% !important;
+  }
