@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faStar, faShoppingCart, faTimes, faCheck } from '@fortawesome/free-solid-svg-icons';
@@ -29,7 +30,27 @@ export default function ProductModal({ product, isOpen, onClose }) {
 
   if (!isOpen || !product) return null;
 
-  return (
+  // Map API data to component props
+  const productData = {
+    id: product._id || product.id,
+    name: product.name,
+    image: product.mainImage || product.image,
+    discount: product.discount || 0,
+    brand: product.brand || 'VAMANA',
+    rating: product.rating || 0,
+    reviews: product.reviews || 0,
+    price: product.finalPrice || product.price,
+    originalPrice: product.actualPrice || product.originalPrice,
+    description: product.description || 'Premium quality fragrance',
+    fragranceType: product.fragranceType || product.category || 'Perfume',
+    gender: product.gender || 'Unisex',
+    category: product.category,
+    volume: product.volume,
+    stock: product.stock,
+    status: product.status
+  };
+
+  const modalContent = (
     <div
       style={{
         position: 'fixed',
@@ -104,8 +125,8 @@ export default function ProductModal({ product, isOpen, onClose }) {
           <div className="col-md-5">
             <div style={{ position: 'relative', height: '100%', minHeight: '300px' }}>
               <img
-                src={product.image}
-                alt={product.name}
+                src={productData.image}
+                alt={productData.name}
                 style={{
                   width: '100%',
                   height: '100%',
@@ -113,7 +134,7 @@ export default function ProductModal({ product, isOpen, onClose }) {
                   borderRadius: '20px 0 0 20px'
                 }}
               />
-              {product.discount > 0 && (
+              {productData.discount > 0 && (
                 <div style={{
                   position: 'absolute',
                   top: '15px',
@@ -125,7 +146,22 @@ export default function ProductModal({ product, isOpen, onClose }) {
                   fontSize: '0.85rem',
                   fontWeight: '700'
                 }}>
-                  {product.discount}% OFF
+                  {productData.discount}% OFF
+                </div>
+              )}
+              {productData.status === 'out-of-stock' && (
+                <div style={{
+                  position: 'absolute',
+                  bottom: '15px',
+                  left: '15px',
+                  backgroundColor: '#e74c3c',
+                  color: 'white',
+                  padding: '0.4rem 0.8rem',
+                  borderRadius: '20px',
+                  fontSize: '0.85rem',
+                  fontWeight: '700'
+                }}>
+                  OUT OF STOCK
                 </div>
               )}
             </div>
@@ -143,7 +179,7 @@ export default function ProductModal({ product, isOpen, onClose }) {
                 letterSpacing: '2px',
                 textTransform: 'uppercase'
               }}>
-                {product.brand}
+                {productData.brand}
               </p>
 
               {/* Product Name */}
@@ -154,7 +190,7 @@ export default function ProductModal({ product, isOpen, onClose }) {
                 marginBottom: '0.8rem',
                 fontWeight: '600'
               }}>
-                {product.name}
+                {productData.name}
               </h3>
 
               {/* Rating */}
@@ -165,7 +201,7 @@ export default function ProductModal({ product, isOpen, onClose }) {
                       key={i}
                       icon={faStar}
                       style={{
-                        color: i < Math.floor(product.rating) ? '#FFD700' : '#ddd',
+                        color: i < Math.floor(productData.rating) ? '#FFD700' : '#ddd',
                         fontSize: '0.85rem',
                         marginRight: '0.15rem'
                       }}
@@ -173,10 +209,10 @@ export default function ProductModal({ product, isOpen, onClose }) {
                   ))}
                 </div>
                 <span style={{ color: 'var(--sand-900)', fontSize: '0.9rem', fontWeight: '600' }}>
-                  {product.rating}
+                  {productData.rating}
                 </span>
                 <span style={{ color: 'var(--sand-700)', fontSize: '0.85rem' }}>
-                  ({product.reviews})
+                  ({productData.reviews})
                 </span>
               </div>
 
@@ -189,15 +225,15 @@ export default function ProductModal({ product, isOpen, onClose }) {
                     fontWeight: '700',
                     fontFamily: "'Playfair Display', serif"
                   }}>
-                    ₹{product.price}
+                    ₹{productData.price}
                   </span>
-                  {product.originalPrice > product.price && (
+                  {productData.originalPrice > productData.price && (
                     <span style={{
                       color: 'var(--sand-600)',
                       fontSize: '1rem',
                       textDecoration: 'line-through'
                     }}>
-                      ₹{product.originalPrice}
+                      ₹{productData.originalPrice}
                     </span>
                   )}
                 </div>
@@ -219,7 +255,7 @@ export default function ProductModal({ product, isOpen, onClose }) {
                   lineHeight: '1.6',
                   marginBottom: 0
                 }}>
-                  {product.description}
+                  {productData.description}
                 </p>
               </div>
 
@@ -250,7 +286,7 @@ export default function ProductModal({ product, isOpen, onClose }) {
                 </ul>
               </div>
 
-              {/* Fragrance Type */}
+              {/* Product Info Tags */}
               <div className="d-flex gap-2 mb-3 flex-wrap">
                 <span style={{
                   backgroundColor: 'var(--sand-200)',
@@ -258,26 +294,41 @@ export default function ProductModal({ product, isOpen, onClose }) {
                   borderRadius: '20px',
                   fontSize: '0.75rem',
                   color: 'var(--sand-900)',
-                  fontWeight: '600'
+                  fontWeight: '600',
+                  textTransform: 'capitalize'
                 }}>
-                  {product.fragranceType}
+                  {productData.category}
                 </span>
-                <span style={{
-                  backgroundColor: 'var(--sand-200)',
-                  padding: '0.35rem 0.9rem',
-                  borderRadius: '20px',
-                  fontSize: '0.75rem',
-                  color: 'var(--sand-900)',
-                  fontWeight: '600'
-                }}>
-                  {product.gender}
-                </span>
+                {productData.volume && (
+                  <span style={{
+                    backgroundColor: 'var(--sand-200)',
+                    padding: '0.35rem 0.9rem',
+                    borderRadius: '20px',
+                    fontSize: '0.75rem',
+                    color: 'var(--sand-900)',
+                    fontWeight: '600'
+                  }}>
+                    {productData.volume}
+                  </span>
+                )}
+                {productData.stock > 0 && (
+                  <span style={{
+                    backgroundColor: '#27ae60',
+                    padding: '0.35rem 0.9rem',
+                    borderRadius: '20px',
+                    fontSize: '0.75rem',
+                    color: 'white',
+                    fontWeight: '600'
+                  }}>
+                    In Stock: {productData.stock}
+                  </span>
+                )}
               </div>
 
               {/* Buttons */}
               <div className="d-flex gap-2">
                 <Link
-                  to={`/product/${product.id}`}
+                  to={`/product/${productData.id}`}
                   onClick={onClose}
                   style={{
                     flex: 1,
@@ -299,31 +350,41 @@ export default function ProductModal({ product, isOpen, onClose }) {
                 </Link>
                 <button
                   onClick={() => {
-                    alert('Added to cart!');
-                    onClose();
+                    if (productData.status === 'out-of-stock') {
+                      alert('This product is currently out of stock');
+                    } else {
+                      alert('Added to cart!');
+                      onClose();
+                    }
                   }}
+                  disabled={productData.status === 'out-of-stock'}
                   style={{
                     flex: 1,
                     padding: '0.7rem',
                     border: '2px solid var(--sand-600)',
                     borderRadius: '10px',
-                    backgroundColor: 'white',
-                    color: 'var(--sand-600)',
+                    backgroundColor: productData.status === 'out-of-stock' ? '#ccc' : 'white',
+                    color: productData.status === 'out-of-stock' ? '#666' : 'var(--sand-600)',
                     fontSize: '0.9rem',
                     fontWeight: '600',
-                    cursor: 'pointer',
-                    transition: 'all 0.3s ease'
+                    cursor: productData.status === 'out-of-stock' ? 'not-allowed' : 'pointer',
+                    transition: 'all 0.3s ease',
+                    opacity: productData.status === 'out-of-stock' ? 0.6 : 1
                   }}
                   onMouseEnter={(e) => {
-                    e.target.style.backgroundColor = 'var(--sand-600)';
-                    e.target.style.color = 'white';
+                    if (productData.status !== 'out-of-stock') {
+                      e.target.style.backgroundColor = 'var(--sand-600)';
+                      e.target.style.color = 'white';
+                    }
                   }}
                   onMouseLeave={(e) => {
-                    e.target.style.backgroundColor = 'white';
-                    e.target.style.color = 'var(--sand-600)';
+                    if (productData.status !== 'out-of-stock') {
+                      e.target.style.backgroundColor = 'white';
+                      e.target.style.color = 'var(--sand-600)';
+                    }
                   }}
                 >
-                  <FontAwesomeIcon icon={faShoppingCart} /> Add to Cart
+                  <FontAwesomeIcon icon={faShoppingCart} /> {productData.status === 'out-of-stock' ? 'Out of Stock' : 'Add to Cart'}
                 </button>
               </div>
             </div>
@@ -345,4 +406,6 @@ export default function ProductModal({ product, isOpen, onClose }) {
       `}</style>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 }

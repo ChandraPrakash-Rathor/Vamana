@@ -30,11 +30,12 @@ export default function LimitedOffers() {
 
   // Map API data to display format
   const offers = limitedOfferData?.map((offer, index) => ({
+    _id: offer._id, // Keep the MongoDB _id
     id: offer._id,
     serialNumber: index + 1,
     title: offer.title,
     description: offer.description,
-    product: offer.product,
+    product: offer.product, // Keep the full product object/ID
     originalPrice: offer.originalPrice,
     offerPrice: offer.offerPrice,
     discount: offer.discount,

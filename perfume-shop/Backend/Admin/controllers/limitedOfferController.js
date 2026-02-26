@@ -88,7 +88,7 @@ exports.createOffer = async (req, res) => {
       });
     }
 
-    // Create offer
+   
     const offer = await LimitedOffer.create({
       title,
       description,
@@ -101,11 +101,11 @@ exports.createOffer = async (req, res) => {
       featured: featured || false
     });
 
-    // Update status based on dates
+   
     offer.updateStatus();
     await offer.save();
 
-    // Populate product details
+    
     await offer.populate('product', 'name mainImage category');
 
     res.status(201).json({
@@ -222,9 +222,6 @@ exports.updateOffer = async (req, res) => {
   }
 };
 
-// @desc    Delete limited offer
-// @route   DELETE /api/admin/limited-offers/:id
-// @access  Private (Admin)
 exports.deleteOffer = async (req, res) => {
   try {
     const offer = await LimitedOffer.findById(req.params.id);

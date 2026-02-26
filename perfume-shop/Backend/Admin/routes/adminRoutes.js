@@ -9,6 +9,7 @@ const productController =require("../controllers/productController")
 const couponController = require("../controllers/couponController");
 const saleController = require("../controllers/saleController");
 const limitedOfferController = require("../controllers/limitedOfferController");
+const reviewController = require("../controllers/reviewController");
 const upload = require("../../config/multer");
 
 
@@ -32,6 +33,13 @@ router.use('/sales', saleRoutes);
 router.post("/insertLimitedOffer", limitedOfferController.createOffer);
 router.get("/GetLimitedOffers", limitedOfferController.getAllOffers);
 router.use('/limited-offers', limitedOfferRoutes);
+
+// Review routes
+router.get("/GetReviews", reviewController.getReviews);
+router.get("/GetReview/:id", reviewController.getReviewById);
+router.post("/insertReview", upload.single('image'), reviewController.addReview);
+router.put("/updateReview/:id", upload.single('image'), reviewController.updateReview);
+router.delete("/deleteReview/:id", reviewController.deleteReview);
 
 router.get('/health', (req, res) => {
   res.status(200).json({

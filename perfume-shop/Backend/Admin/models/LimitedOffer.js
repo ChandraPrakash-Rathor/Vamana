@@ -12,11 +12,11 @@ const limitedOfferSchema = new mongoose.Schema({
     required: [true, 'Description is required'],
     maxlength: [500, 'Description cannot exceed 500 characters']
   },
-  product: {
+  product: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Product',
-    required: [true, 'Product is required']
-  },
+    required: [true, 'At least one product is required']
+  }],
   originalPrice: {
     type: Number,
     required: [true, 'Original price is required'],

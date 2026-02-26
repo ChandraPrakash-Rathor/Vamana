@@ -7,6 +7,7 @@ import ScrollToTopOnRouteChange from './components/common/ScrollToTopOnRouteChan
 import Home from './pages/Home';
 import Catalog from './pages/Catalog';
 import ProductDetail from './pages/ProductDetail';
+import Offers from './pages/Offers';
 import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
 import Invoice from './pages/Invoice';
@@ -35,6 +36,7 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/catalog" element={<Catalog />} />
             <Route path="/product/:id" element={<ProductDetail />} />
+            <Route path="/offers" element={<Offers />} />
             <Route path="/cart" element={<Cart />} />
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/invoice" element={<Invoice />} />

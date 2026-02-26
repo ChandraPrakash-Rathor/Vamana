@@ -7,29 +7,51 @@ import ProductModal from './ProductModal';
 export default function ProductCard({ product, showAddToCart = false }) {
   const [showModal, setShowModal] = useState(false);
 
+  // Map API data to component props
+  const productData = {
+    id: product._id || product.id,
+    name: product.name,
+    image: product.mainImage || product.image,
+    discount: product.discount || 0,
+    isNew: product.isNew || false,
+    fragranceType: product.fragranceType || product.category || 'Perfume',
+    gender: product.gender || 'Unisex',
+    rating: product.rating || 0,
+    reviews: product.reviews || 0,
+    price: product.finalPrice || product.price,
+    originalPrice: product.actualPrice || product.originalPrice,
+    category: product.category
+  };
+
   return (
     <>
       <div 
         className="card border-0 h-100 overflow-hidden" 
-        style={{ backgroundColor: 'var(--sand-200)', transition: 'all 0.3s ease', cursor: 'pointer', position: 'relative' }}
+        style={{ 
+          backgroundColor: 'white', 
+          transition: 'all 0.3s ease', 
+          cursor: 'pointer', 
+          position: 'relative',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
+        }}
         onMouseEnter={(e) => { 
           e.currentTarget.style.transform = 'translateY(-8px)'; 
-          e.currentTarget.style.boxShadow = '0 10px 25px rgba(0,0,0,0.12)'; 
+          e.currentTarget.style.boxShadow = '0 10px 25px rgba(0,0,0,0.15)'; 
         }}
         onMouseLeave={(e) => { 
           e.currentTarget.style.transform = 'translateY(0)'; 
-          e.currentTarget.style.boxShadow = 'none'; 
+          e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.08)'; 
         }}
       >
-        <Link to={`/product/${product.id}`} style={{ textDecoration: 'none' }}>
+        <Link to={`/product/${productData.id}`} style={{ textDecoration: 'none' }}>
           <div style={{ position: 'relative', overflow: 'hidden' }}>
-            <img src={product.image} alt={product.name} style={{ width: '100%', height: 'clamp(200px, 30vw, 280px)', objectFit: 'cover' }} />
-            {product.discount > 0 && (
+            <img src={productData.image} alt={productData.name} style={{ width: '100%', height: 'clamp(200px, 30vw, 280px)', objectFit: 'cover' }} />
+            {productData.discount > 0 && (
               <div style={{ position: 'absolute', top: '10px', right: '10px', backgroundColor: '#e74c3c', color: 'white', padding: '0.3rem 0.6rem', borderRadius: '20px', fontSize: '0.75rem', fontWeight: '700' }}>
-                -{product.discount}%
+                -{productData.discount}%
               </div>
             )}
-            {product.isNew && (
+            {productData.isNew && (
               <div style={{ position: 'absolute', top: '10px', left: '10px', backgroundColor: '#27ae60', color: 'white', padding: '0.3rem 0.6rem', borderRadius: '20px', fontSize: '0.75rem', fontWeight: '700' }}>
                 NEW
               </div>
@@ -68,28 +90,28 @@ export default function ProductCard({ product, showAddToCart = false }) {
           </div>
         </Link>
         <div className="card-body p-3">
-          <Link to={`/product/${product.id}`} style={{ textDecoration: 'none' }}>
+          <Link to={`/product/${productData.id}`} style={{ textDecoration: 'none' }}>
             <h6 style={{ color: 'var(--sand-900)', fontSize: 'clamp(0.9rem, 1.7vw, 1.1rem)', fontWeight: '700', marginBottom: '0.25rem' }}>
-              {product.name}
+              {productData.name}
             </h6>
             <p style={{ color: 'var(--sand-600)', fontSize: '0.8rem', marginBottom: '0.5rem' }}>
-              {product.fragranceType} • {product.gender}
+              {productData.fragranceType} • {productData.gender}
             </p>
             <div className="d-flex align-items-center mb-2">
               <FontAwesomeIcon icon={faStar} style={{ color: '#FFD700', fontSize: '0.8rem' }} />
               <span style={{ fontSize: '0.85rem', color: 'var(--sand-800)', marginLeft: '0.3rem' }}>
-                {product.rating} ({product.reviews})
+                {productData.rating} ({productData.reviews})
               </span>
             </div>
           </Link>
           <div className="d-flex align-items-center justify-content-between">
             <div>
               <span style={{ color: 'var(--sand-900)', fontSize: 'clamp(1rem, 2vw, 1.2rem)', fontWeight: '700' }}>
-                ₹{product.price}
+                ₹{productData.price}
               </span>
-              {product.originalPrice > product.price && (
+              {productData.originalPrice > productData.price && (
                 <span style={{ color: 'var(--sand-600)', fontSize: '0.85rem', textDecoration: 'line-through', marginLeft: '0.5rem' }}>
-                  ₹{product.originalPrice}
+                  ₹{productData.originalPrice}
                 </span>
               )}
             </div>

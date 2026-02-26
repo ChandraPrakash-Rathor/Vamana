@@ -1,11 +1,54 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { GetActiveLimitedOffers } from '../../redux/apis/LimitedOfferApi';
 
 export default function DiscountSection() {
-  const discountProducts = [
-    { name: 'Lavender Dreams', price: '₹1,999', oldPrice: '₹2,899', discount: '30%', image: '/product4.jpg' },
-    { name: 'Sandalwood Essence', price: '₹2,299', oldPrice: '₹3,199', discount: '28%', image: '/product5.jpg' }
-  ];
+  const dispatch = useDispatch();
+  const { offers, loading } = useSelector((state) => state.LimitedOfferSlice);
+  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+
+  useEffect(() => {
+    dispatch(GetActiveLimitedOffers());
+  }, [dispatch]);
+
+  // Calculate countdown timer based on first offer's end date
+  useEffect(() => {
+    if (offers.length === 0) return;
+
+    const calculateTimeLeft = () => {
+      const endDate = new Date(offers[0].endDate);
+      const now = new Date();
+      const difference = endDate - now;
+
+      if (difference > 0) {
+        setTimeLeft({
+          days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+          hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+          minutes: Math.floor((difference / 1000 / 60) % 60),
+          seconds: Math.floor((difference / 1000) % 60)
+        });
+      }
+    };
+
+    calculateTimeLeft();
+    const timer = setInterval(calculateTimeLeft, 1000); // Update every second
+
+    return () => clearInterval(timer);
+  }, [offers]);
+
+  // Don't show section if no active offers
+  if (!loading && offers.length === 0) {
+    return null;
+  }
+
+  // Calculate highest discount from all offers
+  const maxDiscount = offers.length > 0 
+    ? Math.max(...offers.map(offer => offer.discount || 0))
+    : 0;
+
+  // Show first 2 offers only
+  const displayOffers = offers.slice(0, 2);
 
   return (
     <section 
@@ -96,7 +139,7 @@ export default function DiscountSection() {
                 fontSize: 'clamp(1.8rem, 4.5vw, 3rem)'
               }}
             >
-              Get Up to 30% Off
+              Get Up to {maxDiscount}% Off
             </h2>
             
             <p className="mb-2 mb-md-3" style={{ 
@@ -108,43 +151,33 @@ export default function DiscountSection() {
             </p>
 
             <div className="d-flex gap-2 mb-2 mb-md-3 flex-wrap">
-              <div 
-                className="text-center px-2 px-md-3 py-2 rounded"
-                style={{
-                  backgroundColor: 'rgba(255,255,255,0.15)',
-                  backdropFilter: 'blur(10px)',
-                  minWidth: 'clamp(55px, 12vw, 70px)'
-                }}
-              >
-                <div className="fw-bold" style={{ fontSize: 'clamp(1.3rem, 3.5vw, 2rem)' }}>05</div>
-                <div style={{ fontSize: 'clamp(0.65rem, 1.3vw, 0.75rem)', opacity: '0.9' }}>Days</div>
-              </div>
-              <div 
-                className="text-center px-2 px-md-3 py-2 rounded"
-                style={{
-                  backgroundColor: 'rgba(255,255,255,0.15)',
-                  backdropFilter: 'blur(10px)',
-                  minWidth: 'clamp(55px, 12vw, 70px)'
-                }}
-              >
-                <div className="fw-bold" style={{ fontSize: 'clamp(1.3rem, 3.5vw, 2rem)' }}>12</div>
-                <div style={{ fontSize: 'clamp(0.65rem, 1.3vw, 0.75rem)', opacity: '0.9' }}>Hours</div>
-              </div>
-              <div 
-                className="text-center px-2 px-md-3 py-2 rounded"
-                style={{
-                  backgroundColor: 'rgba(255,255,255,0.15)',
-                  backdropFilter: 'blur(10px)',
-                  minWidth: 'clamp(55px, 12vw, 70px)'
-                }}
-              >
-                <div className="fw-bold" style={{ fontSize: 'clamp(1.3rem, 3.5vw, 2rem)' }}>35</div>
-                <div style={{ fontSize: 'clamp(0.65rem, 1.3vw, 0.75rem)', opacity: '0.9' }}>Min</div>
-              </div>
+              {[
+                { label: 'Days', value: timeLeft.days },
+                { label: 'Hours', value: timeLeft.hours },
+                { label: 'Min', value: timeLeft.minutes },
+                { label: 'Sec', value: timeLeft.seconds }
+              ].map((item, idx) => (
+                <div 
+                  key={idx}
+                  className="text-center px-2 px-md-3 py-2 rounded"
+                  style={{
+                    backgroundColor: 'rgba(255,255,255,0.15)',
+                    backdropFilter: 'blur(10px)',
+                    minWidth: 'clamp(50px, 11vw, 65px)'
+                  }}
+                >
+                  <div className="fw-bold" style={{ fontSize: 'clamp(1.2rem, 3vw, 1.8rem)' }}>
+                    {String(item.value).padStart(2, '0')}
+                  </div>
+                  <div style={{ fontSize: 'clamp(0.6rem, 1.2vw, 0.7rem)', opacity: '0.9' }}>
+                    {item.label}
+                  </div>
+                </div>
+              ))}
             </div>
 
             <Link
-              to="/catalog"
+              to="/offers"
               className="btn px-3 py-1 rounded-pill"
               style={{
                 backgroundColor: 'white',
@@ -172,8 +205,8 @@ export default function DiscountSection() {
           {/* Right Side - Discount Products */}
           <div className="col-lg-6 px-3 px-md-4">
             <div className="row g-2 g-md-3">
-              {discountProducts.map((product, index) => (
-                <div key={index} className="col-6">
+              {displayOffers.map((offer, index) => (
+                <div key={offer._id} className="col-6">
                   <div 
                     className="card border-0 h-100 overflow-hidden position-relative"
                     style={{
@@ -207,17 +240,20 @@ export default function DiscountSection() {
                         animation: 'bounce 2s ease-in-out infinite'
                       }}
                     >
-                      -{product.discount}
+                      -{offer.discount}%
                     </div>
 
                     <div style={{ height: 'clamp(130px, 22vw, 180px)', overflow: 'hidden' }}>
                       <img
-                        src={product.image}
-                        alt={product.name}
+                        src={`http://localhost:5000/uploads/${offer.product?.mainImage}`}
+                        alt={offer.product?.name}
                         style={{
                           width: '100%',
                           height: '100%',
                           objectFit: 'cover'
+                        }}
+                        onError={(e) => {
+                          e.target.src = '/product4.jpg';
                         }}
                       />
                     </div>
@@ -231,7 +267,7 @@ export default function DiscountSection() {
                           fontSize: 'clamp(0.8rem, 1.6vw, 0.95rem)'
                         }}
                       >
-                        {product.name}
+                        {offer.product?.name}
                       </h6>
                       <div className="d-flex align-items-center justify-content-center gap-2">
                         <span 
@@ -241,13 +277,13 @@ export default function DiscountSection() {
                             fontSize: 'clamp(0.9rem, 1.8vw, 1.05rem)' 
                           }}
                         >
-                          {product.price}
+                          ₹{offer.offerPrice?.toLocaleString()}
                         </span>
                         <span 
                           className="text-decoration-line-through text-muted"
                           style={{ fontSize: 'clamp(0.7rem, 1.4vw, 0.8rem)' }}
                         >
-                          {product.oldPrice}
+                          ₹{offer.originalPrice?.toLocaleString()}
                         </span>
                       </div>
                     </div>

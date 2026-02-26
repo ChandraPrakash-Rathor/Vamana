@@ -75,8 +75,10 @@ export default function EditLimitedOfferModal({ isOpen, onClose, offer }) {
       });
 
       // Pre-select product
-      const productId = typeof offer.product === 'object' ? offer.product._id : offer.product;
-      const selectedProduct = productOptions.find(p => p.value === productId);
+      const productId = offer.product 
+        ? (typeof offer.product === 'object' ? offer.product._id : offer.product)
+        : null;
+      const selectedProduct = productId ? productOptions.find(p => p.value === productId) : null;
       setSelectedProduct(selectedProduct || null);
       
       hasInitialized.current = true;
@@ -162,7 +164,7 @@ export default function EditLimitedOfferModal({ isOpen, onClose, offer }) {
         featured: data.featured || false
       };
 
-      const res = await dispatch(UpdateLimitedOffer({ id: offer.id, data: offerData }));
+      const res = await dispatch(UpdateLimitedOffer({ id: offer._id, data: offerData }));
       
       if (res?.payload?.status === "success") {
         toast.success("Limited offer updated successfully!");

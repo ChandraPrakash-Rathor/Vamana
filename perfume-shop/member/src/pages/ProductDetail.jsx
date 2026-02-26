@@ -1,37 +1,79 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { GetProductById, GetProducts } from '../redux/apis/ProductApi';
+import { clearCurrentProduct } from '../redux/slices/ProductSlice';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faStar, faShoppingCart, faHeart, faTruck, faShieldAlt, faUndo } from '@fortawesome/free-solid-svg-icons';
-import { perfumes } from '../data/perfumes';
 import ScrollToTop from '../components/common/ScrollToTop';
 import Breadcrumb from '../components/common/Breadcrumb';
 
 export default function ProductDetail() {
   const { id } = useParams();
-  const product = perfumes.find(p => p.id === parseInt(id));
+  const dispatch = useDispatch();
+  const { currentProduct, products, loading } = useSelector((state) => state.ProductSlice);
   
   const [selectedImage, setSelectedImage] = useState(0);
-  const [selectedSize, setSelectedSize] = useState(0);
   const [quantity, setQuantity] = useState(1);
 
   useEffect(() => {
     window.scrollTo(0, 0);
-  }, [id]);
+    // Fetch product by ID
+    dispatch(GetProductById(id));
+    // Fetch all products for related products
+    dispatch(GetProducts());
 
-  if (!product) {
+    // Cleanup on unmount
+    return () => {
+      dispatch(clearCurrentProduct());
+    };
+  }, [dispatch, id]);
+
+  // Loading state
+  if (loading && !currentProduct) {
     return (
       <div className="container py-5" style={{ paddingTop: '100px', minHeight: '100vh', backgroundColor: 'var(--sand-100)' }}>
-        <h2 style={{ color: 'var(--sand-900)' }}>Product not found</h2>
-        <Link to="/catalog" style={{ color: 'var(--sand-600)' }}>Back to Catalog</Link>
+        <div className="text-center py-5">
+          <div className="spinner-border" style={{ color: 'var(--sand-600)', width: '3rem', height: '3rem' }} role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
+          <p className="mt-3" style={{ color: 'var(--sand-700)', fontSize: '1.1rem' }}>Loading product...</p>
+        </div>
       </div>
     );
   }
 
-  const relatedProducts = perfumes
-    .filter(p => p.id !== product.id && (p.fragranceType === product.fragranceType || p.category === product.category))
-    .slice(0, 4);
+  // Product not found
+  if (!currentProduct) {
+    return (
+      <div className="container py-5" style={{ paddingTop: '100px', minHeight: '100vh', backgroundColor: 'var(--sand-100)' }}>
+        <div className="text-center py-5">
+          <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>📦</div>
+          <h2 style={{ color: 'var(--sand-900)', marginBottom: '1rem' }}>Product not found</h2>
+          <Link to="/catalog" className="btn" style={{ 
+            backgroundColor: 'var(--sand-600)', 
+            color: 'white',
+            padding: '0.7rem 2rem',
+            borderRadius: '25px',
+            textDecoration: 'none',
+            fontWeight: '600'
+          }}>
+            Back to Catalog
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
-  const currentPrice = product.sizes[selectedSize].price;
+  const product = currentProduct;
+
+  // Prepare product images (main + sub images)
+  const productImages = [product.mainImage, ...(product.subImages || [])].filter(Boolean);
+
+  // Get related products (same category, exclude current product)
+  const relatedProducts = products
+    .filter(p => p._id !== product._id && p.category === product.category)
+    .slice(0, 4);
 
   return (
     <div style={{ backgroundColor: 'var(--sand-100)', minHeight: '100vh', paddingTop: '90px' }}>
@@ -57,7 +99,7 @@ export default function ProductDetail() {
                   boxShadow: '0 10px 30px rgba(0,0,0,0.08)'
                 }}>
                   <img
-                    src={product.images[selectedImage]}
+                    src={productImages[selectedImage]}
                     alt={product.name}
                     style={{
                       width: '100%',
@@ -96,6 +138,22 @@ export default function ProductDetail() {
                       {product.discount}% OFF
                     </div>
                   )}
+                  {product.status === 'out-of-stock' && (
+                    <div style={{
+                      position: 'absolute',
+                      bottom: '15px',
+                      left: '15px',
+                      backgroundColor: '#e74c3c',
+                      color: 'white',
+                      padding: '0.4rem 0.9rem',
+                      borderRadius: '20px',
+                      fontSize: '0.8rem',
+                      fontWeight: '700',
+                      boxShadow: '0 3px 10px rgba(231, 76, 60, 0.3)'
+                    }}>
+                      OUT OF STOCK
+                    </div>
+                  )}
                   {product.isNew && (
                     <div style={{
                       position: 'absolute',
@@ -117,7 +175,7 @@ export default function ProductDetail() {
 
               {/* Thumbnails */}
               <div className="d-flex gap-2 justify-content-center">
-                {product.images.map((img, index) => (
+                {productImages.map((img, index) => (
                   <div
                     key={index}
                     onClick={() => setSelectedImage(index)}
@@ -165,7 +223,7 @@ export default function ProductDetail() {
                 letterSpacing: '2px',
                 textTransform: 'uppercase'
               }}>
-                {product.brand}
+                {product.brand || 'VAMANA'}
               </p>
 
               {/* Product Name */}
@@ -221,31 +279,47 @@ export default function ProductDetail() {
                   borderRadius: '20px',
                   fontSize: '0.75rem',
                   color: 'var(--sand-900)',
-                  fontWeight: '600'
-                }}>
-                  {product.fragranceType}
-                </span>
-                <span style={{
-                  backgroundColor: 'var(--sand-100)',
-                  padding: '0.35rem 0.9rem',
-                  borderRadius: '20px',
-                  fontSize: '0.75rem',
-                  color: 'var(--sand-900)',
-                  fontWeight: '600'
-                }}>
-                  {product.gender}
-                </span>
-                <span style={{
-                  backgroundColor: 'var(--sand-100)',
-                  padding: '0.35rem 0.9rem',
-                  borderRadius: '20px',
-                  fontSize: '0.75rem',
-                  color: 'var(--sand-900)',
                   fontWeight: '600',
                   textTransform: 'capitalize'
                 }}>
                   {product.category}
                 </span>
+                {product.volume && (
+                  <span style={{
+                    backgroundColor: 'var(--sand-100)',
+                    padding: '0.35rem 0.9rem',
+                    borderRadius: '20px',
+                    fontSize: '0.75rem',
+                    color: 'var(--sand-900)',
+                    fontWeight: '600'
+                  }}>
+                    {product.volume}
+                  </span>
+                )}
+                {product.featured && (
+                  <span style={{
+                    backgroundColor: 'var(--sand-600)',
+                    padding: '0.35rem 0.9rem',
+                    borderRadius: '20px',
+                    fontSize: '0.75rem',
+                    color: 'white',
+                    fontWeight: '600'
+                  }}>
+                    Featured
+                  </span>
+                )}
+                {product.bestseller && (
+                  <span style={{
+                    backgroundColor: '#27ae60',
+                    padding: '0.35rem 0.9rem',
+                    borderRadius: '20px',
+                    fontSize: '0.75rem',
+                    color: 'white',
+                    fontWeight: '600'
+                  }}>
+                    Bestseller
+                  </span>
+                )}
               </div>
 
               {/* Price */}
@@ -257,58 +331,33 @@ export default function ProductDetail() {
                     fontWeight: '700',
                     fontFamily: "'Playfair Display', serif"
                   }}>
-                    ₹{currentPrice}
+                    ₹{product.finalPrice}
                   </span>
-                  {product.originalPrice > product.price && (
-                    <span style={{
-                      color: 'var(--sand-600)',
-                      fontSize: 'clamp(1rem, 2vw, 1.2rem)',
-                      textDecoration: 'line-through'
-                    }}>
-                      ₹{product.originalPrice}
-                    </span>
+                  {product.actualPrice > product.finalPrice && (
+                    <>
+                      <span style={{
+                        color: 'var(--sand-600)',
+                        fontSize: 'clamp(1rem, 2vw, 1.2rem)',
+                        textDecoration: 'line-through'
+                      }}>
+                        ₹{product.actualPrice}
+                      </span>
+                      <span style={{
+                        backgroundColor: '#e74c3c',
+                        color: 'white',
+                        padding: '0.2rem 0.6rem',
+                        borderRadius: '15px',
+                        fontSize: '0.75rem',
+                        fontWeight: '700'
+                      }}>
+                        {product.discount}% OFF
+                      </span>
+                    </>
                   )}
                 </div>
                 <p style={{ color: 'var(--sand-700)', fontSize: '0.75rem', marginBottom: 0 }}>
                   Inclusive of all taxes • Free shipping on orders above ₹999
                 </p>
-              </div>
-
-              {/* Size Selection */}
-              <div className="mb-3">
-                <h6 style={{
-                  color: 'var(--sand-900)',
-                  fontSize: '0.85rem',
-                  fontWeight: '700',
-                  marginBottom: '0.7rem'
-                }}>
-                  Select Size
-                </h6>
-                <div className="d-flex gap-2">
-                  {product.sizes.map((size, index) => (
-                    <button
-                      key={index}
-                      onClick={() => setSelectedSize(index)}
-                      style={{
-                        padding: '0.6rem 1.2rem',
-                        border: selectedSize === index ? '2px solid var(--sand-600)' : '2px solid var(--sand-400)',
-                        borderRadius: '10px',
-                        backgroundColor: selectedSize === index ? 'var(--sand-600)' : 'white',
-                        color: selectedSize === index ? 'white' : 'var(--sand-900)',
-                        fontSize: '0.85rem',
-                        fontWeight: '600',
-                        cursor: 'pointer',
-                        transition: 'all 0.3s ease',
-                        boxShadow: selectedSize === index ? '0 4px 12px rgba(200, 164, 93, 0.25)' : 'none'
-                      }}
-                    >
-                      {size.ml}ml
-                      <div style={{ fontSize: '0.7rem', marginTop: '0.2rem', opacity: 0.9 }}>
-                        ₹{size.price}
-                      </div>
-                    </button>
-                  ))}
-                </div>
               </div>
 
               {/* Quantity */}
@@ -378,29 +427,41 @@ export default function ProductDetail() {
               {/* Action Buttons */}
               <div className="d-flex gap-2 mb-3">
                 <button
-                  onClick={() => alert('Added to cart!')}
+                  onClick={() => {
+                    if (product.status === 'out-of-stock') {
+                      alert('This product is currently out of stock');
+                    } else {
+                      alert('Added to cart!');
+                    }
+                  }}
+                  disabled={product.status === 'out-of-stock'}
                   style={{
                     flex: 1,
                     padding: '0.7rem',
                     border: '2px solid var(--sand-600)',
                     borderRadius: '10px',
-                    backgroundColor: 'white',
-                    color: 'var(--sand-600)',
+                    backgroundColor: product.status === 'out-of-stock' ? '#ccc' : 'white',
+                    color: product.status === 'out-of-stock' ? '#666' : 'var(--sand-600)',
                     fontSize: '0.9rem',
                     fontWeight: '600',
-                    cursor: 'pointer',
-                    transition: 'all 0.3s ease'
+                    cursor: product.status === 'out-of-stock' ? 'not-allowed' : 'pointer',
+                    transition: 'all 0.3s ease',
+                    opacity: product.status === 'out-of-stock' ? 0.6 : 1
                   }}
                   onMouseEnter={(e) => {
-                    e.target.style.backgroundColor = 'var(--sand-600)';
-                    e.target.style.color = 'white';
+                    if (product.status !== 'out-of-stock') {
+                      e.target.style.backgroundColor = 'var(--sand-600)';
+                      e.target.style.color = 'white';
+                    }
                   }}
                   onMouseLeave={(e) => {
-                    e.target.style.backgroundColor = 'white';
-                    e.target.style.color = 'var(--sand-600)';
+                    if (product.status !== 'out-of-stock') {
+                      e.target.style.backgroundColor = 'white';
+                      e.target.style.color = 'var(--sand-600)';
+                    }
                   }}
                 >
-                  <FontAwesomeIcon icon={faShoppingCart} style={{ fontSize: '0.85rem' }} /> Add to Cart
+                  <FontAwesomeIcon icon={faShoppingCart} style={{ fontSize: '0.85rem' }} /> {product.status === 'out-of-stock' ? 'Out of Stock' : 'Add to Cart'}
                 </button>
                 <button
                   style={{
@@ -427,30 +488,42 @@ export default function ProductDetail() {
               </div>
 
               <button
-                onClick={() => alert('Proceeding to checkout...')}
+                onClick={() => {
+                  if (product.status === 'out-of-stock') {
+                    alert('This product is currently out of stock');
+                  } else {
+                    alert('Proceeding to checkout...');
+                  }
+                }}
+                disabled={product.status === 'out-of-stock'}
                 style={{
                   width: '100%',
                   padding: '0.8rem',
                   border: 'none',
                   borderRadius: '10px',
-                  backgroundColor: 'var(--sand-900)',
+                  backgroundColor: product.status === 'out-of-stock' ? '#ccc' : 'var(--sand-900)',
                   color: 'white',
                   fontSize: '0.95rem',
                   fontWeight: '600',
-                  cursor: 'pointer',
+                  cursor: product.status === 'out-of-stock' ? 'not-allowed' : 'pointer',
                   transition: 'all 0.3s ease',
-                  boxShadow: '0 4px 15px rgba(0,0,0,0.15)'
+                  boxShadow: product.status === 'out-of-stock' ? 'none' : '0 4px 15px rgba(0,0,0,0.15)',
+                  opacity: product.status === 'out-of-stock' ? 0.6 : 1
                 }}
                 onMouseEnter={(e) => {
-                  e.target.style.transform = 'translateY(-2px)';
-                  e.target.style.boxShadow = '0 6px 20px rgba(0,0,0,0.2)';
+                  if (product.status !== 'out-of-stock') {
+                    e.target.style.transform = 'translateY(-2px)';
+                    e.target.style.boxShadow = '0 6px 20px rgba(0,0,0,0.2)';
+                  }
                 }}
                 onMouseLeave={(e) => {
-                  e.target.style.transform = 'translateY(0)';
-                  e.target.style.boxShadow = '0 4px 15px rgba(0,0,0,0.15)';
+                  if (product.status !== 'out-of-stock') {
+                    e.target.style.transform = 'translateY(0)';
+                    e.target.style.boxShadow = '0 4px 15px rgba(0,0,0,0.15)';
+                  }
                 }}
               >
-                Buy Now
+                {product.status === 'out-of-stock' ? 'Out of Stock' : 'Buy Now'}
               </button>
 
               {/* Features */}
@@ -481,69 +554,6 @@ export default function ProductDetail() {
                 </div>
               </div>
             </div>
-
-            {/* Fragrance Notes */}
-            <div style={{
-              backgroundColor: 'var(--sand-200)',
-              borderRadius: '20px',
-              padding: 'clamp(1.5rem, 3vw, 2rem)',
-              marginTop: '1.5rem',
-              boxShadow: '0 5px 20px rgba(0,0,0,0.06)'
-            }}>
-              <h3 style={{
-                color: 'var(--sand-900)',
-                fontFamily: "'Playfair Display', serif",
-                fontSize: 'clamp(1.2rem, 2.5vw, 1.5rem)',
-                marginBottom: '1rem',
-                fontWeight: '600'
-              }}>
-                Fragrance Notes
-              </h3>
-              <div className="row g-2">
-                <div className="col-12">
-                  <div style={{
-                    backgroundColor: 'var(--sand-100)',
-                    borderRadius: '12px',
-                    padding: '0.9rem'
-                  }}>
-                    <h6 style={{ color: 'var(--sand-900)', marginBottom: '0.5rem', fontWeight: '700', fontSize: '0.8rem' }}>
-                      Top Notes
-                    </h6>
-                    <p style={{ color: 'var(--sand-800)', marginBottom: 0, fontSize: '0.85rem' }}>
-                      {product.notes.top.join(', ')}
-                    </p>
-                  </div>
-                </div>
-                <div className="col-12">
-                  <div style={{
-                    backgroundColor: 'var(--sand-100)',
-                    borderRadius: '12px',
-                    padding: '0.9rem'
-                  }}>
-                    <h6 style={{ color: 'var(--sand-900)', marginBottom: '0.5rem', fontWeight: '700', fontSize: '0.8rem' }}>
-                      Middle Notes
-                    </h6>
-                    <p style={{ color: 'var(--sand-800)', marginBottom: 0, fontSize: '0.85rem' }}>
-                      {product.notes.middle.join(', ')}
-                    </p>
-                  </div>
-                </div>
-                <div className="col-12">
-                  <div style={{
-                    backgroundColor: 'var(--sand-100)',
-                    borderRadius: '12px',
-                    padding: '0.9rem'
-                  }}>
-                    <h6 style={{ color: 'var(--sand-900)', marginBottom: '0.5rem', fontWeight: '700', fontSize: '0.8rem' }}>
-                      Base Notes
-                    </h6>
-                    <p style={{ color: 'var(--sand-800)', marginBottom: 0, fontSize: '0.85rem' }}>
-                      {product.notes.base.join(', ')}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
 
@@ -562,8 +572,8 @@ export default function ProductDetail() {
             </h3>
             <div className="row g-3">
               {relatedProducts.map(relatedProduct => (
-                <div key={relatedProduct.id} className="col-6 col-md-3">
-                  <Link to={`/product/${relatedProduct.id}`} style={{ textDecoration: 'none' }}>
+                <div key={relatedProduct._id} className="col-6 col-md-3">
+                  <Link to={`/product/${relatedProduct._id}`} style={{ textDecoration: 'none' }}>
                     <div
                       className="card border-0 h-100"
                       style={{
@@ -583,7 +593,7 @@ export default function ProductDetail() {
                     >
                       <div style={{ position: 'relative', overflow: 'hidden', borderRadius: '15px 15px 0 0' }}>
                         <img
-                          src={relatedProduct.image}
+                          src={relatedProduct.mainImage}
                           alt={relatedProduct.name}
                           style={{
                             width: '100%',
@@ -603,7 +613,7 @@ export default function ProductDetail() {
                           </span>
                         </div>
                         <span style={{ color: 'var(--sand-900)', fontSize: 'clamp(1rem, 2vw, 1.2rem)', fontWeight: '700' }}>
-                          ₹{relatedProduct.price}
+                          ₹{relatedProduct.finalPrice}
                         </span>
                       </div>
                     </div>

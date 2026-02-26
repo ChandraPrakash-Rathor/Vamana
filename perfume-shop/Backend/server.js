@@ -12,10 +12,14 @@ app.use("/uploads", express.static("uploads"));
 app.use(cors());
 app.use(express.json());
 
-// routes
+// Routes
 app.use("/api/admin", require("./Admin/routes/adminRoutes"));
-// app.use("/api/member", require("./member/routes/memberRoutes"));
+app.use("/api/member", require("./Member/routes/memberRoutes"));
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => console.log(`Server running on ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`✅ Server running on http://localhost:${PORT}`);
+  console.log(`📋 Admin API: http://localhost:${PORT}/api/admin/health`);
+  console.log(`📋 Member API: http://localhost:${PORT}/api/member/health`);
+});

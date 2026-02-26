@@ -1,187 +1,140 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { 
-  faClock, 
-  faFire, 
-  faSnowflake, 
-  faSun,
-  faLeaf,
-  faGift,
-  faTag,
-  faBolt,
-  faHeart,
-  faMoon,
-  faStar
-} from '@fortawesome/free-solid-svg-icons';
-import { perfumes } from '../data/perfumes';
+import { faClock, faTag } from '@fortawesome/free-solid-svg-icons';
 import ProductCard from '../components/common/ProductCard';
 import Breadcrumb from '../components/common/Breadcrumb';
 import ScrollToTop from '../components/common/ScrollToTop';
-import SaleAnimations from '../components/sale/SaleAnimations';
+import { GetActiveSales } from '../redux/apis/SaleApi';
 
 export default function Sale() {
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { sales, loading } = useSelector((state) => state.SaleSlice);
+  
   const [timeLeft, setTimeLeft] = useState({
-    days: 5,
-    hours: 12,
-    minutes: 30,
-    seconds: 45
+    days: 0,
+    hours: 0,
+    minutes: 0,
+    seconds: 0
   });
 
-  // Current active sale - can be changed based on season
-  const [activeSale, setActiveSale] = useState('diwali');
-
-  // Sale configurations
-  const sales = {
-    summer: {
-      name: 'Summer Sale',
-      icon: faSun,
-      discount: '50%',
-      color: '#ff6b35',
-      gradient: 'linear-gradient(135deg, #ff6b35 0%, #f7931e 100%)',
-      bgColor: '#fff5f0',
-      description: 'Beat the heat with our refreshing summer fragrances',
-      endDate: 'June 30, 2024'
-    },
-    winter: {
-      name: 'Winter Sale',
-      icon: faSnowflake,
-      discount: '40%',
-      color: '#4a90e2',
-      gradient: 'linear-gradient(135deg, #4a90e2 0%, #357abd 100%)',
-      bgColor: '#f0f7ff',
-      description: 'Warm up with cozy winter scents at amazing prices',
-      endDate: 'December 31, 2024'
-    },
-    spring: {
-      name: 'Spring Sale',
-      icon: faLeaf,
-      discount: '35%',
-      color: '#7cb342',
-      gradient: 'linear-gradient(135deg, #7cb342 0%, #558b2f 100%)',
-      bgColor: '#f1f8e9',
-      description: 'Fresh floral fragrances for the blooming season',
-      endDate: 'March 31, 2024'
-    },
-    christmas: {
-      name: 'Christmas Sale',
-      icon: faGift,
-      discount: '55%',
-      color: '#c41e3a',
-      gradient: 'linear-gradient(135deg, #c41e3a 0%, #0c7c59 100%)',
-      bgColor: '#fff0f0',
-      description: 'Celebrate Christmas with magical fragrances',
-      endDate: 'December 25, 2024'
-    },
-    diwali: {
-      name: 'Diwali Sale',
-      icon: faStar,
-      discount: '60%',
-      color: '#ff6b35',
-      gradient: 'linear-gradient(135deg, #ff6b35 0%, #9c27b0 100%)',
-      bgColor: '#fff5f0',
-      description: 'Light up your Diwali with divine fragrances',
-      endDate: 'November 12, 2024'
-    },
-    newyear: {
-      name: 'New Year Sale',
-      icon: faStar,
-      discount: '65%',
-      color: '#ffd700',
-      gradient: 'linear-gradient(135deg, #ffd700 0%, #ff1493 100%)',
-      bgColor: '#fffef0',
-      description: 'Start the new year with fresh scents',
-      endDate: 'January 5, 2025'
-    },
-    valentine: {
-      name: 'Valentine Sale',
-      icon: faHeart,
-      discount: '45%',
-      color: '#ff1493',
-      gradient: 'linear-gradient(135deg, #ff1493 0%, #ff69b4 100%)',
-      bgColor: '#fff0f5',
-      description: 'Spread love with romantic fragrances',
-      endDate: 'February 14, 2024'
-    },
-    eid: {
-      name: 'Eid Sale',
-      icon: faMoon,
-      discount: '50%',
-      color: '#0c7c59',
-      gradient: 'linear-gradient(135deg, #0c7c59 0%, #4a90e2 100%)',
-      bgColor: '#f0fff4',
-      description: 'Celebrate Eid with premium fragrances',
-      endDate: 'April 10, 2024'
-    },
-    holi: {
-      name: 'Holi Sale',
-      icon: faStar,
-      discount: '55%',
-      color: '#ff1493',
-      gradient: 'linear-gradient(135deg, #ff1493 0%, #ffd700 50%, #00bfff 100%)',
-      bgColor: '#fff0ff',
-      description: 'Add colors to your life with vibrant scents',
-      endDate: 'March 25, 2024'
-    },
-    festive: {
-      name: 'Festive Sale',
-      icon: faGift,
-      discount: '60%',
-      color: '#e91e63',
-      gradient: 'linear-gradient(135deg, #e91e63 0%, #c2185b 100%)',
-      bgColor: '#fce4ec',
-      description: 'Celebrate with exclusive festive offers',
-      endDate: 'December 25, 2024'
-    }
-  };
-
-  const currentSale = sales[activeSale];
-
-  // Countdown timer
+  // Fetch active sales
   useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeLeft(prev => {
-        if (prev.seconds > 0) {
-          return { ...prev, seconds: prev.seconds - 1 };
-        } else if (prev.minutes > 0) {
-          return { ...prev, minutes: prev.minutes - 1, seconds: 59 };
-        } else if (prev.hours > 0) {
-          return { ...prev, hours: prev.hours - 1, minutes: 59, seconds: 59 };
-        } else if (prev.days > 0) {
-          return { ...prev, days: prev.days - 1, hours: 23, minutes: 59, seconds: 59 };
-        }
-        return prev;
-      });
-    }, 1000);
+    dispatch(GetActiveSales());
+  }, [dispatch]);
+
+  // Redirect if no sales available
+  useEffect(() => {
+    if (!loading && sales && sales.length === 0) {
+      navigate('/', { replace: true });
+    }
+  }, [sales, loading, navigate]);
+
+  // Get first active/scheduled sale from backend
+  const currentSale = sales && sales.length > 0 ? sales[0] : null;
+
+  // Calculate countdown timer based on sale dates
+  useEffect(() => {
+    if (!currentSale) return;
+
+    const calculateTimeLeft = () => {
+      const now = new Date();
+      const startDate = new Date(currentSale.startDate);
+      const endDate = new Date(currentSale.endDate);
+      
+      // If sale hasn't started yet, countdown to start
+      // If sale is active, countdown to end
+      const targetDate = now < startDate ? startDate : endDate;
+      const difference = targetDate - now;
+
+      if (difference > 0) {
+        setTimeLeft({
+          days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+          hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+          minutes: Math.floor((difference / 1000 / 60) % 60),
+          seconds: Math.floor((difference / 1000) % 60)
+        });
+      } else {
+        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+      }
+    };
+
+    calculateTimeLeft();
+    const timer = setInterval(calculateTimeLeft, 1000);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [currentSale]);
 
-  // Get sale products (first 8 products with discounted prices)
-  const saleProducts = perfumes.slice(0, 8).map(product => ({
-    ...product,
-    originalPrice: product.price,
-    price: Math.round(product.price * 0.6) // 40% off
-  }));
+  // Show loading state
+  if (loading) {
+    return (
+      <div style={{ 
+        backgroundColor: 'var(--sand-100)', 
+        minHeight: '100vh', 
+        paddingTop: '90px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        <div className="text-center">
+          <div className="spinner-border text-warning" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
+          <p className="mt-3">Loading sale...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If no sale data, return null (will redirect)
+  if (!currentSale) {
+    return null;
+  }
+
+  // Determine sale status
+  const now = new Date();
+  const startDate = new Date(currentSale.startDate);
+  const endDate = new Date(currentSale.endDate);
+  const isUpcoming = now < startDate;
+  const isActive = now >= startDate && now <= endDate;
+
+  // Get sale products from backend - only show if sale is active
+  const saleProducts = currentSale && currentSale.applicableProducts && isActive
+    ? currentSale.applicableProducts.map(product => ({
+        id: product._id,
+        name: product.name,
+        image: product.mainImage, // Just the filename
+        mainImage: product.mainImage,
+        category: product.category,
+        description: product.description,
+        price: product.salePrice, // Sale price
+        originalPrice: product.originalPrice, // Original price
+        actualPrice: product.originalPrice,
+        finalPrice: product.salePrice,
+        discount: product.discount,
+        status: product.status,
+        _id: product._id
+      }))
+    : [];
 
   return (
     <div style={{ backgroundColor: 'var(--sand-100)', minHeight: '100vh', paddingTop: '90px' }}>
-      <Breadcrumb items={[{ label: 'Sale', path: '/sale' }]} />
+      <Breadcrumb items={[{ label: currentSale.name, path: '/sale' }]} />
       
       <div className="container py-4">
         {/* Hero Banner */}
         <div style={{
-          background: currentSale.gradient,
+          background: 'linear-gradient(135deg, #ff6b35 0%, #9c27b0 100%)',
           borderRadius: '20px',
-          padding: 'clamp(2rem, 4vw, 4rem)',
+          padding: 'clamp(2rem, 4vw, 3rem)',
           marginBottom: '3rem',
           position: 'relative',
           overflow: 'hidden',
-          color: 'white'
+          color: 'white',
+          boxShadow: '0 10px 40px rgba(0,0,0,0.2)'
         }}>
-          {/* Festival Animations */}
-          <SaleAnimations saleType={activeSale} />
-
           {/* Animated Background Elements */}
           <div style={{
             position: 'absolute',
@@ -191,8 +144,7 @@ export default function Sale() {
             height: '200px',
             borderRadius: '50%',
             backgroundColor: 'rgba(255, 255, 255, 0.1)',
-            animation: 'float 6s ease-in-out infinite',
-            zIndex: 0
+            animation: 'float 6s ease-in-out infinite'
           }} />
           <div style={{
             position: 'absolute',
@@ -202,25 +154,25 @@ export default function Sale() {
             height: '150px',
             borderRadius: '50%',
             backgroundColor: 'rgba(255, 255, 255, 0.1)',
-            animation: 'float 8s ease-in-out infinite',
-            zIndex: 0
+            animation: 'float 8s ease-in-out infinite 2s'
           }} />
 
-          <div className="row align-items-center position-relative" style={{ zIndex: 3 }}>
+          <div className="row align-items-center position-relative" style={{ zIndex: 2 }}>
             <div className="col-lg-7 mb-4 mb-lg-0">
+              {/* Status Badge */}
               <div style={{
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '0.5rem',
                 padding: '0.5rem 1rem',
-                backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                backgroundColor: isUpcoming ? 'rgba(255, 193, 7, 0.3)' : 'rgba(76, 175, 80, 0.3)',
                 borderRadius: '20px',
                 marginBottom: '1rem',
-                fontSize: 'clamp(0.8rem, 1.5vw, 0.9rem)',
-                fontWeight: '600'
+                fontSize: '0.85rem',
+                fontWeight: '700',
+                border: `2px solid ${isUpcoming ? '#ffc107' : '#4caf50'}`
               }}>
-                <FontAwesomeIcon icon={faBolt} />
-                Limited Time Offer
+                {isUpcoming ? '🕐 Coming Soon' : '🔥 Live Now'}
               </div>
 
               <h1 style={{
@@ -228,16 +180,17 @@ export default function Sale() {
                 fontSize: 'clamp(2rem, 5vw, 3.5rem)',
                 fontWeight: '700',
                 marginBottom: '1rem',
-                lineHeight: '1.2'
+                lineHeight: '1.2',
+                textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
               }}>
-                <FontAwesomeIcon icon={currentSale.icon} style={{ marginRight: '1rem' }} />
                 {currentSale.name}
               </h1>
 
               <p style={{
-                fontSize: 'clamp(1rem, 2vw, 1.3rem)',
+                fontSize: 'clamp(1rem, 2vw, 1.2rem)',
                 marginBottom: '1.5rem',
-                opacity: 0.95
+                opacity: 0.95,
+                lineHeight: '1.6'
               }}>
                 {currentSale.description}
               </p>
@@ -246,13 +199,13 @@ export default function Sale() {
                 display: 'inline-block',
                 padding: '1rem 2rem',
                 backgroundColor: 'white',
-                color: currentSale.color,
+                color: '#ff6b35',
                 borderRadius: '15px',
                 fontSize: 'clamp(1.5rem, 3vw, 2.5rem)',
-                fontWeight: '700',
-                boxShadow: '0 10px 30px rgba(0,0,0,0.2)'
+                fontWeight: '800',
+                boxShadow: '0 10px 30px rgba(0,0,0,0.3)'
               }}>
-                Up to {currentSale.discount} OFF
+                Up to {currentSale.discount}% OFF
               </div>
             </div>
 
@@ -268,43 +221,45 @@ export default function Sale() {
                 <div style={{
                   textAlign: 'center',
                   marginBottom: '1rem',
-                  fontSize: 'clamp(1rem, 2vw, 1.2rem)',
-                  fontWeight: '600',
+                  fontSize: 'clamp(0.9rem, 1.8vw, 1.1rem)',
+                  fontWeight: '700',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: '0.5rem'
                 }}>
                   <FontAwesomeIcon icon={faClock} />
-                  Sale Ends In
+                  {isUpcoming ? 'Sale Starts In' : 'Sale Ends In'}
                 </div>
 
-                <div className="row g-2 g-md-3">
+                <div className="row g-2">
                   {[
-                    { value: timeLeft.days, label: 'Days' },
-                    { value: timeLeft.hours, label: 'Hours' },
-                    { value: timeLeft.minutes, label: 'Mins' },
-                    { value: timeLeft.seconds, label: 'Secs' }
-                  ].map((item, index) => (
-                    <div key={index} className="col-3">
+                    { label: 'Days', value: timeLeft.days },
+                    { label: 'Hours', value: timeLeft.hours },
+                    { label: 'Mins', value: timeLeft.minutes },
+                    { label: 'Secs', value: timeLeft.seconds }
+                  ].map((item, idx) => (
+                    <div key={idx} className="col-3">
                       <div style={{
                         backgroundColor: 'white',
-                        color: currentSale.color,
+                        color: '#ff6b35',
                         borderRadius: '10px',
                         padding: 'clamp(0.8rem, 2vw, 1.2rem)',
                         textAlign: 'center'
                       }}>
                         <div style={{
                           fontSize: 'clamp(1.5rem, 3vw, 2.5rem)',
-                          fontWeight: '700',
-                          lineHeight: '1'
+                          fontWeight: '800',
+                          lineHeight: '1',
+                          fontFamily: "'Courier New', monospace"
                         }}>
                           {String(item.value).padStart(2, '0')}
                         </div>
                         <div style={{
-                          fontSize: 'clamp(0.7rem, 1.5vw, 0.85rem)',
-                          marginTop: '0.3rem',
-                          opacity: 0.8
+                          fontSize: 'clamp(0.7rem, 1.4vw, 0.85rem)',
+                          marginTop: '0.5rem',
+                          fontWeight: '600',
+                          color: '#666'
                         }}>
                           {item.label}
                         </div>
@@ -317,187 +272,98 @@ export default function Sale() {
           </div>
         </div>
 
-        {/* Sale Type Selector */}
-        <div style={{
-          display: 'flex',
-          gap: '1rem',
-          marginBottom: '3rem',
-          flexWrap: 'wrap',
-          justifyContent: 'center'
-        }}>
-          {Object.entries(sales).map(([key, sale]) => (
-            <button
-              key={key}
-              onClick={() => setActiveSale(key)}
-              style={{
-                padding: '1rem 2rem',
-                border: activeSale === key ? `3px solid ${sale.color}` : '2px solid var(--sand-400)',
-                borderRadius: '15px',
-                backgroundColor: activeSale === key ? sale.bgColor : 'white',
-                color: activeSale === key ? sale.color : 'var(--sand-800)',
-                fontSize: 'clamp(0.9rem, 1.8vw, 1rem)',
-                fontWeight: '700',
-                cursor: 'pointer',
-                transition: 'all 0.3s ease',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                boxShadow: activeSale === key ? `0 5px 20px ${sale.color}40` : 'none'
-              }}
-              onMouseEnter={(e) => {
-                if (activeSale !== key) {
-                  e.target.style.backgroundColor = 'var(--sand-200)';
-                  e.target.style.transform = 'translateY(-2px)';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (activeSale !== key) {
-                  e.target.style.backgroundColor = 'white';
-                  e.target.style.transform = 'translateY(0)';
-                }
-              }}
-            >
-              <FontAwesomeIcon icon={sale.icon} />
-              {sale.name}
-            </button>
-          ))}
-        </div>
-
-        {/* Hot Deals Banner */}
-        <div style={{
-          backgroundColor: '#ff4444',
-          color: 'white',
-          padding: '1.5rem',
-          borderRadius: '15px',
-          marginBottom: '2rem',
-          textAlign: 'center',
-          position: 'relative',
-          overflow: 'hidden'
-        }}>
-          <div style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.1) 10px, rgba(255,255,255,0.1) 20px)',
-            animation: 'slide 20s linear infinite'
-          }} />
-          <div style={{ position: 'relative', zIndex: 2 }}>
-            <FontAwesomeIcon icon={faFire} style={{ fontSize: '2rem', marginBottom: '0.5rem' }} />
-            <h3 style={{
-              fontSize: 'clamp(1.2rem, 2.5vw, 1.8rem)',
-              fontWeight: '700',
-              marginBottom: '0.5rem'
-            }}>
-              🔥 Hot Deals Alert!
+        {/* Products Grid - Only show when sale is active */}
+        {isUpcoming ? (
+          <div className="text-center py-5">
+            <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>⏰</div>
+            <h3 style={{ color: 'var(--sand-900)', marginBottom: '0.5rem', fontSize: 'clamp(1.5rem, 3vw, 2rem)' }}>
+              Sale Starts Soon!
             </h3>
-            <p style={{
-              fontSize: 'clamp(0.9rem, 1.8vw, 1.1rem)',
-              marginBottom: 0,
-              opacity: 0.95
-            }}>
-              Extra 10% off on orders above ₹2999 • Free shipping on all sale items
+            <p style={{ color: 'var(--sand-600)', fontSize: 'clamp(0.9rem, 1.8vw, 1.1rem)' }}>
+              Products will be available when the sale starts on {new Date(currentSale.startDate).toLocaleDateString('en-IN', { 
+                day: 'numeric', 
+                month: 'long', 
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              })}
             </p>
           </div>
-        </div>
-
-        {/* Products Section */}
-        <div className="text-center mb-4">
-          <h2 style={{
-            color: 'var(--sand-900)',
-            fontFamily: "'Playfair Display', serif",
-            fontSize: 'clamp(1.8rem, 3vw, 2.5rem)',
-            marginBottom: '0.5rem',
-            fontWeight: '600'
-          }}>
-            <FontAwesomeIcon icon={faTag} style={{ color: currentSale.color, marginRight: '1rem' }} />
-            Sale Products
-          </h2>
-          <p style={{
-            color: 'var(--sand-700)',
-            fontSize: 'clamp(0.9rem, 1.8vw, 1rem)'
-          }}>
-            {saleProducts.length} Products on Sale
-          </p>
-        </div>
-
-        {/* Products Grid */}
-        <div className="row g-3 mb-4">
-          {saleProducts.map((product) => (
-            <div key={product.id} className="col-6 col-md-3">
-              <div style={{ position: 'relative' }}>
-                {/* Sale Badge */}
-                <div style={{
-                  position: 'absolute',
-                  top: '10px',
-                  left: '10px',
-                  zIndex: 10,
-                  padding: '0.4rem 0.8rem',
-                  background: currentSale.gradient,
-                  color: 'white',
-                  borderRadius: '8px',
-                  fontSize: '0.75rem',
-                  fontWeight: '700',
-                  boxShadow: '0 4px 10px rgba(0,0,0,0.2)'
-                }}>
-                  {currentSale.discount} OFF
-                </div>
-                <ProductCard product={product} showAddToCart={true} />
-              </div>
+        ) : saleProducts && saleProducts.length > 0 ? (
+          <div className="mb-4">
+            <div className="d-flex align-items-center justify-content-between mb-3">
+              <h2 style={{
+                fontSize: 'clamp(1.5rem, 3vw, 2rem)',
+                fontWeight: '700',
+                color: 'var(--sand-900)',
+                margin: 0
+              }}>
+                <FontAwesomeIcon icon={faTag} style={{ color: '#ff6b35', marginRight: '0.5rem' }} />
+                Sale Products ({saleProducts.length})
+              </h2>
+              <Link 
+                to="/catalog"
+                style={{
+                  color: 'var(--sand-600)',
+                  textDecoration: 'none',
+                  fontWeight: '600',
+                  fontSize: '0.95rem'
+                }}
+              >
+                View All →
+              </Link>
             </div>
-          ))}
-        </div>
 
-        {/* View All Button */}
-        <div className="text-center mt-4">
-          <Link
-            to="/catalog"
-            style={{
-              display: 'inline-block',
-              padding: '1rem 3rem',
-              background: currentSale.gradient,
-              color: 'white',
-              textDecoration: 'none',
-              borderRadius: '15px',
-              fontSize: '1.1rem',
-              fontWeight: '700',
-              transition: 'all 0.3s ease',
-              boxShadow: `0 5px 20px ${currentSale.color}40`
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.transform = 'translateY(-3px)';
-              e.target.style.boxShadow = `0 8px 25px ${currentSale.color}60`;
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.transform = 'translateY(0)';
-              e.target.style.boxShadow = `0 5px 20px ${currentSale.color}40`;
-            }}
-          >
-            View All Products →
-          </Link>
+            <div className="row g-3">
+              {saleProducts.map((product) => (
+                <div key={product.id} className="col-6 col-md-4 col-lg-3">
+                  <ProductCard product={product} showAddToCart={true} />
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="text-center py-5">
+            <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📦</div>
+            <h3 style={{ color: 'var(--sand-900)', marginBottom: '0.5rem' }}>No Products Available</h3>
+            <p style={{ color: 'var(--sand-600)' }}>Products will be added soon for this sale</p>
+          </div>
+        )}
+
+        {/* Trust Badges */}
+        <div className="row mt-4 pt-3 border-top g-3">
+          <div className="col-6 col-md-3 text-center">
+            <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🚚</div>
+            <h6 style={{ fontWeight: '700', color: 'var(--sand-900)', fontSize: '0.9rem' }}>Free Delivery</h6>
+            <p style={{ fontSize: '0.75rem', color: 'var(--sand-600)', margin: 0 }}>On orders above ₹999</p>
+          </div>
+          <div className="col-6 col-md-3 text-center">
+            <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>✅</div>
+            <h6 style={{ fontWeight: '700', color: 'var(--sand-900)', fontSize: '0.9rem' }}>100% Authentic</h6>
+            <p style={{ fontSize: '0.75rem', color: 'var(--sand-600)', margin: 0 }}>Original products</p>
+          </div>
+          <div className="col-6 col-md-3 text-center">
+            <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🔄</div>
+            <h6 style={{ fontWeight: '700', color: 'var(--sand-900)', fontSize: '0.9rem' }}>Easy Returns</h6>
+            <p style={{ fontSize: '0.75rem', color: 'var(--sand-600)', margin: 0 }}>7 days policy</p>
+          </div>
+          <div className="col-6 col-md-3 text-center">
+            <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>💳</div>
+            <h6 style={{ fontWeight: '700', color: 'var(--sand-900)', fontSize: '0.9rem' }}>Secure Payment</h6>
+            <p style={{ fontSize: '0.75rem', color: 'var(--sand-600)', margin: 0 }}>Safe & encrypted</p>
+          </div>
         </div>
       </div>
 
       <ScrollToTop />
 
-      {/* Animations */}
       <style>{`
         @keyframes float {
           0%, 100% {
-            transform: translateY(0px);
+            transform: translateY(0) rotate(0deg);
           }
           50% {
-            transform: translateY(-20px);
-          }
-        }
-
-        @keyframes slide {
-          0% {
-            transform: translateX(0);
-          }
-          100% {
-            transform: translateX(20px);
+            transform: translateY(-20px) rotate(5deg);
           }
         }
       `}</style>

@@ -1,11 +1,20 @@
-import React from 'react';
+import { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
-import { perfumes } from '../../data/perfumes';
+import { GetBestsellerProducts } from '../../redux/apis/ProductApi';
 import ProductCard from '../common/ProductCard';
 
 export default function BestSellers() {
-  // Get best seller products (those with isBestSeller flag)
-  const bestSellers = perfumes.filter(p => p.isBestSeller).slice(0, 4);
+  const dispatch = useDispatch();
+  const { bestsellerProducts, loading } = useSelector((state) => state.ProductSlice);
+
+  useEffect(() => {
+    // Fetch bestseller products on component mount
+    dispatch(GetBestsellerProducts());
+  }, [dispatch]);
+
+  // Get first 4 bestsellers
+  const bestSellers = bestsellerProducts.slice(0, 4);
 
   return (
     <section 
@@ -55,11 +64,23 @@ export default function BestSellers() {
 
         {/* Products Grid - 4 per row */}
         <div className="row g-2 g-md-3">
-          {bestSellers.map((product) => (
-            <div key={product.id} className="col-6 col-md-3">
-              <ProductCard product={product} showAddToCart={true} />
+          {loading ? (
+            <div className="col-12 text-center py-5">
+              <div className="spinner-border" style={{ color: 'var(--sand-600)' }} role="status">
+                <span className="visually-hidden">Loading...</span>
+              </div>
             </div>
-          ))}
+          ) : bestSellers.length === 0 ? (
+            <div className="col-12 text-center py-5">
+              <p style={{ color: 'var(--sand-700)' }}>No bestseller products available</p>
+            </div>
+          ) : (
+            bestSellers.map((product) => (
+              <div key={product._id} className="col-6 col-md-3">
+                <ProductCard product={product} showAddToCart={true} />
+              </div>
+            ))
+          )}
         </div>
       </div>
     </section>

@@ -1,14 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faShoppingCart, faUser, faSearch } from '@fortawesome/free-solid-svg-icons';
 import LoginModal from './LoginModal';
+import { GetActiveSales } from '../../redux/apis/SaleApi';
 
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const location = useLocation();
+  const dispatch = useDispatch();
+  const { sales } = useSelector((state) => state.SaleSlice);
+
+  // Fetch active sales on component mount
+  useEffect(() => {
+    dispatch(GetActiveSales());
+  }, [dispatch]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -145,32 +154,34 @@ export default function Header() {
               </Link>
             </li>
 
-            {/* Sale Link */}
-            <li className="nav-item">
-              <Link 
-                className="nav-link px-4 py-2 position-relative d-inline-block" 
-                to="/sale" 
-                style={{ 
-                  color: location.pathname === '/sale' ? '#ff4444' : 'var(--sand-900)',
-                  fontWeight: '700',
-                  fontSize: '0.95rem',
-                  letterSpacing: '0.3px',
-                  transition: 'all 0.3s ease',
-                  fontFamily: "'Roboto', sans-serif",
-                  borderBottom: location.pathname === '/sale' ? '2px solid #ff4444' : 'none'
-                }}
-                onMouseEnter={(e) => {
-                  e.target.style.color = '#ff4444';
-                  e.target.style.transform = 'translateY(-2px)';
-                }}
-                onMouseLeave={(e) => {
-                  e.target.style.color = location.pathname === '/sale' ? '#ff4444' : 'var(--sand-900)';
-                  e.target.style.transform = 'translateY(0)';
-                }}
-              >
-                🔥 Sale
-              </Link>
-            </li>
+            {/* Sale Link - Only show if there are active sales */}
+            {sales && sales.length > 0 && (
+              <li className="nav-item">
+                <Link 
+                  className="nav-link px-4 py-2 position-relative d-inline-block" 
+                  to="/sale" 
+                  style={{ 
+                    color: location.pathname === '/sale' ? '#ff4444' : 'var(--sand-900)',
+                    fontWeight: '700',
+                    fontSize: '0.95rem',
+                    letterSpacing: '0.3px',
+                    transition: 'all 0.3s ease',
+                    fontFamily: "'Roboto', sans-serif",
+                    borderBottom: location.pathname === '/sale' ? '2px solid #ff4444' : 'none'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.color = '#ff4444';
+                    e.target.style.transform = 'translateY(-2px)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.color = location.pathname === '/sale' ? '#ff4444' : 'var(--sand-900)';
+                    e.target.style.transform = 'translateY(0)';
+                  }}
+                >
+                  🔥 Sale
+                </Link>
+              </li>
+            )}
             
             {/* Cart with Badge */}
             <li className="nav-item">
