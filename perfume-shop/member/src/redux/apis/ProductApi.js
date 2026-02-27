@@ -56,6 +56,24 @@ export const GetBestsellerProducts = createAsyncThunk(
   }
 );
 
+// Get top rated products (3+ reviews)
+export const GetTopRatedProducts = createAsyncThunk(
+  'GetTopRatedProducts',
+  async (limit = 8) => {
+    let url = baseUrl + `products/top-rated?limit=${limit}`;
+    try {
+      const response = (await axios.get(url)).data;
+      if (response.success === true) {
+        return Promise.resolve(response);
+      } else {
+        return Promise.reject(response);
+      }
+    } catch (err) {
+      return Promise.reject(err);
+    }
+  }
+);
+
 // Get product by ID
 export const GetProductById = createAsyncThunk(
   'GetProductById',

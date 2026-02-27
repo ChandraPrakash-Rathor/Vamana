@@ -88,24 +88,34 @@ exports.createOffer = async (req, res) => {
       });
     }
 
-   
+    // Convert dates to local timezone start/end of day
+    // If date is "2026-02-27", make it start at 00:00:00 local time, not UTC
+    const startDateObj = new Date(startDate);
+    const endDateObj = new Date(endDate);
+    
+    // Set start date to beginning of day in local timezone
+    startDateObj.setHours(0, 0, 0, 0);
+    
+    // Set end date to end of day in local timezone
+    endDateObj.setHours(23, 59, 59, 999);
+
     const offer = await LimitedOffer.create({
       title,
       description,
       product,
       originalPrice: Number(originalPrice),
       offerPrice: Number(offerPrice),
-      startDate: new Date(startDate),
-      endDate: new Date(endDate),
+      startDate: startDateObj,
+      endDate: endDateObj,
       stockLimit: stockLimit ? Number(stockLimit) : null,
       featured: featured || false
     });
 
-   
+    // Update status based on current time
     offer.updateStatus();
     await offer.save();
 
-    
+    // Populate product details
     await offer.populate('product', 'name mainImage category');
 
     res.status(201).json({

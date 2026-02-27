@@ -3,6 +3,7 @@ import {
   GetProducts,
   GetFeaturedProducts,
   GetBestsellerProducts,
+  GetTopRatedProducts,
   GetProductById,
   GetProductsByCategory
 } from '../apis/ProductApi';
@@ -12,6 +13,7 @@ const initialState = {
   products: [],
   featuredProducts: [],
   bestsellerProducts: [],
+  topRatedProducts: [],
   currentProduct: null,
   categoryProducts: [],
   error: null
@@ -67,6 +69,20 @@ export const ProductSlice = createSlice({
       state.bestsellerProducts = action.payload?.data || [];
     });
     builder.addCase(GetBestsellerProducts.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.error.message;
+    });
+
+    // GetTopRatedProducts cases
+    builder.addCase(GetTopRatedProducts.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    });
+    builder.addCase(GetTopRatedProducts.fulfilled, (state, action) => {
+      state.loading = false;
+      state.topRatedProducts = action.payload?.data || [];
+    });
+    builder.addCase(GetTopRatedProducts.rejected, (state, action) => {
       state.loading = false;
       state.error = action.error.message;
     });

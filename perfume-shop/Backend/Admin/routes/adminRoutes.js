@@ -4,6 +4,7 @@ const productRoutes = require('./productRoutes');
 const couponRoutes = require('./couponRoutes');
 const saleRoutes = require('./saleRoutes');
 const limitedOfferRoutes = require('./limitedOfferRoutes');
+const bannerRoutes = require('./bannerRoutes');
 const authController = require("../controllers/AuthController");
 const productController =require("../controllers/productController")
 const couponController = require("../controllers/couponController");
@@ -40,6 +41,9 @@ router.get("/GetReview/:id", reviewController.getReviewById);
 router.post("/insertReview", upload.single('image'), reviewController.addReview);
 router.put("/updateReview/:id", upload.single('image'), reviewController.updateReview);
 router.delete("/deleteReview/:id", reviewController.deleteReview);
+
+// Banner routes
+router.use('/banners', bannerRoutes);
 
 router.get('/health', (req, res) => {
   res.status(200).json({

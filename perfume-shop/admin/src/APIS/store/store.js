@@ -6,6 +6,7 @@ import  CouponReducer from '../slice/CouponSlice'
 import  SaleReducer from '../slice/SaleSlice'
 import  LimitedOfferReducer from '../slice/LimitedOfferSlice'
 import  ReviewReducer from '../slice/ReviewSlice'
+import  BannerReducer from '../slice/BannerSlice'
  
 
 export const store = configureStore({
@@ -15,6 +16,7 @@ export const store = configureStore({
     CouponSlice:CouponReducer,
     SaleSlice:SaleReducer,
     LimitedOfferSlice:LimitedOfferReducer,
-    ReviewSlice:ReviewReducer
+    ReviewSlice:ReviewReducer,
+    BannerSlice:BannerReducer
   },
 })

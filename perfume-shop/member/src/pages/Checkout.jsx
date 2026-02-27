@@ -56,8 +56,6 @@ export default function Checkout() {
     formData.append('total', total);
     formData.append('items', JSON.stringify(cartItems));
     
-    console.log('Checkout Form Data:', Object.fromEntries(formData));
-    
     // In real app, process payment here
     // After successful payment, redirect to invoice
     navigate('/invoice');

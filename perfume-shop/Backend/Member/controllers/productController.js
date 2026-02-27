@@ -1,4 +1,5 @@
 const Product = require('../../Admin/models/Product');
+const { addRatingsToProducts, addRatingToProduct } = require('../../utils/reviewHelper');
 
 // @desc    Get all active products for customers
 // @route   GET /api/member/products
@@ -22,10 +23,13 @@ exports.getAllProducts = async (req, res) => {
       )
     }));
 
+    // Add actual ratings from Review collection
+    const productsWithRatings = await addRatingsToProducts(updatedProducts);
+
     res.status(200).json({
       success: true,
-      count: updatedProducts.length,
-      data: updatedProducts
+      count: productsWithRatings.length,
+      data: productsWithRatings
     });
   } catch (error) {
     console.error("Error fetching products:", error);
@@ -60,10 +64,13 @@ exports.getFeaturedProducts = async (req, res) => {
       )
     }));
 
+    // Add actual ratings from Review collection
+    const productsWithRatings = await addRatingsToProducts(updatedProducts);
+
     res.status(200).json({
       success: true,
-      count: updatedProducts.length,
-      data: updatedProducts
+      count: productsWithRatings.length,
+      data: productsWithRatings
     });
   } catch (error) {
     console.error("Error fetching featured products:", error);
@@ -98,13 +105,66 @@ exports.getBestsellerProducts = async (req, res) => {
       )
     }));
 
+    // Add actual ratings from Review collection
+    const productsWithRatings = await addRatingsToProducts(updatedProducts);
+
     res.status(200).json({
       success: true,
-      count: updatedProducts.length,
-      data: updatedProducts
+      count: productsWithRatings.length,
+      data: productsWithRatings
     });
   } catch (error) {
     console.error("Error fetching bestseller products:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+      error: error.message
+    });
+  }
+};
+
+// @desc    Get top rated products (3+ reviews)
+// @route   GET /api/member/products/top-rated
+// @access  Public
+exports.getTopRatedProducts = async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 8;
+    
+    // Get all active products first
+    const products = await Product.find({ 
+      status: { $in: ['active', 'out-of-stock'] }
+    })
+      .select('-__v');
+
+    const updatedProducts = products.map(product => ({
+      ...product._doc,
+      mainImage: product.mainImage
+        ? `${req.protocol}://${req.get("host")}/uploads/${product.mainImage}`
+        : null,
+      subImages: product.subImages?.map(img =>
+        `${req.protocol}://${req.get("host")}/uploads/${img}`
+      )
+    }));
+
+    // Add actual ratings from Review collection
+    const productsWithRatings = await addRatingsToProducts(updatedProducts);
+    
+    // Filter products with 3+ reviews and 3.5+ rating, then sort
+    const topRated = productsWithRatings
+      .filter(p => p.reviews >= 3 && p.rating >= 3.5)
+      .sort((a, b) => {
+        if (b.rating !== a.rating) return b.rating - a.rating;
+        return b.reviews - a.reviews;
+      })
+      .slice(0, limit);
+
+    res.status(200).json({
+      success: true,
+      count: topRated.length,
+      data: topRated
+    });
+  } catch (error) {
+    console.error("Error fetching top rated products:", error);
     res.status(500).json({
       success: false,
       message: "Server Error",
@@ -137,9 +197,12 @@ exports.getProductById = async (req, res) => {
       )
     };
 
+    // Add actual rating from Review collection
+    const productWithRating = await addRatingToProduct(updatedProduct);
+
     res.status(200).json({
       success: true,
-      data: updatedProduct
+      data: productWithRating
     });
   } catch (error) {
     console.error('Error in getProductById:', error);
@@ -183,10 +246,13 @@ exports.getProductsByCategory = async (req, res) => {
       )
     }));
 
+    // Add actual ratings from Review collection
+    const productsWithRatings = await addRatingsToProducts(updatedProducts);
+
     res.status(200).json({
       success: true,
-      count: updatedProducts.length,
-      data: updatedProducts
+      count: productsWithRatings.length,
+      data: productsWithRatings
     });
   } catch (error) {
     console.error('Error in getProductsByCategory:', error);

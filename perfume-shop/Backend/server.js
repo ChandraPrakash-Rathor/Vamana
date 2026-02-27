@@ -2,6 +2,7 @@ const express = require("express");
 const dotenv = require("dotenv");
 const cors = require("cors");
 const connectDB = require("./config/db");
+const { initCronJobs } = require("./config/cronJobs");
 
 dotenv.config();
 connectDB();
@@ -15,6 +16,9 @@ app.use(express.json());
 // Routes
 app.use("/api/admin", require("./Admin/routes/adminRoutes"));
 app.use("/api/member", require("./Member/routes/memberRoutes"));
+
+// Initialize cron jobs for auto status updates
+initCronJobs();
 
 const PORT = process.env.PORT || 5000;
 

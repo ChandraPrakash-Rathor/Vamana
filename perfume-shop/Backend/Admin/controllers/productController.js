@@ -1,4 +1,6 @@
 const Product = require('../models/Product');
+const fs = require('fs');
+const path = require('path');
 
 exports.getAllProducts = async (req, res) => {
   try {
@@ -137,9 +139,6 @@ exports.createProduct = async (req, res) => {
 // @access  Private (Admin)
 exports.updateProduct = async (req, res) => {
   try {
-    const fs = require('fs');
-    const path = require('path');
-    
     let product = await Product.findById(req.params.id);
 
     if (!product) {
@@ -211,6 +210,7 @@ exports.updateProduct = async (req, res) => {
     );
 
     res.status(200).json({
+      status: 'success',
       success: true,
       message: 'Product updated successfully',
       data: product
@@ -249,9 +249,6 @@ exports.updateProduct = async (req, res) => {
 // @access  Private (Admin)
 exports.deleteProduct = async (req, res) => {
   try {
-    const fs = require('fs');
-    const path = require('path');
-    
     const product = await Product.findById(req.params.id);
 
     if (!product) {
@@ -266,7 +263,7 @@ exports.deleteProduct = async (req, res) => {
       const mainImagePath = path.join(__dirname, '../../uploads', product.mainImage);
       if (fs.existsSync(mainImagePath)) {
         fs.unlinkSync(mainImagePath);
-        console.log('Deleted main image:', product.mainImage);
+        console.log('✅ Deleted main image:', product.mainImage);
       }
     }
 
@@ -276,7 +273,7 @@ exports.deleteProduct = async (req, res) => {
         const subImagePath = path.join(__dirname, '../../uploads', img);
         if (fs.existsSync(subImagePath)) {
           fs.unlinkSync(subImagePath);
-          console.log('Deleted sub image:', img);
+          console.log('✅ Deleted sub image:', img);
         }
       });
     }
@@ -284,12 +281,13 @@ exports.deleteProduct = async (req, res) => {
     await product.deleteOne();
 
     res.status(200).json({
+      status: 'success',
       success: true,
       message: 'Product and all images deleted successfully',
       data: {}
     });
   } catch (error) {
-    console.error('Error in deleteProduct:', error);
+    console.error('❌ Error in deleteProduct:', error);
 
     // Handle invalid ObjectId
     if (error.kind === 'ObjectId') {

@@ -1,6 +1,7 @@
 const Review = require('../models/Review');
 const path = require('path');
 const fs = require('fs');
+const { getImageUrl, getFilenameFromUrl } = require('../../utils/imageHelper');
 
 // Get all reviews
 exports.getReviews = async (req, res) => {
@@ -10,9 +11,7 @@ exports.getReviews = async (req, res) => {
     // Add full image URLs
     const reviewsWithUrls = reviews.map(review => ({
       ...review.toObject(),
-      image: review.image.startsWith('http') 
-        ? review.image 
-        : `${process.env.BASE_URL}/uploads/${review.image}`
+      image: getImageUrl(review.image)
     }));
 
     res.status(200).json({
@@ -43,9 +42,7 @@ exports.getReviewById = async (req, res) => {
 
     const reviewWithUrl = {
       ...review.toObject(),
-      image: review.image.startsWith('http') 
-        ? review.image 
-        : `${process.env.BASE_URL}/uploads/${review.image}`
+      image: getImageUrl(review.image)
     };
 
     res.status(200).json({
@@ -75,12 +72,13 @@ exports.addReview = async (req, res) => {
       });
     }
 
-    // Handle image upload
-    let imagePath = 'https://i.pravatar.cc/150?img=10';
+    // Handle image upload - use default avatar if no image provided
+    let imagePath = 'default-avatar.png'; // Default placeholder
     if (req.file) {
       imagePath = req.file.filename;
-    } else if (req.body.image && req.body.image.startsWith('http')) {
-      imagePath = req.body.image;
+    } else if (req.body.image && req.body.image.trim() !== '') {
+      // Extract filename if full URL provided
+      imagePath = getFilenameFromUrl(req.body.image);
     }
 
     const newReview = new Review({
@@ -98,9 +96,7 @@ exports.addReview = async (req, res) => {
 
     const reviewWithUrl = {
       ...newReview.toObject(),
-      image: newReview.image.startsWith('http') 
-        ? newReview.image 
-        : `${process.env.BASE_URL}/uploads/${newReview.image}`
+      image: getImageUrl(newReview.image)
     };
 
     res.status(201).json({
@@ -135,16 +131,17 @@ exports.updateReview = async (req, res) => {
     // Handle image update
     let imagePath = existingReview.image;
     if (req.file) {
-      // Delete old image if it exists and is not a URL
-      if (existingReview.image && !existingReview.image.startsWith('http')) {
+      // Delete old image if it exists and is not default avatar
+      if (existingReview.image && existingReview.image !== 'default-avatar.png') {
         const oldImagePath = path.join(__dirname, '../../uploads', existingReview.image);
         if (fs.existsSync(oldImagePath)) {
           fs.unlinkSync(oldImagePath);
         }
       }
       imagePath = req.file.filename;
-    } else if (req.body.image && req.body.image.startsWith('http')) {
-      imagePath = req.body.image;
+    } else if (req.body.image && req.body.image.trim() !== '') {
+      // Extract filename if full URL provided
+      imagePath = getFilenameFromUrl(req.body.image);
     }
 
     // Update fields
@@ -161,9 +158,7 @@ exports.updateReview = async (req, res) => {
 
     const reviewWithUrl = {
       ...existingReview.toObject(),
-      image: existingReview.image.startsWith('http') 
-        ? existingReview.image 
-        : `${process.env.BASE_URL}/uploads/${existingReview.image}`
+      image: getImageUrl(existingReview.image)
     };
 
     res.status(200).json({
@@ -194,8 +189,8 @@ exports.deleteReview = async (req, res) => {
       });
     }
 
-    // Delete image if it exists and is not a URL
-    if (review.image && !review.image.startsWith('http')) {
+    // Delete image if it exists and is not default avatar
+    if (review.image && review.image !== 'default-avatar.png') {
       const imagePath = path.join(__dirname, '../../uploads', review.image);
       if (fs.existsSync(imagePath)) {
         fs.unlinkSync(imagePath);

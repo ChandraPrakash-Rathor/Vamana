@@ -14,13 +14,21 @@ export default function ProductCard({ product, showAddToCart = false }) {
     image: product.mainImage || product.image,
     discount: product.discount || 0,
     isNew: product.isNew || false,
-    fragranceType: product.fragranceType || product.category || 'Perfume',
-    gender: product.gender || 'Unisex',
+    category: product.category || 'perfume',
     rating: product.rating || 0,
     reviews: product.reviews || 0,
     price: product.finalPrice || product.price,
-    originalPrice: product.actualPrice || product.originalPrice,
-    category: product.category
+    originalPrice: product.actualPrice || product.originalPrice
+  };
+
+  // Format category display for men's products
+  const getCategoryDisplay = (category) => {
+    const categoryMap = {
+      'perfume': 'Perfume',
+      'attar': 'Attar',
+      'combo': 'Combo Pack'
+    };
+    return `${categoryMap[category] || 'Perfume'} • For Men`;
   };
 
   return (
@@ -95,14 +103,20 @@ export default function ProductCard({ product, showAddToCart = false }) {
               {productData.name}
             </h6>
             <p style={{ color: 'var(--sand-600)', fontSize: '0.8rem', marginBottom: '0.5rem' }}>
-              {productData.fragranceType} • {productData.gender}
+              {getCategoryDisplay(productData.category)}
             </p>
-            <div className="d-flex align-items-center mb-2">
-              <FontAwesomeIcon icon={faStar} style={{ color: '#FFD700', fontSize: '0.8rem' }} />
-              <span style={{ fontSize: '0.85rem', color: 'var(--sand-800)', marginLeft: '0.3rem' }}>
-                {productData.rating} ({productData.reviews})
-              </span>
-            </div>
+            {/* Show rating only if product has reviews */}
+            {productData.reviews > 0 && (
+              <div className="d-flex align-items-center mb-2">
+                <FontAwesomeIcon icon={faStar} style={{ color: '#FFD700', fontSize: '0.8rem' }} />
+                <span style={{ fontSize: '0.85rem', color: 'var(--sand-800)', marginLeft: '0.3rem', fontWeight: '600' }}>
+                  {productData.rating.toFixed(1)}
+                </span>
+                <span style={{ fontSize: '0.75rem', color: 'var(--sand-600)', marginLeft: '0.3rem' }}>
+                  ({productData.reviews} {productData.reviews === 1 ? 'review' : 'reviews'})
+                </span>
+              </div>
+            )}
           </Link>
           <div className="d-flex align-items-center justify-content-between">
             <div>

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import Select from 'react-select';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -14,7 +14,6 @@ import { toast } from "react-toastify";
 export default function EditLimitedOfferModal({ isOpen, onClose, offer }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
-  const hasInitialized = useRef(false);
   const dispatch = useDispatch();
 
   const {
@@ -53,7 +52,7 @@ export default function EditLimitedOfferModal({ isOpen, onClose, offer }) {
 
   // Prefill form when offer changes
   useEffect(() => {
-    if (offer && isOpen && productOptions.length > 0 && !hasInitialized.current) {
+    if (offer && isOpen && productOptions.length > 0) {
       // Convert date strings to YYYY-MM-DD format
       const parseDate = (dateStr) => {
         const date = new Date(dateStr);
@@ -74,23 +73,39 @@ export default function EditLimitedOfferModal({ isOpen, onClose, offer }) {
         featured: offer.featured || false
       });
 
-      // Pre-select product
-      const productId = offer.product 
-        ? (typeof offer.product === 'object' ? offer.product._id : offer.product)
-        : null;
-      const selectedProduct = productId ? productOptions.find(p => p.value === productId) : null;
-      setSelectedProduct(selectedProduct || null);
+      // Pre-select product - handle both array and object
+      let productId = null;
       
-      hasInitialized.current = true;
+      if (offer.product) {
+        if (Array.isArray(offer.product)) {
+          // If product is an array, get the first item
+          productId = offer.product.length > 0 
+            ? (typeof offer.product[0] === 'object' ? offer.product[0]._id : offer.product[0])
+            : null;
+        } else {
+          // If product is a single value
+          productId = typeof offer.product === 'object' ? offer.product._id : offer.product;
+        }
+      }
+      
+      const selectedProductOption = productId 
+        ? productOptions.find(p => p.value === productId) 
+        : null;
+      
+      setSelectedProduct(selectedProductOption || null);
+      
+      console.log('🔍 Edit modal - Product ID:', productId);
+      console.log('🔍 Edit modal - Selected product:', selectedProductOption);
     }
   }, [offer, isOpen, productOptions, reset]);
 
-  // Reset initialization flag when modal closes
+  // Reset when modal closes
   useEffect(() => {
     if (!isOpen) {
-      hasInitialized.current = false;
+      setSelectedProduct(null);
+      reset();
     }
-  }, [isOpen]);
+  }, [isOpen, reset]);
 
   const customSelectStyles = {
     control: (base, state) => ({

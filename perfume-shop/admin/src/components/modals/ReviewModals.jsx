@@ -2,7 +2,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faEdit, faEye, faSave, faTimes, faTrash, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import Select from 'react-select';
 import { useForm, Controller } from 'react-hook-form';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 // Shared Modal Wrapper Style
 const modalStyles = {
@@ -29,7 +29,9 @@ const modalStyles = {
     maxHeight: '90vh',
     overflow: 'hidden',
     boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
-    animation: 'slideUp 0.2s ease'
+    animation: 'slideUp 0.2s ease',
+    display: 'flex',
+    flexDirection: 'column'
   },
   header: {
     backgroundColor: 'white',
@@ -37,20 +39,26 @@ const modalStyles = {
     padding: '1.5rem 2rem',
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'space-between'
+    justifyContent: 'space-between',
+    flexShrink: 0
   },
   body: {
-    padding: '2rem',
-    maxHeight: 'calc(90vh - 160px)',
-    overflowY: 'auto'
+    padding: '1.5rem 2rem',
+    overflowY: 'auto',
+    flex: '1 1 auto',
+    minHeight: 0
   },
   footer: {
-    padding: '1.25rem 2rem',
+    padding: '1rem 2rem',
     borderTop: '1px solid #e5e7eb',
     backgroundColor: '#f9fafb',
     display: 'flex',
     gap: '0.75rem',
-    justifyContent: 'flex-end'
+    justifyContent: 'flex-end',
+    flexShrink: 0,
+    position: 'sticky',
+    bottom: 0,
+    zIndex: 10
   }
 };
 
@@ -162,7 +170,7 @@ export function AddReviewModal({ show, onClose, onSave, products = [] }) {
   return (
     <div style={modalStyles.overlay} onClick={onClose}>
       <div style={modalStyles.container} onClick={(e) => e.stopPropagation()}>
-        <form onSubmit={handleSubmit(onSubmit)}>
+        <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
         {/* Header */}
         <div style={modalStyles.header}>
           <div>
@@ -180,8 +188,8 @@ export function AddReviewModal({ show, onClose, onSave, products = [] }) {
         </div>
 
         {/* Body */}
-        <div style={modalStyles.body}>
-          <div className="row g-3">
+        <div style={modalStyles.body} className="modal-body-scroll">
+          <div className="row g-2">
             <div className="col-md-6">
               <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: '600', color: '#374151', marginBottom: '0.375rem' }}>Customer Name <span style={{ color: '#ef4444' }}>*</span></label>
               <input type="text" {...register('name', { required: 'Name is required' })} placeholder="Enter name" style={{ width: '100%', padding: '0.625rem 0.875rem', borderRadius: '6px', border: errors.name ? '1px solid #ef4444' : '1px solid #d1d5db', fontSize: '0.875rem', outline: 'none', transition: 'all 0.2s' }}
@@ -301,6 +309,22 @@ export function AddReviewModal({ show, onClose, onSave, products = [] }) {
       <style>{`
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        
+        /* Custom Scrollbar */
+        .modal-body-scroll::-webkit-scrollbar {
+          width: 8px;
+        }
+        .modal-body-scroll::-webkit-scrollbar-track {
+          background: #f3f4f6;
+          border-radius: 4px;
+        }
+        .modal-body-scroll::-webkit-scrollbar-thumb {
+          background: #9ca3af;
+          border-radius: 4px;
+        }
+        .modal-body-scroll::-webkit-scrollbar-thumb:hover {
+          background: #6b7280;
+        }
       `}</style>
     </div>
   );
@@ -308,21 +332,29 @@ export function AddReviewModal({ show, onClose, onSave, products = [] }) {
 
 // Edit Review Modal - Same design as Add
 export function EditReviewModal({ show, onClose, review, onSave, products = [] }) {
-  const { register, handleSubmit, control, formState: { errors } } = useForm({
-    defaultValues: {
-      name: review?.name || '',
-      role: review?.role || '',
-      location: review?.location || '',
-      rating: review?.rating || 5,
-      review: review?.review || '',
-      product: review?.product || '',
-      verified: review?.verified ?? true,
-      image: review?.image || ''
-    }
-  });
-
-  const [imagePreview, setImagePreview] = useState(review?.image || '');
+  const [imagePreview, setImagePreview] = useState('');
   const [imageFile, setImageFile] = useState(null);
+
+  // Initialize form with useForm hook
+  const { register, handleSubmit, control, formState: { errors }, reset } = useForm();
+
+  // Update form values when review changes
+  useEffect(() => {
+    if (review && show) {
+      reset({
+        name: review.name || '',
+        role: review.role || '',
+        location: review.location || '',
+        rating: review.rating || 5,
+        review: review.review || '',
+        product: review.product || '',
+        verified: review.verified ?? true,
+        image: review.image || ''
+      });
+      setImagePreview(review.image || '');
+      setImageFile(null);
+    }
+  }, [review, show, reset]);
 
   if (!show || !review) return null;
   
@@ -415,7 +447,7 @@ export function EditReviewModal({ show, onClose, review, onSave, products = [] }
   return (
     <div style={modalStyles.overlay} onClick={onClose}>
       <div style={modalStyles.container} onClick={(e) => e.stopPropagation()}>
-        <form onSubmit={handleSubmit(onSubmit)}>
+        <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
         <div style={modalStyles.header}>
           <div>
             <h3 style={{ margin: 0, fontSize: '1.375rem', fontWeight: '600', color: '#111827', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
@@ -430,8 +462,8 @@ export function EditReviewModal({ show, onClose, review, onSave, products = [] }
             onMouseEnter={(e) => { e.target.style.background = '#e5e7eb'; e.target.style.color = '#111827'; }}
             onMouseLeave={(e) => { e.target.style.background = '#f3f4f6'; e.target.style.color = '#6b7280'; }}>×</button>
         </div>
-        <div style={modalStyles.body}>
-          <div className="row g-3">
+        <div style={modalStyles.body} className="modal-body-scroll">
+          <div className="row g-2">
             <div className="col-md-6">
               <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: '600', color: '#374151', marginBottom: '0.375rem' }}>Customer Name <span style={{ color: '#ef4444' }}>*</span></label>
               <input type="text" {...register('name', { required: 'Name is required' })} style={{ width: '100%', padding: '0.625rem 0.875rem', borderRadius: '6px', border: errors.name ? '1px solid #ef4444' : '1px solid #d1d5db', fontSize: '0.875rem', outline: 'none', transition: 'all 0.2s' }}

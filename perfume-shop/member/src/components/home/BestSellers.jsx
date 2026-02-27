@@ -1,20 +1,27 @@
 import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
-import { GetBestsellerProducts } from '../../redux/apis/ProductApi';
+import { fetchBestReviewedProducts } from '../../redux/apis/ReviewApi';
 import ProductCard from '../common/ProductCard';
 
 export default function BestSellers() {
   const dispatch = useDispatch();
-  const { bestsellerProducts, loading } = useSelector((state) => state.ProductSlice);
+  const { bestReviewedProducts, loading } = useSelector((state) => state.ReviewSlice);
 
   useEffect(() => {
-    // Fetch bestseller products on component mount
-    dispatch(GetBestsellerProducts());
+    // Fetch products with best reviews (3+ reviews, 3+ rating)
+    dispatch(fetchBestReviewedProducts({ limit: 8, minReviews: 1 })); // minReviews: 1 for testing, change to 3 in production
   }, [dispatch]);
 
-  // Get first 4 bestsellers
-  const bestSellers = bestsellerProducts.slice(0, 4);
+  // Get first 4 products with review data
+  const bestSellers = bestReviewedProducts.slice(0, 4).map(item => {
+    // Override product rating and reviews with calculated values from review aggregation
+    const product = { ...item.product };
+    product.rating = item.avgRating; // Use calculated average rating from reviews
+    product.reviews = item.reviewCount; // Use actual review count
+    
+    return product;
+  });
 
   return (
     <section 

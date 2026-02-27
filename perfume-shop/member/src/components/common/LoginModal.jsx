@@ -34,7 +34,6 @@ export default function LoginModal({ show, onClose }) {
       setLoading(false);
       setMobile(data.mobile);
       setStep('otp');
-      console.log('Mobile Form Data:', Object.fromEntries(formData));
     }, 1000);
   };
 
@@ -69,7 +68,6 @@ export default function LoginModal({ show, onClose }) {
       setLoading(false);
       localStorage.setItem('userLoggedIn', 'true');
       localStorage.setItem('userMobile', mobile);
-      console.log('OTP Form Data:', Object.fromEntries(formData));
       onClose();
     }, 1000);
   };

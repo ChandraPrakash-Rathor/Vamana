@@ -1,54 +1,39 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchFeaturedReviews } from '../../redux/apis/ReviewApi';
 
 export default function Testimonials() {
+  const dispatch = useDispatch();
+  const { featuredReviews, loading } = useSelector(state => state.ReviewSlice);
   const [activeIndex, setActiveIndex] = useState(0);
 
-  const testimonials = [
-    {
-      id: 1,
-      name: 'Sarah Johnson',
-      role: 'Fashion Blogger',
-      location: 'New York, USA',
-      image: 'https://i.pravatar.cc/150?img=1',
-      rating: 5,
-      review: 'Absolutely love the Velvet Rose! The scent lasts all day and I receive compliments everywhere I go. The packaging is luxurious and the quality is exceptional. Best perfume purchase ever!',
-      product: 'Velvet Rose',
-      verified: true
-    },
-    {
-      id: 2,
-      name: 'Michael Chen',
-      role: 'Business Executive',
-      location: 'London, UK',
-      image: 'https://i.pravatar.cc/150?img=12',
-      rating: 5,
-      review: 'The Mystic Oud is sophisticated and elegant. Perfect for business meetings and special occasions. The longevity is impressive and the scent evolves beautifully throughout the day.',
-      product: 'Mystic Oud',
-      verified: true
-    },
-    {
-      id: 3,
-      name: 'Emma Williams',
-      role: 'Makeup Artist',
-      location: 'Paris, France',
-      image: 'https://i.pravatar.cc/150?img=5',
-      rating: 5,
-      review: 'Ocean Breeze is my go-to summer fragrance. Fresh, light, and absolutely divine. The quality is outstanding and it never feels overwhelming. I get so many compliments!',
-      product: 'Ocean Breeze',
-      verified: true
-    },
-    {
-      id: 4,
-      name: 'David Martinez',
-      role: 'Photographer',
-      location: 'Dubai, UAE',
-      image: 'https://i.pravatar.cc/150?img=13',
-      rating: 5,
-      review: 'Exceptional quality and unique scents. The packaging is luxurious and makes for perfect gifts. Fast shipping and excellent customer service. Will definitely order again!',
-      product: 'Golden Amber',
-      verified: true
-    }
-  ];
+  // Fetch featured reviews on mount
+  useEffect(() => {
+    dispatch(fetchFeaturedReviews(6));
+  }, [dispatch]);
+
+  // Use fetched reviews or fallback to empty array
+  const testimonials = featuredReviews.length > 0 ? featuredReviews : [];
+
+  // Show loading state
+  if (loading || testimonials.length === 0) {
+    return (
+      <section 
+        className="py-5 d-flex align-items-center justify-content-center"
+        style={{
+          background: `linear-gradient(135deg, var(--sand-100) 0%, var(--sand-200) 100%)`,
+          minHeight: '400px'
+        }}
+      >
+        <div className="text-center">
+          <div className="spinner-border text-secondary" role="status" style={{ width: '3rem', height: '3rem' }}>
+            <span className="visually-hidden">Loading...</span>
+          </div>
+          <p className="mt-3" style={{ color: 'var(--sand-700)' }}>Loading reviews...</p>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section 
@@ -118,7 +103,7 @@ export default function Testimonials() {
                 <div className="col-md-4 d-flex align-items-center justify-content-center p-3 p-md-4" style={{ backgroundColor: 'var(--sand-400)' }}>
                   <div className="text-center">
                     <img
-                      src={testimonials[activeIndex].image}
+                      src={testimonials[activeIndex].image || 'https://i.pravatar.cc/150?img=1'}
                       alt={testimonials[activeIndex].name}
                       style={{
                         width: 'clamp(80px, 15vw, 120px)',
@@ -237,7 +222,7 @@ export default function Testimonials() {
         {/* Small Testimonial Cards Grid */}
         <div className="row g-2">
           {testimonials.map((testimonial, index) => (
-            <div key={testimonial.id} className="col-6 col-md-3">
+            <div key={testimonial._id || index} className="col-6 col-md-3">
               <div 
                 className="card border-0 h-100"
                 style={{
@@ -258,7 +243,7 @@ export default function Testimonials() {
               >
                 <div className="card-body p-2 text-center">
                   <img
-                    src={testimonial.image}
+                    src={testimonial.image || `https://i.pravatar.cc/150?img=${index + 1}`}
                     alt={testimonial.name}
                     style={{
                       width: 'clamp(40px, 10vw, 60px)',

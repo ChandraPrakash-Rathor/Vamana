@@ -1,5 +1,6 @@
 const cron = require('node-cron');
 const Sale = require('../Admin/models/Sale');
+const LimitedOffer = require('../Admin/models/LimitedOffer');
 
 // Function to delete expired sales (1 hour after end time)
 const deleteExpiredSales = async () => {
@@ -66,11 +67,72 @@ const updateSaleStatuses = async () => {
   }
 };
 
+// Function to update limited offer statuses based on current time
+const updateLimitedOfferStatuses = async () => {
+  try {
+    const now = new Date();
+
+    // First, adjust any scheduled offers that are "today" in local timezone but future in UTC
+    const scheduledOffers = await LimitedOffer.find({ status: 'scheduled' });
+    
+    for (const offer of scheduledOffers) {
+      // Check if it's the same calendar day in local timezone
+      const offerStartLocal = new Date(offer.startDate);
+      const nowLocal = new Date(now);
+      
+      const isSameDay = 
+        offerStartLocal.getFullYear() === nowLocal.getFullYear() &&
+        offerStartLocal.getMonth() === nowLocal.getMonth() &&
+        offerStartLocal.getDate() === nowLocal.getDate();
+      
+      if (isSameDay && offer.startDate > now) {
+        // Adjust start date to beginning of today (local timezone)
+        const newStartDate = new Date(now);
+        newStartDate.setHours(0, 0, 0, 0);
+        
+        offer.startDate = newStartDate;
+        await offer.save();
+        console.log(`✅ Adjusted "${offer.title}" start date to local timezone`);
+      }
+    }
+
+    // Update scheduled offers to active if start time has passed
+    const activatedOffers = await LimitedOffer.updateMany(
+      {
+        status: 'scheduled',
+        startDate: { $lte: now },
+        endDate: { $gte: now }
+      },
+      { $set: { status: 'active' } }
+    );
+
+    if (activatedOffers.modifiedCount > 0) {
+      console.log(`✅ Activated ${activatedOffers.modifiedCount} scheduled limited offers`);
+    }
+
+    // Update active offers to expired if end time has passed
+    const expiredOffers = await LimitedOffer.updateMany(
+      {
+        status: 'active',
+        endDate: { $lt: now }
+      },
+      { $set: { status: 'expired' } }
+    );
+
+    if (expiredOffers.modifiedCount > 0) {
+      console.log(`✅ Expired ${expiredOffers.modifiedCount} active limited offers`);
+    }
+  } catch (error) {
+    console.error('❌ Error updating limited offer statuses:', error);
+  }
+};
+
 // Initialize cron jobs
 const initCronJobs = () => {
-  // Run every minute to update sale statuses
+  // Run every minute to update sale and limited offer statuses
   cron.schedule('* * * * *', () => {
     updateSaleStatuses();
+    updateLimitedOfferStatuses();
   });
 
   // Run every hour to delete expired sales (1 hour after end time)
@@ -80,7 +142,12 @@ const initCronJobs = () => {
 
   console.log('⏰ Cron jobs initialized:');
   console.log('   - Sale status updater: Every minute');
+  console.log('   - Limited offer status updater: Every minute');
   console.log('   - Expired sale cleanup: Every hour');
+  
+  // Run immediately on startup
+  updateSaleStatuses();
+  updateLimitedOfferStatuses();
 };
 
-module.exports = { initCronJobs, deleteExpiredSales, updateSaleStatuses };
+module.exports = { initCronJobs, deleteExpiredSales, updateSaleStatuses, updateLimitedOfferStatuses };

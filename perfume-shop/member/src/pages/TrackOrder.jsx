@@ -20,8 +20,6 @@ export default function TrackOrder() {
     const formData = new FormData();
     formData.append('orderId', data.orderId);
     
-    console.log('Track Order Form Data:', Object.fromEntries(formData));
-    
     // Simulate tracking result
     setTrackingResult({
       orderId: data.orderId,

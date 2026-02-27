@@ -5,13 +5,18 @@ import {
   faImage, faStar, faEdit, faPlus, faSave, faTimes, faTrash, faEye
 } from '@fortawesome/free-solid-svg-icons';
 import { AddReviewModal, EditReviewModal, ViewReviewModal, DeleteReviewModal } from '../components/modals/ReviewModals';
+import EditBannerModal from '../components/modals/EditBannerModal';
 import { fetchReviews, addReview, updateReview, deleteReview } from '../APIS/apis/ReviewApi';
 import { clearError, clearSuccess } from '../APIS/slice/ReviewSlice';
+import { fetchBanners, updateBanner } from '../APIS/apis/BannerApi';
+import { clearError as clearBannerError, clearSuccess as clearBannerSuccess } from '../APIS/slice/BannerSlice';
+import { toast } from 'react-toastify';
 import axios from 'axios';
 
 export default function ContentManagement() {
   const dispatch = useDispatch();
   const { reviews: reviewsFromRedux, loading, error, success } = useSelector(state => state.ReviewSlice);
+  const { banners: bannersFromRedux, loading: bannerLoading, error: bannerError, success: bannerSuccess } = useSelector(state => state.BannerSlice);
   
   const [activeTab, setActiveTab] = useState('banners');
   const [editingBanner, setEditingBanner] = useState(null);
@@ -22,23 +27,36 @@ export default function ContentManagement() {
   const [selectedReview, setSelectedReview] = useState(null);
   const [products, setProducts] = useState([]);
 
-  // Fetch products and reviews on component mount
+  // Fetch products, reviews, and banners on component mount
   useEffect(() => {
     fetchProducts();
     dispatch(fetchReviews());
+    dispatch(fetchBanners());
   }, [dispatch]);
 
-  // Handle success/error messages
+  // Handle success/error messages with toast for reviews
   useEffect(() => {
     if (success) {
-      alert('✅ Operation completed successfully!');
+      toast.success('✅ Review operation completed successfully!');
       dispatch(clearSuccess());
     }
     if (error) {
-      alert(`⚠️ Error: ${error}`);
+      toast.error(`⚠️ Error: ${error}`);
       dispatch(clearError());
     }
   }, [success, error, dispatch]);
+
+  // Handle success/error messages with toast for banners
+  useEffect(() => {
+    if (bannerSuccess) {
+      toast.success('✅ Banner updated successfully!');
+      dispatch(clearBannerSuccess());
+    }
+    if (bannerError) {
+      toast.error(`⚠️ Error: ${bannerError}`);
+      dispatch(clearBannerError());
+    }
+  }, [bannerSuccess, bannerError, dispatch]);
 
   const fetchProducts = async () => {
     try {
@@ -51,27 +69,8 @@ export default function ContentManagement() {
     }
   };
 
-  // Hero Banners Data - Matching HeroSlider.jsx structure
-  const [banners, setBanners] = useState([
-    {
-      id: 1,
-      type: 'circle',
-      topBadge: 'Fragrance & Elegance Co',
-      title: 'Vamana Signature Collection',
-      subtitle: 'Innovating the Perfume Industry with Sustainable & Sensory-Driven Solutions',
-      bottomBadge: 'Crafted by: Vamana',
-      websiteUrl: 'www.vamana.com'
-    },
-    {
-      id: 2,
-      type: 'arch',
-      topBadge: 'Vamana Fragrances',
-      title: 'Exquisite Fragrances',
-      subtitle: 'Awaken Your Senses, Embrace Timeless Elegance',
-      websiteUrl: 'www.vamana.com',
-      bottomText: 'Crafted with Excellence • Since 2024'
-    }
-  ]);
+  // Use banners from Redux
+  const banners = bannersFromRedux;
 
   // Reviews Data - Use from Redux
   const reviews = reviewsFromRedux;
@@ -82,10 +81,16 @@ export default function ContentManagement() {
   };
 
   // Handle Banner Save
-  const handleBannerSave = () => {
-    setBanners(banners.map(b => b.id === editingBanner.id ? editingBanner : b));
-    setEditingBanner(null);
-    alert('✅ Banner updated successfully! Changes will reflect on the home page.');
+  const handleBannerSave = async (formData) => {
+    const bannerId = formData.get('id');
+    
+    dispatch(updateBanner({ id: bannerId, formData }))
+      .unwrap()
+      .then(() => {
+        setEditingBanner(null);
+        dispatch(fetchBanners()); // Refresh banners
+      })
+      .catch((err) => console.error('Update failed:', err));
   };
 
   // Handle Review Edit
@@ -240,321 +245,154 @@ export default function ContentManagement() {
       {activeTab === 'banners' && (
         <div className="row g-4">
           {banners.map((banner) => (
-            <div key={banner.id} className="col-12">
-              <div className="card border-0 shadow-sm" style={{
+            <div key={banner._id} className="col-md-6">
+              <div className="card border-0 shadow-sm h-100" style={{
                 backgroundColor: 'white',
                 borderRadius: '16px',
-                overflow: 'hidden'
+                overflow: 'hidden',
+                transition: 'transform 0.3s ease, box-shadow 0.3s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-4px)';
+                e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.15)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
               }}>
-                {/* Banner Header */}
+                {/* Card Header */}
                 <div style={{
                   background: 'linear-gradient(135deg, var(--sand-200) 0%, var(--sand-300) 100%)',
                   padding: '1.5rem',
                   borderBottom: '3px solid var(--sand-400)'
                 }}>
-                  <div className="d-flex align-items-center justify-content-between">
-                    <div>
-                      <h4 style={{
-                        color: 'var(--sand-900)',
-                        fontSize: '1.5rem',
-                        fontWeight: '700',
-                        marginBottom: '0.5rem',
-                        fontFamily: "'Playfair Display', serif"
-                      }}>
-                        {banner.type === 'circle' ? '🔵 Banner 1 - Circle Design' : '🏛️ Banner 2 - Arch Design'}
-                      </h4>
-                      <p style={{
-                        color: 'var(--sand-700)',
-                        fontSize: '0.95rem',
-                        marginBottom: '0'
-                      }}>
-                        {banner.type === 'circle' 
-                          ? 'First slide with circular product display' 
-                          : 'Second slide with arch-shaped product display'}
-                      </p>
-                    </div>
-                    <div style={{
-                      backgroundColor: editingBanner?.id === banner.id ? '#f59e0b' : '#10b981',
-                      color: 'white',
-                      padding: '0.75rem 1.5rem',
-                      borderRadius: '10px',
-                      fontSize: '0.9rem',
+                  <div className="d-flex align-items-center justify-content-between mb-2">
+                    <h4 style={{
+                      color: 'var(--sand-900)',
+                      fontSize: '1.25rem',
                       fontWeight: '700',
-                      boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
+                      marginBottom: '0',
+                      fontFamily: "'Playfair Display', serif"
                     }}>
-                      {editingBanner?.id === banner.id ? '✏️ Editing' : '✓ Active'}
-                    </div>
+                      {banner.type === 'circle' ? '🔵 Banner 1' : '🏛️ Banner 2'}
+                    </h4>
+                    <span style={{
+                      backgroundColor: '#10b981',
+                      color: 'white',
+                      padding: '0.375rem 0.875rem',
+                      borderRadius: '20px',
+                      fontSize: '0.75rem',
+                      fontWeight: '700'
+                    }}>
+                      ✓ Active
+                    </span>
                   </div>
+                  <p style={{
+                    color: 'var(--sand-700)',
+                    fontSize: '0.875rem',
+                    marginBottom: '0'
+                  }}>
+                    {banner.type === 'circle' ? 'Circle Design' : 'Arch Design'}
+                  </p>
                 </div>
 
-                {/* Banner Form */}
+                {/* Card Body */}
                 <div className="p-4">
-                  <div className="row g-4">
-                    {/* Left Column */}
-                    <div className="col-md-6">
-                      <div className="mb-4">
-                        <label className="form-label fw-bold" style={{ 
-                          color: 'var(--sand-900)', 
-                          fontSize: '1rem',
-                          marginBottom: '0.75rem'
-                        }}>
-                          📌 Top Badge Text
-                        </label>
-                        <input
-                          type="text"
-                          className="form-control"
-                          value={editingBanner?.id === banner.id ? editingBanner.topBadge : banner.topBadge}
-                          onChange={(e) => setEditingBanner({ ...editingBanner, topBadge: e.target.value })}
-                          disabled={editingBanner?.id !== banner.id}
-                          placeholder="e.g., Fragrance & Elegance Co"
-                          style={{
-                            padding: '0.85rem',
-                            borderRadius: '10px',
-                            border: '2px solid var(--sand-300)',
-                            fontSize: '1rem',
-                            backgroundColor: editingBanner?.id === banner.id ? 'white' : 'var(--sand-100)'
-                          }}
-                        />
-                        <small style={{ color: 'var(--sand-600)', fontSize: '0.85rem', marginTop: '0.5rem', display: 'block' }}>
-                          Small badge text shown at the top
-                        </small>
-                      </div>
-
-                      <div className="mb-4">
-                        <label className="form-label fw-bold" style={{ 
-                          color: 'var(--sand-900)', 
-                          fontSize: '1rem',
-                          marginBottom: '0.75rem'
-                        }}>
-                          ✨ Main Title
-                        </label>
-                        <input
-                          type="text"
-                          className="form-control"
-                          value={editingBanner?.id === banner.id ? editingBanner.title : banner.title}
-                          onChange={(e) => setEditingBanner({ ...editingBanner, title: e.target.value })}
-                          disabled={editingBanner?.id !== banner.id}
-                          placeholder="e.g., Vamana Signature Collection"
-                          style={{
-                            padding: '0.85rem',
-                            borderRadius: '10px',
-                            border: '2px solid var(--sand-300)',
-                            fontSize: '1rem',
-                            fontWeight: '600',
-                            backgroundColor: editingBanner?.id === banner.id ? 'white' : 'var(--sand-100)'
-                          }}
-                        />
-                        <small style={{ color: 'var(--sand-600)', fontSize: '0.85rem', marginTop: '0.5rem', display: 'block' }}>
-                          Large heading text (supports line breaks with \n)
-                        </small>
-                      </div>
-
-                      <div className="mb-4">
-                        <label className="form-label fw-bold" style={{ 
-                          color: 'var(--sand-900)', 
-                          fontSize: '1rem',
-                          marginBottom: '0.75rem'
-                        }}>
-                          📝 Subtitle / Description
-                        </label>
-                        <textarea
-                          className="form-control"
-                          rows="3"
-                          value={editingBanner?.id === banner.id ? editingBanner.subtitle : banner.subtitle}
-                          onChange={(e) => setEditingBanner({ ...editingBanner, subtitle: e.target.value })}
-                          disabled={editingBanner?.id !== banner.id}
-                          placeholder="Enter banner description..."
-                          style={{
-                            padding: '0.85rem',
-                            borderRadius: '10px',
-                            border: '2px solid var(--sand-300)',
-                            fontSize: '0.95rem',
-                            resize: 'vertical',
-                            backgroundColor: editingBanner?.id === banner.id ? 'white' : 'var(--sand-100)'
-                          }}
-                        />
-                        <small style={{ color: 'var(--sand-600)', fontSize: '0.85rem', marginTop: '0.5rem', display: 'block' }}>
-                          Descriptive text shown below the title
-                        </small>
-                      </div>
-                    </div>
-
-                    {/* Right Column */}
-                    <div className="col-md-6">
-                      {banner.type === 'circle' && (
-                        <div className="mb-4">
-                          <label className="form-label fw-bold" style={{ 
-                            color: 'var(--sand-900)', 
-                            fontSize: '1rem',
-                            marginBottom: '0.75rem'
-                          }}>
-                            🏷️ Bottom Badge Text
-                          </label>
-                          <input
-                            type="text"
-                            className="form-control"
-                            value={editingBanner?.id === banner.id ? editingBanner.bottomBadge : banner.bottomBadge}
-                            onChange={(e) => setEditingBanner({ ...editingBanner, bottomBadge: e.target.value })}
-                            disabled={editingBanner?.id !== banner.id}
-                            placeholder="e.g., Crafted by: Vamana"
-                            style={{
-                              padding: '0.85rem',
-                              borderRadius: '10px',
-                              border: '2px solid var(--sand-300)',
-                              fontSize: '1rem',
-                              backgroundColor: editingBanner?.id === banner.id ? 'white' : 'var(--sand-100)'
-                            }}
-                          />
-                          <small style={{ color: 'var(--sand-600)', fontSize: '0.85rem', marginTop: '0.5rem', display: 'block' }}>
-                            Badge text shown at the bottom (Circle design only)
-                          </small>
-                        </div>
-                      )}
-
-                      {banner.type === 'arch' && (
-                        <div className="mb-4">
-                          <label className="form-label fw-bold" style={{ 
-                            color: 'var(--sand-900)', 
-                            fontSize: '1rem',
-                            marginBottom: '0.75rem'
-                          }}>
-                            📄 Bottom Text
-                          </label>
-                          <input
-                            type="text"
-                            className="form-control"
-                            value={editingBanner?.id === banner.id ? editingBanner.bottomText : banner.bottomText}
-                            onChange={(e) => setEditingBanner({ ...editingBanner, bottomText: e.target.value })}
-                            disabled={editingBanner?.id !== banner.id}
-                            placeholder="e.g., Crafted with Excellence • Since 2024"
-                            style={{
-                              padding: '0.85rem',
-                              borderRadius: '10px',
-                              border: '2px solid var(--sand-300)',
-                              fontSize: '1rem',
-                              backgroundColor: editingBanner?.id === banner.id ? 'white' : 'var(--sand-100)'
-                            }}
-                          />
-                          <small style={{ color: 'var(--sand-600)', fontSize: '0.85rem', marginTop: '0.5rem', display: 'block' }}>
-                            Additional info text (Arch design only)
-                          </small>
-                        </div>
-                      )}
-
-                      <div className="mb-4">
-                        <label className="form-label fw-bold" style={{ 
-                          color: 'var(--sand-900)', 
-                          fontSize: '1rem',
-                          marginBottom: '0.75rem'
-                        }}>
-                          🌐 Website URL
-                        </label>
-                        <input
-                          type="text"
-                          className="form-control"
-                          value={editingBanner?.id === banner.id ? editingBanner.websiteUrl : banner.websiteUrl}
-                          onChange={(e) => setEditingBanner({ ...editingBanner, websiteUrl: e.target.value })}
-                          disabled={editingBanner?.id !== banner.id}
-                          placeholder="e.g., www.vamana.com"
-                          style={{
-                            padding: '0.85rem',
-                            borderRadius: '10px',
-                            border: '2px solid var(--sand-300)',
-                            fontSize: '1rem',
-                            backgroundColor: editingBanner?.id === banner.id ? 'white' : 'var(--sand-100)'
-                          }}
-                        />
-                        <small style={{ color: 'var(--sand-600)', fontSize: '0.85rem', marginTop: '0.5rem', display: 'block' }}>
-                          Website URL displayed on the banner
-                        </small>
-                      </div>
-
-                      {/* Info Box */}
-                      <div style={{
-                        backgroundColor: 'var(--sand-100)',
-                        border: '2px solid var(--sand-400)',
-                        borderRadius: '10px',
-                        padding: '1rem',
-                        marginTop: '1.5rem'
-                      }}>
-                        <div style={{ fontSize: '0.9rem', color: 'var(--sand-800)' }}>
-                          <strong>ℹ️ Note:</strong> Images (PNG files) cannot be changed from here. 
-                          Only text content is editable. Contact developer to update images.
-                        </div>
+                  <div className="mb-3">
+                    <div className="d-flex align-items-start gap-2 mb-2">
+                      <span style={{ fontSize: '1.25rem' }}>📌</span>
+                      <div style={{ flex: 1 }}>
+                        <small className="text-muted d-block mb-1">Top Badge</small>
+                        <p className="mb-0" style={{ fontWeight: '500', color: 'var(--sand-900)' }}>
+                          {banner.topBadge}
+                        </p>
                       </div>
                     </div>
                   </div>
 
-                  {/* Action Buttons */}
-                  <div className="d-flex gap-3 mt-4 pt-3 border-top">
-                    {editingBanner?.id === banner.id ? (
-                      <>
-                        <button
-                          onClick={handleBannerSave}
-                          style={{
-                            flex: 1,
-                            padding: '1rem',
-                            borderRadius: '10px',
-                            border: 'none',
-                            background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                            color: 'white',
-                            fontSize: '1rem',
-                            fontWeight: '700',
-                            cursor: 'pointer',
-                            transition: 'all 0.3s ease',
-                            boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)'
-                          }}
-                          onMouseEnter={(e) => e.target.style.transform = 'translateY(-2px)'}
-                          onMouseLeave={(e) => e.target.style.transform = 'translateY(0)'}
-                        >
-                          <FontAwesomeIcon icon={faSave} className="me-2" />
-                          Save Changes
-                        </button>
-                        <button
-                          onClick={() => setEditingBanner(null)}
-                          style={{
-                            flex: 1,
-                            padding: '1rem',
-                            borderRadius: '10px',
-                            border: '2px solid var(--sand-400)',
-                            background: 'white',
-                            color: 'var(--sand-900)',
-                            fontSize: '1rem',
-                            fontWeight: '700',
-                            cursor: 'pointer',
-                            transition: 'all 0.3s ease'
-                          }}
-                          onMouseEnter={(e) => e.target.style.backgroundColor = 'var(--sand-100)'}
-                          onMouseLeave={(e) => e.target.style.backgroundColor = 'white'}
-                        >
-                          <FontAwesomeIcon icon={faTimes} className="me-2" />
-                          Cancel
-                        </button>
-                      </>
-                    ) : (
-                      <button
-                        onClick={() => handleBannerEdit(banner)}
-                        style={{
-                          width: '100%',
-                          padding: '1rem',
-                          borderRadius: '10px',
-                          border: 'none',
-                          background: 'linear-gradient(135deg, var(--sand-600) 0%, var(--sand-700) 100%)',
-                          color: 'white',
-                          fontSize: '1rem',
-                          fontWeight: '700',
-                          cursor: 'pointer',
-                          transition: 'all 0.3s ease',
-                          boxShadow: '0 4px 12px rgba(179, 135, 63, 0.3)'
-                        }}
-                        onMouseEnter={(e) => e.target.style.transform = 'translateY(-2px)'}
-                        onMouseLeave={(e) => e.target.style.transform = 'translateY(0)'}
-                      >
-                        <FontAwesomeIcon icon={faEdit} className="me-2" />
-                        Edit Banner Content
-                      </button>
-                    )}
+                  <div className="mb-3">
+                    <div className="d-flex align-items-start gap-2 mb-2">
+                      <span style={{ fontSize: '1.25rem' }}>✨</span>
+                      <div style={{ flex: 1 }}>
+                        <small className="text-muted d-block mb-1">Main Title</small>
+                        <p className="mb-0" style={{ fontWeight: '600', color: 'var(--sand-900)', fontSize: '1.05rem' }}>
+                          {banner.title}
+                        </p>
+                      </div>
+                    </div>
                   </div>
+
+                  <div className="mb-3">
+                    <div className="d-flex align-items-start gap-2 mb-2">
+                      <span style={{ fontSize: '1.25rem' }}>📝</span>
+                      <div style={{ flex: 1 }}>
+                        <small className="text-muted d-block mb-1">Subtitle</small>
+                        <p className="mb-0" style={{ color: 'var(--sand-700)', fontSize: '0.9rem', lineHeight: '1.5' }}>
+                          {banner.subtitle}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {banner.type === 'circle' && banner.bottomBadge && (
+                    <div className="mb-3">
+                      <div className="d-flex align-items-start gap-2 mb-2">
+                        <span style={{ fontSize: '1.25rem' }}>🏷️</span>
+                        <div style={{ flex: 1 }}>
+                          <small className="text-muted d-block mb-1">Bottom Badge</small>
+                          <p className="mb-0" style={{ fontWeight: '500', color: 'var(--sand-900)' }}>
+                            {banner.bottomBadge}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {banner.type === 'arch' && banner.bottomText && (
+                    <div className="mb-3">
+                      <div className="d-flex align-items-start gap-2 mb-2">
+                        <span style={{ fontSize: '1.25rem' }}>📄</span>
+                        <div style={{ flex: 1 }}>
+                          <small className="text-muted d-block mb-1">Bottom Text</small>
+                          <p className="mb-0" style={{ fontWeight: '500', color: 'var(--sand-900)' }}>
+                            {banner.bottomText}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="mb-3">
+                    <div className="d-flex align-items-start gap-2 mb-2">
+                      <span style={{ fontSize: '1.25rem' }}>🌐</span>
+                      <div style={{ flex: 1 }}>
+                        <small className="text-muted d-block mb-1">Website URL</small>
+                        <p className="mb-0" style={{ fontWeight: '500', color: 'var(--sand-600)' }}>
+                          {banner.websiteUrl}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Edit Button */}
+                  <button
+                    onClick={() => handleBannerEdit(banner)}
+                    className="btn w-100 mt-3"
+                    style={{
+                      background: 'linear-gradient(135deg, var(--sand-600) 0%, var(--sand-700) 100%)',
+                      color: 'white',
+                      fontWeight: '600',
+                      padding: '0.75rem',
+                      borderRadius: '10px',
+                      border: 'none',
+                      transition: 'all 0.3s ease'
+                    }}
+                    onMouseEnter={(e) => e.target.style.transform = 'translateY(-2px)'}
+                    onMouseLeave={(e) => e.target.style.transform = 'translateY(0)'}
+                  >
+                    <FontAwesomeIcon icon={faEdit} className="me-2" />
+                    Edit Banner
+                  </button>
                 </div>
               </div>
             </div>
@@ -786,6 +624,13 @@ export default function ContentManagement() {
 
 
       {/* Modals */}
+      <EditBannerModal
+        isOpen={editingBanner !== null}
+        onClose={() => setEditingBanner(null)}
+        banner={editingBanner}
+        onSave={handleBannerSave}
+      />
+
       <AddReviewModal
         show={showAddReviewModal}
         onClose={() => setShowAddReviewModal(false)}

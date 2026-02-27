@@ -42,12 +42,20 @@ export default function ProductModal({ product, isOpen, onClose }) {
     price: product.finalPrice || product.price,
     originalPrice: product.actualPrice || product.originalPrice,
     description: product.description || 'Premium quality fragrance',
-    fragranceType: product.fragranceType || product.category || 'Perfume',
-    gender: product.gender || 'Unisex',
-    category: product.category,
+    category: product.category || 'perfume',
     volume: product.volume,
     stock: product.stock,
     status: product.status
+  };
+
+  // Format category display for men's products
+  const getCategoryDisplay = (category) => {
+    const categoryMap = {
+      'perfume': 'Perfume',
+      'attar': 'Attar',
+      'combo': 'Combo Pack'
+    };
+    return `${categoryMap[category] || 'Perfume'} • For Men`;
   };
 
   const modalContent = (
@@ -294,10 +302,9 @@ export default function ProductModal({ product, isOpen, onClose }) {
                   borderRadius: '20px',
                   fontSize: '0.75rem',
                   color: 'var(--sand-900)',
-                  fontWeight: '600',
-                  textTransform: 'capitalize'
+                  fontWeight: '600'
                 }}>
-                  {productData.category}
+                  {getCategoryDisplay(productData.category)}
                 </span>
                 {productData.volume && (
                   <span style={{
