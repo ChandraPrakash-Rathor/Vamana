@@ -3,8 +3,10 @@ import { useParams, Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { GetProductById, GetProducts } from '../redux/apis/ProductApi';
 import { clearCurrentProduct } from '../redux/slices/ProductSlice';
+import { addToCart } from '../redux/apis/CartApi';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faStar, faShoppingCart, faHeart, faTruck, faShieldAlt, faUndo } from '@fortawesome/free-solid-svg-icons';
+import { toast } from 'react-toastify';
 import ScrollToTop from '../components/common/ScrollToTop';
 import Breadcrumb from '../components/common/Breadcrumb';
 
@@ -12,6 +14,8 @@ export default function ProductDetail() {
   const { id } = useParams();
   const dispatch = useDispatch();
   const { currentProduct, products, loading } = useSelector((state) => state.ProductSlice);
+  const { user } = useSelector((state) => state.AuthSlice);
+  const { loading: cartLoading } = useSelector((state) => state.CartSlice);
   
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
@@ -74,6 +78,33 @@ export default function ProductDetail() {
   const relatedProducts = products
     .filter(p => p._id !== product._id && p.category === product.category)
     .slice(0, 4);
+
+  const handleAddToCart = async () => {
+    if (!user) {
+      // Store pending cart item with quantity
+      sessionStorage.setItem('pendingCartItem', JSON.stringify({
+        productId: product._id,
+        quantity
+      }));
+      toast.info('Please login to add items to cart');
+      window.openAuthModal('login');
+      return;
+    }
+
+    if (product.status === 'out-of-stock') {
+      toast.error('This product is currently out of stock');
+      return;
+    }
+
+    const result = await dispatch(addToCart({ 
+      productId: product._id, 
+      quantity 
+    }));
+
+    if (result.payload?.success) {
+      toast.success(`Added ${quantity} item(s) to cart!`);
+    }
+  };
 
   return (
     <div style={{ backgroundColor: 'var(--sand-100)', minHeight: '100vh', paddingTop: '90px' }}>
@@ -427,14 +458,8 @@ export default function ProductDetail() {
               {/* Action Buttons */}
               <div className="d-flex gap-2 mb-3">
                 <button
-                  onClick={() => {
-                    if (product.status === 'out-of-stock') {
-                      alert('This product is currently out of stock');
-                    } else {
-                      alert('Added to cart!');
-                    }
-                  }}
-                  disabled={product.status === 'out-of-stock'}
+                  onClick={handleAddToCart}
+                  disabled={product.status === 'out-of-stock' || cartLoading}
                   style={{
                     flex: 1,
                     padding: '0.7rem',
@@ -444,24 +469,28 @@ export default function ProductDetail() {
                     color: product.status === 'out-of-stock' ? '#666' : 'var(--sand-600)',
                     fontSize: '0.9rem',
                     fontWeight: '600',
-                    cursor: product.status === 'out-of-stock' ? 'not-allowed' : 'pointer',
+                    cursor: product.status === 'out-of-stock' || cartLoading ? 'not-allowed' : 'pointer',
                     transition: 'all 0.3s ease',
-                    opacity: product.status === 'out-of-stock' ? 0.6 : 1
+                    opacity: product.status === 'out-of-stock' || cartLoading ? 0.6 : 1
                   }}
                   onMouseEnter={(e) => {
-                    if (product.status !== 'out-of-stock') {
+                    if (product.status !== 'out-of-stock' && !cartLoading) {
                       e.target.style.backgroundColor = 'var(--sand-600)';
                       e.target.style.color = 'white';
                     }
                   }}
                   onMouseLeave={(e) => {
-                    if (product.status !== 'out-of-stock') {
+                    if (product.status !== 'out-of-stock' && !cartLoading) {
                       e.target.style.backgroundColor = 'white';
                       e.target.style.color = 'var(--sand-600)';
                     }
                   }}
                 >
-                  <FontAwesomeIcon icon={faShoppingCart} style={{ fontSize: '0.85rem' }} /> {product.status === 'out-of-stock' ? 'Out of Stock' : 'Add to Cart'}
+                  <FontAwesomeIcon icon={faShoppingCart} style={{ fontSize: '0.85rem' }} /> {
+                    product.status === 'out-of-stock' ? 'Out of Stock' : 
+                    cartLoading ? 'Adding...' : 
+                    'Add to Cart'
+                  }
                 </button>
                 <button
                   style={{
@@ -474,6 +503,7 @@ export default function ProductDetail() {
                     cursor: 'pointer',
                     transition: 'all 0.3s ease'
                   }}
+                  onClick={() => toast.info('Wishlist feature coming soon!')}
                   onMouseEnter={(e) => {
                     e.target.style.backgroundColor = 'var(--sand-600)';
                     e.target.style.color = 'white';
@@ -486,45 +516,6 @@ export default function ProductDetail() {
                   <FontAwesomeIcon icon={faHeart} style={{ fontSize: '0.85rem' }} />
                 </button>
               </div>
-
-              <button
-                onClick={() => {
-                  if (product.status === 'out-of-stock') {
-                    alert('This product is currently out of stock');
-                  } else {
-                    alert('Proceeding to checkout...');
-                  }
-                }}
-                disabled={product.status === 'out-of-stock'}
-                style={{
-                  width: '100%',
-                  padding: '0.8rem',
-                  border: 'none',
-                  borderRadius: '10px',
-                  backgroundColor: product.status === 'out-of-stock' ? '#ccc' : 'var(--sand-900)',
-                  color: 'white',
-                  fontSize: '0.95rem',
-                  fontWeight: '600',
-                  cursor: product.status === 'out-of-stock' ? 'not-allowed' : 'pointer',
-                  transition: 'all 0.3s ease',
-                  boxShadow: product.status === 'out-of-stock' ? 'none' : '0 4px 15px rgba(0,0,0,0.15)',
-                  opacity: product.status === 'out-of-stock' ? 0.6 : 1
-                }}
-                onMouseEnter={(e) => {
-                  if (product.status !== 'out-of-stock') {
-                    e.target.style.transform = 'translateY(-2px)';
-                    e.target.style.boxShadow = '0 6px 20px rgba(0,0,0,0.2)';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (product.status !== 'out-of-stock') {
-                    e.target.style.transform = 'translateY(0)';
-                    e.target.style.boxShadow = '0 4px 15px rgba(0,0,0,0.15)';
-                  }
-                }}
-              >
-                {product.status === 'out-of-stock' ? 'Out of Stock' : 'Buy Now'}
-              </button>
 
               {/* Features */}
               <div className="row g-2 mt-3">

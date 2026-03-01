@@ -10,7 +10,13 @@ connectDB();
 const app = express();
 app.use("/uploads", express.static("uploads"));
 
-app.use(cors());
+app.use(
+  cors({
+    origin: true, // Allow all origins
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    credentials: true,
+  })
+);
 app.use(express.json());
 
 // Routes

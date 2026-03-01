@@ -9,7 +9,6 @@ import {
   faTags,
   faBolt,
   faFileAlt,
-  faChartLine,
   faCog
 } from '@fortawesome/free-solid-svg-icons';
 
@@ -25,7 +24,6 @@ export default function Sidebar({ collapsed, mobileOpen, onLinkClick }) {
     { path: '/sales', icon: faTags, label: 'Sales' },
     { path: '/limited-offers', icon: faBolt, label: 'Limited Offers' },
     { path: '/content', icon: faFileAlt, label: 'Content' },
-    { path: '/analytics', icon: faChartLine, label: 'Analytics' },
     { path: '/settings', icon: faCog, label: 'Settings' }
   ];
 

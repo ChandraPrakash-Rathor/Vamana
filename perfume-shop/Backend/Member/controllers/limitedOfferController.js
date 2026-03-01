@@ -1,4 +1,5 @@
 const LimitedOffer = require('../../Admin/models/LimitedOffer');
+const { getImageUrl } = require('../../utils/imageHelper');
 
 // @desc    Get all active limited offers for members
 // @route   GET /api/member/limited-offers
@@ -33,6 +34,15 @@ exports.getActiveOffers = async (req, res) => {
         if (Array.isArray(offerObj.product) && offerObj.product.length > 0) {
           offerObj.product = offerObj.product[0];
         }
+        
+        // Add full image URLs to product
+        if (offerObj.product) {
+          offerObj.product.mainImage = getImageUrl(offerObj.product.mainImage);
+          if (offerObj.product.subImages && offerObj.product.subImages.length > 0) {
+            offerObj.product.subImages = offerObj.product.subImages.map(img => getImageUrl(img));
+          }
+        }
+        
         return offerObj;
       });
 
@@ -80,6 +90,14 @@ exports.getOfferById = async (req, res) => {
     const offerObj = offer.toObject();
     if (Array.isArray(offerObj.product) && offerObj.product.length > 0) {
       offerObj.product = offerObj.product[0];
+    }
+
+    // Add full image URLs to product
+    if (offerObj.product) {
+      offerObj.product.mainImage = getImageUrl(offerObj.product.mainImage);
+      if (offerObj.product.subImages && offerObj.product.subImages.length > 0) {
+        offerObj.product.subImages = offerObj.product.subImages.map(img => getImageUrl(img));
+      }
     }
 
     res.status(200).json({

@@ -45,7 +45,7 @@ export default function EditSaleModal({ isOpen, onClose, sale }) {
 
   // Prefill form when sale changes
   useEffect(() => {
-    if (sale && isOpen && productOptions.length > 0 && !hasInitialized.current) {
+    if (sale && isOpen && productData && productData.length > 0 && !hasInitialized.current) {
       // Convert date strings to YYYY-MM-DD format
       const parseDate = (dateStr) => {
         const date = new Date(dateStr);
@@ -75,7 +75,7 @@ export default function EditSaleModal({ isOpen, onClose, sale }) {
       
       hasInitialized.current = true;
     }
-  }, [sale, isOpen, productOptions, reset]);
+  }, [sale, isOpen, productData, reset]);
 
   // Reset initialization flag when modal closes
   useEffect(() => {

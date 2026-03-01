@@ -1,5 +1,5 @@
 import { useForm } from 'react-hook-form';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUser, faLock, faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
 import { loginUser } from '../APIS/apis/Authapi';
@@ -15,29 +15,43 @@ export default function Login({ onLogin }) {
   const dispatch = useDispatch();
   const navigate  = useNavigate();
 
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      // Reset any stuck states
+      document.body.style.overflow = 'auto';
+      document.body.style.pointerEvents = 'auto';
+    };
+  }, []);
+
   const onSubmit = async(data) => {
+    setIsLoading(true);
+    
     const formData = new FormData();
     formData.append('email', data.username);
     formData.append('password', data.password);
     
-    console.log('Login Form Data:', Object.fromEntries(formData));
-    
-    const res  =await dispatch(loginUser(formData))
-    console.log(res,"res")
+    try {
+      const res = await dispatch(loginUser(formData));
 
-    if(res?.payload?.status == "success"){
-      toast.success("Login Successful!");
-      Cookies.set("isAuthenticate",res?.payload?.success)
-      navigate("/dashboard")
-    }else{
-    toast.error("Invalid credentials"); 
-    navigate("/login")
+      if(res?.payload?.success){
+        toast.success("Login Successful!");
+        // Store token in cookie
+        Cookies.set("authToken", res?.payload?.token, { expires: 7 });
+        Cookies.set("isAuthenticate", true, { expires: 7 });
+        
+        // Use window.location for clean page reload (fixes stuck overlay issue)
+        setTimeout(() => {
+          window.location.href = '/dashboard';
+        }, 500);
+      } else {
+        toast.error(res?.payload?.message || "Invalid credentials");
+        setIsLoading(false);
+      }
+    } catch (error) {
+      toast.error("Login failed. Please try again.");
+      setIsLoading(false);
     }
-
-
-    setIsLoading(false);
-    
-   
   }
 
   return (

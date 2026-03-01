@@ -7,6 +7,11 @@ export default function AdminLayout({ children, onLogout }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 992);
 
+  // Reset mobile sidebar on mount (fixes stuck overlay after login)
+  useEffect(() => {
+    setMobileOpen(false);
+  }, []);
+
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth < 992);
@@ -35,23 +40,6 @@ export default function AdminLayout({ children, onLogout }) {
 
   return (
     <div className="admin-layout">
-      {/* Mobile Overlay */}
-      {isMobile && mobileOpen && (
-        <div
-          onClick={closeMobileSidebar}
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            zIndex: 1035,
-            animation: 'fadeIn 0.3s ease'
-          }}
-        />
-      )}
-      
       <Sidebar 
         collapsed={sidebarCollapsed} 
         mobileOpen={mobileOpen}

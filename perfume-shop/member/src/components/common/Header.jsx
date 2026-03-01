@@ -1,18 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faShoppingCart, faUser, faSearch } from '@fortawesome/free-solid-svg-icons';
-import LoginModal from './LoginModal';
+import { faShoppingCart, faUser, faSearch, faSignOutAlt } from '@fortawesome/free-solid-svg-icons';
 import { GetActiveSales } from '../../redux/apis/SaleApi';
+import { logoutUser } from '../../redux/apis/AuthApi';
+import { toast } from 'react-toastify';
 
-export default function Header() {
+export default function Header({ onOpenAuth }) {
   const [scrolled, setScrolled] = useState(false);
-  const [showLoginModal, setShowLoginModal] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const location = useLocation();
+  const navigate = useNavigate();
   const dispatch = useDispatch();
   const { sales } = useSelector((state) => state.SaleSlice);
+  const { user } = useSelector((state) => state.AuthSlice);
+  const { items } = useSelector((state) => state.CartSlice);
 
   // Fetch active sales on component mount
   useEffect(() => {
@@ -32,29 +36,40 @@ export default function Header() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  useEffect(() => {
-    // Check login status
-    const loggedIn = localStorage.getItem('userLoggedIn');
-    setIsLoggedIn(!!loggedIn);
-  }, []);
-
   const handleAccountClick = (e) => {
     e.preventDefault();
-    const loggedIn = localStorage.getItem('userLoggedIn');
-    if (loggedIn) {
-      // Navigate to account page or show account menu
-      alert('Account page coming soon!');
+    if (user) {
+      // Navigate to account page
+      toast.info('Account page coming soon!');
     } else {
-      setShowLoginModal(true);
+      onOpenAuth();
     }
   };
 
-  const handleLoginClose = () => {
-    setShowLoginModal(false);
-    // Refresh login status
-    const loggedIn = localStorage.getItem('userLoggedIn');
-    setIsLoggedIn(!!loggedIn);
+  const handleLogout = async () => {
+    await dispatch(logoutUser());
+    toast.success('Logged out successfully');
+    navigate('/');
   };
+
+  const handleSearchToggle = () => {
+    setSearchOpen(!searchOpen);
+    if (searchOpen) {
+      setSearchQuery('');
+    }
+  };
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/catalog?search=${encodeURIComponent(searchQuery.trim())}`);
+      setSearchOpen(false);
+      setSearchQuery('');
+    }
+  };
+
+  // Calculate total cart items
+  const cartItemCount = items?.reduce((total, item) => total + item.quantity, 0) || 0;
 
   return (
     <nav
@@ -206,37 +221,109 @@ export default function Header() {
                   e.target.style.transform = 'translateY(0)';
                 }}
               >
-                <FontAwesomeIcon icon={faShoppingCart} />
+                <div style={{ position: 'relative' }}>
+                  <FontAwesomeIcon icon={faShoppingCart} />
+                  {cartItemCount > 0 && (
+                    <span style={{
+                      position: 'absolute',
+                      top: '-8px',
+                      right: '-10px',
+                      backgroundColor: '#e74c3c',
+                      color: 'white',
+                      borderRadius: '50%',
+                      width: '18px',
+                      height: '18px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '0.65rem',
+                      fontWeight: '700'
+                    }}>
+                      {cartItemCount}
+                    </span>
+                  )}
+                </div>
                 Cart
               </Link>
             </li>
             
             <li className="nav-item">
-              <a
-                href="#"
-                className="nav-link px-4 py-2 position-relative d-inline-flex align-items-center gap-2" 
-                onClick={handleAccountClick}
-                style={{ 
-                  color: 'var(--sand-900)',
-                  fontWeight: '600',
-                  fontSize: '0.95rem',
-                  letterSpacing: '0.3px',
-                  transition: 'all 0.3s ease',
-                  fontFamily: "'Roboto', sans-serif",
-                  cursor: 'pointer'
-                }}
-                onMouseEnter={(e) => {
-                  e.target.style.color = 'var(--sand-600)';
-                  e.target.style.transform = 'translateY(-2px)';
-                }}
-                onMouseLeave={(e) => {
-                  e.target.style.color = 'var(--sand-900)';
-                  e.target.style.transform = 'translateY(0)';
-                }}
-              >
-                <FontAwesomeIcon icon={faUser} />
-                {isLoggedIn ? 'My Account' : 'Login'}
-              </a>
+              {user ? (
+                <div className="dropdown">
+                  <a
+                    href="#"
+                    className="nav-link px-4 py-2 position-relative d-inline-flex align-items-center gap-2 dropdown-toggle"
+                    data-bs-toggle="dropdown"
+                    style={{ 
+                      color: 'var(--sand-900)',
+                      fontWeight: '600',
+                      fontSize: '0.95rem',
+                      letterSpacing: '0.3px',
+                      transition: 'all 0.3s ease',
+                      fontFamily: "'Roboto', sans-serif",
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <FontAwesomeIcon icon={faUser} />
+                    {user.name?.split(' ')[0] || 'Account'}
+                  </a>
+                  <ul className="dropdown-menu dropdown-menu-end" style={{
+                    backgroundColor: 'var(--sand-100)',
+                    border: '1px solid var(--sand-300)',
+                    borderRadius: '10px',
+                    padding: '0.5rem'
+                  }}>
+                    <li>
+                      <button
+                        onClick={handleLogout}
+                        className="dropdown-item"
+                        style={{
+                          color: 'var(--sand-900)',
+                          padding: '0.5rem 1rem',
+                          borderRadius: '8px',
+                          fontSize: '0.9rem',
+                          fontWeight: '600',
+                          border: 'none',
+                          backgroundColor: 'transparent',
+                          cursor: 'pointer',
+                          transition: 'all 0.3s ease'
+                        }}
+                        onMouseEnter={(e) => e.target.style.backgroundColor = 'var(--sand-300)'}
+                        onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                      >
+                        <FontAwesomeIcon icon={faSignOutAlt} style={{ marginRight: '0.5rem' }} />
+                        Logout
+                      </button>
+                    </li>
+                  </ul>
+                </div>
+              ) : (
+                <a
+                  href="#"
+                  className="nav-link px-4 py-2 position-relative d-inline-flex align-items-center gap-2" 
+                  onClick={handleAccountClick}
+                  style={{ 
+                    color: 'var(--sand-900)',
+                    fontWeight: '600',
+                    fontSize: '0.95rem',
+                    letterSpacing: '0.3px',
+                    transition: 'all 0.3s ease',
+                    fontFamily: "'Roboto', sans-serif",
+                    cursor: 'pointer'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.color = 'var(--sand-600)';
+                    e.target.style.transform = 'translateY(-2px)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.color = 'var(--sand-900)';
+                    e.target.style.transform = 'translateY(0)';
+                  }}
+                >
+                  <FontAwesomeIcon icon={faUser} />
+                  Login
+                </a>
+              )}
             </li>
 
             {/* Divider */}
@@ -250,43 +337,113 @@ export default function Header() {
               />
             </li>
 
-            {/* Search Icon Button */}
+            {/* Animated Search Bar */}
             <li className="nav-item">
-              <button
-                className="btn rounded-circle d-flex align-items-center justify-content-center"
-                type="button"
-                style={{
-                  width: '42px',
-                  height: '42px',
-                  backgroundColor: 'var(--sand-300)',
-                  border: 'none',
-                  color: 'var(--sand-800)',
-                  transition: 'all 0.3s ease',
-                  fontSize: '1rem'
-                }}
-                onMouseEnter={(e) => {
-                  e.target.style.backgroundColor = 'var(--sand-600)';
-                  e.target.style.color = 'white';
-                  e.target.style.transform = 'scale(1.1)';
-                }}
-                onMouseLeave={(e) => {
-                  e.target.style.backgroundColor = 'var(--sand-300)';
-                  e.target.style.color = 'var(--sand-800)';
-                  e.target.style.transform = 'scale(1)';
-                }}
-              >
-                <FontAwesomeIcon icon={faSearch} />
-              </button>
+              <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                {/* Search Input - Expands from left to right */}
+                <form onSubmit={handleSearchSubmit} style={{ display: 'flex', alignItems: 'center' }}>
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search products..."
+                    style={{
+                      width: searchOpen ? '250px' : '0px',
+                      padding: searchOpen ? '0.6rem 1rem' : '0',
+                      paddingRight: searchOpen ? '3rem' : '0',
+                      border: searchOpen ? '2px solid var(--sand-400)' : 'none',
+                      borderRadius: '25px',
+                      backgroundColor: 'var(--sand-100)',
+                      color: 'var(--sand-900)',
+                      fontSize: '0.95rem',
+                      outline: 'none',
+                      transition: 'all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55)',
+                      opacity: searchOpen ? 1 : 0,
+                      marginRight: searchOpen ? '0.5rem' : '0',
+                      fontFamily: "'Roboto', sans-serif"
+                    }}
+                    onFocus={(e) => e.target.style.borderColor = 'var(--sand-600)'}
+                    onBlur={(e) => e.target.style.borderColor = 'var(--sand-400)'}
+                  />
+                  
+                  {/* Search Icon Button */}
+                  <button
+                    type={searchOpen ? 'submit' : 'button'}
+                    onClick={!searchOpen ? handleSearchToggle : undefined}
+                    className="btn rounded-circle d-flex align-items-center justify-content-center"
+                    style={{
+                      width: '42px',
+                      height: '42px',
+                      backgroundColor: searchOpen ? 'var(--sand-600)' : 'var(--sand-300)',
+                      border: 'none',
+                      color: searchOpen ? 'white' : 'var(--sand-800)',
+                      transition: 'all 0.3s ease',
+                      fontSize: '1rem',
+                      flexShrink: 0,
+                      position: 'relative',
+                      zIndex: 10
+                    }}
+                    onMouseEnter={(e) => {
+                      e.target.style.backgroundColor = 'var(--sand-600)';
+                      e.target.style.color = 'white';
+                      e.target.style.transform = 'scale(1.1)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.backgroundColor = searchOpen ? 'var(--sand-600)' : 'var(--sand-300)';
+                      e.target.style.color = searchOpen ? 'white' : 'var(--sand-800)';
+                      e.target.style.transform = 'scale(1)';
+                    }}
+                  >
+                    <FontAwesomeIcon icon={faSearch} />
+                  </button>
+                </form>
+
+                {/* Close button when search is open */}
+                {searchOpen && (
+                  <button
+                    onClick={handleSearchToggle}
+                    className="btn rounded-circle d-flex align-items-center justify-content-center ms-2"
+                    style={{
+                      width: '36px',
+                      height: '36px',
+                      backgroundColor: 'transparent',
+                      border: '2px solid var(--sand-400)',
+                      color: 'var(--sand-800)',
+                      transition: 'all 0.3s ease',
+                      fontSize: '0.9rem',
+                      animation: 'fadeIn 0.3s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.target.style.backgroundColor = 'var(--sand-300)';
+                      e.target.style.borderColor = 'var(--sand-600)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.backgroundColor = 'transparent';
+                      e.target.style.borderColor = 'var(--sand-400)';
+                    }}
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
             </li>
           </ul>
         </div>
       </div>
 
-      {/* Login Modal */}
-      <LoginModal 
-        show={showLoginModal} 
-        onClose={handleLoginClose} 
-      />
+      {/* Animation Styles */}
+      <style>{`
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: scale(0.8);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+      `}</style>
     </nav>
   );
 }

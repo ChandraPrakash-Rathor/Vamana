@@ -100,10 +100,10 @@ export default function LimitedOffers() {
     control: (base, state) => ({
       ...base,
       borderRadius: '8px',
-      border: '1px solid #dee2e6',
+      border: '1px solid var(--sand-300)',
       padding: '0.25rem',
       boxShadow: state.isFocused ? '0 0 0 3px rgba(179, 135, 63, 0.1)' : 'none',
-      borderColor: state.isFocused ? 'var(--sand-600)' : '#dee2e6',
+      borderColor: state.isFocused ? 'var(--sand-600)' : 'var(--sand-300)',
       '&:hover': {
         borderColor: 'var(--sand-600)'
       }
@@ -148,14 +148,14 @@ export default function LimitedOffers() {
       {/* Page Header */}
       <div className="mb-4">
         <h2 className="mb-2" style={{
-          color: '#212529',
+          color: 'var(--sand-900)',
           fontSize: '1.5rem',
           fontWeight: '600'
         }}>
           Limited Time Offers
         </h2>
         <p className="mb-0" style={{ 
-          color: '#6c757d', 
+          color: 'var(--sand-700)', 
           fontSize: '0.875rem'
         }}>
           Create and manage exclusive flash deals and limited offers
@@ -480,16 +480,16 @@ export default function LimitedOffers() {
         padding: '1.5rem'
       }}>
         {/* Filters Section */}
-        <div className="mb-4 pb-4" style={{ borderBottom: '1px solid #e9ecef' }}>
+        <div className="mb-4 pb-4" style={{ borderBottom: '1px solid var(--sand-200)' }}>
           <div className="row g-3 align-items-end">
             {/* Search Bar */}
             <div className="col-12 col-lg-5">
               <label className="form-label mb-2" style={{ 
-                color: '#495057', 
+                color: 'var(--sand-800)', 
                 fontSize: '0.875rem',
                 fontWeight: '500'
               }}>
-                <FontAwesomeIcon icon={faSearch} className="me-2" style={{ color: '#6c757d' }} />
+                <FontAwesomeIcon icon={faSearch} className="me-2" style={{ color: 'var(--sand-600)' }} />
                 Search Offers
               </label>
               <input
@@ -501,7 +501,7 @@ export default function LimitedOffers() {
                 style={{
                   padding: '0.5rem 0.75rem',
                   borderRadius: '8px',
-                  border: '1px solid #dee2e6',
+                  border: '1px solid var(--sand-300)',
                   fontSize: '0.875rem'
                 }}
               />
@@ -510,11 +510,11 @@ export default function LimitedOffers() {
             {/* Status Filter */}
             <div className="col-12 col-md-6 col-lg-3">
               <label className="form-label mb-2" style={{ 
-                color: '#495057', 
+                color: 'var(--sand-800)', 
                 fontSize: '0.875rem',
                 fontWeight: '500'
               }}>
-                <FontAwesomeIcon icon={faFilter} className="me-2" style={{ color: '#6c757d' }} />
+                <FontAwesomeIcon icon={faFilter} className="me-2" style={{ color: 'var(--sand-600)' }} />
                 Filter
               </label>
               <Select
@@ -562,7 +562,7 @@ export default function LimitedOffers() {
           {/* Results Count */}
           <div className="row mt-3">
             <div className="col-12">
-              <span style={{ color: '#6c757d', fontSize: '0.875rem', fontWeight: '500' }}>
+              <span style={{ color: 'var(--sand-700)', fontSize: '0.875rem', fontWeight: '500' }}>
                 Showing {filteredOffers.length} of {totalOffers} offers
               </span>
             </div>
@@ -575,7 +575,7 @@ export default function LimitedOffers() {
             <div key={offer.id} className="col-12 col-md-6 col-lg-3">
               <div className="card h-100 border-0" style={{
                 borderRadius: '8px',
-                border: '1px solid #dee2e6',
+                border: '1px solid var(--sand-300)',
                 transition: 'all 0.2s',
                 overflow: 'hidden'
               }}>
@@ -583,7 +583,7 @@ export default function LimitedOffers() {
                 <div style={{
                   position: 'relative',
                   paddingTop: '56.25%',
-                  backgroundColor: '#f8f9fa',
+                  backgroundColor: 'var(--sand-100)',
                   background: `linear-gradient(135deg, ${getStatusColor(offer.status)}15 0%, ${getStatusColor(offer.status)}25 100%)`
                 }}>
                   <div style={{
@@ -643,7 +643,7 @@ export default function LimitedOffers() {
                 {/* Offer Info */}
                 <div className="card-body p-3">
                   <h5 className="card-title mb-2" style={{
-                    color: '#212529',
+                    color: 'var(--sand-900)',
                     fontSize: '0.9375rem',
                     fontWeight: '600',
                     lineHeight: '1.3',
@@ -658,7 +658,7 @@ export default function LimitedOffers() {
                   </h5>
                   
                   <p className="mb-2" style={{
-                    color: '#6c757d',
+                    color: 'var(--sand-700)',
                     fontSize: '0.8125rem',
                     lineHeight: '1.4',
                     display: '-webkit-box',
@@ -672,7 +672,7 @@ export default function LimitedOffers() {
                   {/* Date Range */}
                   <div className="d-flex align-items-center gap-1 mb-2" style={{
                     fontSize: '0.75rem',
-                    color: '#6c757d'
+                    color: 'var(--sand-700)'
                   }}>
                     <FontAwesomeIcon icon={faCalendarAlt} style={{ fontSize: '0.7rem' }} />
                     <span>
@@ -682,10 +682,10 @@ export default function LimitedOffers() {
 
                   {/* Stock Info */}
                   {offer.stockLimit && (
-                    <div className="mb-2 pb-2" style={{ borderBottom: '1px solid #e9ecef' }}>
+                    <div className="mb-2 pb-2" style={{ borderBottom: '1px solid var(--sand-200)' }}>
                       <div className="d-flex justify-content-between mb-1" style={{
                         fontSize: '0.7rem',
-                        color: '#6c757d'
+                        color: 'var(--sand-700)'
                       }}>
                         <span>Stock</span>
                         <span style={{ fontWeight: '600' }}>
@@ -694,7 +694,7 @@ export default function LimitedOffers() {
                       </div>
                       <div style={{
                         height: '4px',
-                        backgroundColor: '#e9ecef',
+                        backgroundColor: 'var(--sand-200)',
                         borderRadius: '2px',
                         overflow: 'hidden'
                       }}>
@@ -713,9 +713,9 @@ export default function LimitedOffers() {
                     <button 
                       onClick={() => handleViewClick(offer)}
                       className="btn btn-sm flex-fill" style={{
-                      backgroundColor: '#f8f9fa',
-                      border: '1px solid #dee2e6',
-                      color: '#495057',
+                      backgroundColor: 'var(--sand-100)',
+                      border: '1px solid var(--sand-300)',
+                      color: 'var(--sand-800)',
                       padding: '0.375rem',
                       borderRadius: '4px',
                       fontSize: '0.75rem',
@@ -760,10 +760,10 @@ export default function LimitedOffers() {
         {filteredOffers.length === 0 && (
           <div className="text-center py-5">
             <div className="mb-3" style={{ fontSize: '3rem', opacity: 0.3 }}>⚡</div>
-            <h5 className="mb-2" style={{ color: '#495057', fontWeight: '600' }}>
+            <h5 className="mb-2" style={{ color: 'var(--sand-800)', fontWeight: '600' }}>
               No offers found
             </h5>
-            <p className="mb-3" style={{ color: '#6c757d', fontSize: '0.875rem' }}>
+            <p className="mb-3" style={{ color: 'var(--sand-700)', fontSize: '0.875rem' }}>
               {searchQuery || selectedStatus ? 'Try adjusting your filters' : 'Create your first limited offer'}
             </p>
             {!searchQuery && !selectedStatus && (

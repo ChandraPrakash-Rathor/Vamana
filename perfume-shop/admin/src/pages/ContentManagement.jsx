@@ -11,7 +11,7 @@ import { clearError, clearSuccess } from '../APIS/slice/ReviewSlice';
 import { fetchBanners, updateBanner } from '../APIS/apis/BannerApi';
 import { clearError as clearBannerError, clearSuccess as clearBannerSuccess } from '../APIS/slice/BannerSlice';
 import { toast } from 'react-toastify';
-import axios from 'axios';
+import { api } from '../APIS/apis/Authapi'; // Import authenticated api instance
 
 export default function ContentManagement() {
   const dispatch = useDispatch();
@@ -60,12 +60,15 @@ export default function ContentManagement() {
 
   const fetchProducts = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/admin/GetProducts');
+      const response = await api.get('GetProducts');
       if (response.data.success) {
         setProducts(response.data.data);
       }
     } catch (error) {
       console.error('Error fetching products:', error);
+      if (error.response?.data?.message) {
+        toast.error(`⚠️ Error: ${error.response.data.message}`);
+      }
     }
   };
 

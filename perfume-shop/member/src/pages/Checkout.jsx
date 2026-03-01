@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 import { useForm } from 'react-hook-form';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
@@ -21,45 +22,104 @@ import {
   faPaypal 
 } from '@fortawesome/free-brands-svg-icons';
 import Breadcrumb from '../components/common/Breadcrumb';
+import { getCart } from '../redux/apis/CartApi';
+import { toast } from 'react-toastify';
 
 export default function Checkout() {
   const navigate = useNavigate();
-  const [paymentMethod, setPaymentMethod] = useState('card');
+  const dispatch = useDispatch();
+  const [paymentMethod, setPaymentMethod] = useState('cod');
   const { register, handleSubmit, formState: { errors } } = useForm();
+  
+  // Get cart and user data from Redux
+  const { items, loading } = useSelector(state => state.CartSlice);
+  const { user, isAuthenticated } = useSelector(state => state.AuthSlice);
 
-  // Sample cart items (in real app, this would come from cart state/context)
-  const cartItems = [
-    { id: 1, name: 'Eternal Rose', size: '50ml', quantity: 1, price: 2499, image: '/product1.jpg' },
-    { id: 2, name: 'Midnight Oud', size: '100ml', quantity: 1, price: 3999, image: '/product3.jpg' }
-  ];
+  // Fetch cart on component mount
+  useEffect(() => {
+    if (!isAuthenticated) {
+      toast.error('Please login to checkout');
+      navigate('/cart');
+      return;
+    }
+    dispatch(getCart());
+  }, [dispatch, isAuthenticated, navigate]);
 
-  const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const shipping = subtotal > 999 ? 0 : 99;
+  // Redirect if cart is empty
+  useEffect(() => {
+    if (!loading && items && items.length === 0) {
+      toast.info('Your cart is empty');
+      navigate('/cart');
+    }
+  }, [items, loading, navigate]);
+
+  // Calculate totals from Redux cart items
+  const subtotal = items?.reduce((sum, item) => sum + (item.price * item.quantity), 0) || 0;
+  const shipping = subtotal >= 2000 ? 0 : 99; // Free shipping above ₹2000
   const tax = Math.round(subtotal * 0.18); // 18% GST
   const total = subtotal + shipping + tax;
 
   const onSubmit = (data) => {
-    const formData = new FormData();
+    // Prepare order data
+    const orderData = {
+      // Customer info
+      customer: {
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: data.email,
+        phone: data.phone
+      },
+      // Shipping address
+      shippingAddress: {
+        address: data.address,
+        city: data.city,
+        state: data.state,
+        pincode: data.pincode
+      },
+      // Payment details
+      paymentMethod: paymentMethod,
+      paymentDetails: paymentMethod === 'card' ? {
+        cardNumber: data.cardNumber?.slice(-4), // Store only last 4 digits
+        cardName: data.cardName
+      } : paymentMethod === 'upi' ? {
+        upiId: data.upiId
+      } : null,
+      // Order summary
+      items: items.map(item => ({
+        productId: item.product._id,
+        name: item.product.name,
+        quantity: item.quantity,
+        price: item.price,
+        image: item.product.mainImage
+      })),
+      subtotal,
+      shipping,
+      tax,
+      total,
+      orderDate: new Date().toISOString()
+    };
     
-    // Add all form fields to FormData
-    Object.keys(data).forEach(key => {
-      formData.append(key, data[key]);
-    });
+    // Store order data in sessionStorage for invoice page
+    sessionStorage.setItem('orderData', JSON.stringify(orderData));
     
-    // Add payment method
-    formData.append('paymentMethod', paymentMethod);
+    // Show success message
+    toast.success('Order placed successfully!');
     
-    // Add order details
-    formData.append('subtotal', subtotal);
-    formData.append('shipping', shipping);
-    formData.append('tax', tax);
-    formData.append('total', total);
-    formData.append('items', JSON.stringify(cartItems));
-    
-    // In real app, process payment here
-    // After successful payment, redirect to invoice
+    // Redirect to invoice page
     navigate('/invoice');
   };
+
+  if (loading) {
+    return (
+      <div style={{ backgroundColor: 'var(--sand-100)', minHeight: '100vh', paddingTop: '90px' }}>
+        <div className="container py-5 text-center">
+          <div className="spinner-border" role="status" style={{ color: 'var(--sand-600)' }}>
+            <span className="visually-hidden">Loading...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ backgroundColor: 'var(--sand-100)', minHeight: '100vh', paddingTop: '90px' }}>
@@ -152,6 +212,7 @@ export default function Checkout() {
                     </label>
                     <input
                       type="email"
+                      defaultValue={user?.email || ''}
                       {...register('email', { 
                         required: 'Email is required',
                         pattern: {
@@ -176,10 +237,11 @@ export default function Checkout() {
                     </label>
                     <input
                       type="tel"
+                      defaultValue={user?.phone || ''}
                       {...register('phone', { 
                         required: 'Phone is required',
                         pattern: {
-                          value: /^[0-9]{10}$/,
+                          value: /^[6-9][0-9]{9}$/,
                           message: 'Please enter a valid 10 digit phone number'
                         }
                       })}
@@ -560,8 +622,10 @@ export default function Checkout() {
 
                 {/* Cart Items */}
                 <div style={{ marginBottom: '1.5rem' }}>
-                  {cartItems.map((item) => (
-                    <div key={item.id} style={{
+                  {items && items
+                    .filter(item => item.product)
+                    .map((item) => (
+                    <div key={item._id} style={{
                       display: 'flex',
                       gap: '1rem',
                       marginBottom: '1rem',
@@ -569,8 +633,8 @@ export default function Checkout() {
                       borderBottom: '1px solid var(--sand-400)'
                     }}>
                       <img
-                        src={item.image}
-                        alt={item.name}
+                        src={item.product.mainImage || '/product1.jpg'}
+                        alt={item.product.name}
                         style={{
                           width: '60px',
                           height: '60px',
@@ -585,21 +649,21 @@ export default function Checkout() {
                           fontWeight: '600',
                           marginBottom: '0.2rem'
                         }}>
-                          {item.name}
+                          {item.product.name}
                         </div>
                         <div style={{
                           color: 'var(--sand-600)',
                           fontSize: '0.85rem',
                           marginBottom: '0.3rem'
                         }}>
-                          {item.size} • Qty: {item.quantity}
+                          {item.product.size || '50'}ml • Qty: {item.quantity}
                         </div>
                         <div style={{
                           color: 'var(--sand-900)',
                           fontSize: '0.95rem',
                           fontWeight: '700'
                         }}>
-                          ₹{item.price.toLocaleString()}
+                          ₹{(item.price * item.quantity).toLocaleString()}
                         </div>
                       </div>
                     </div>
@@ -738,7 +802,7 @@ export default function Checkout() {
                     fontSize: '0.85rem'
                   }}>
                     <FontAwesomeIcon icon={faCheckCircle} style={{ color: '#28a745' }} />
-                    <span>Free Shipping on ₹999+</span>
+                    <span>Free Shipping on ₹2000+</span>
                   </div>
                 </div>
               </div>

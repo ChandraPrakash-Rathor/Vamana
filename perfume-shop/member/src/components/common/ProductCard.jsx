@@ -1,11 +1,17 @@
 ﻿import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faStar, faShoppingCart } from '@fortawesome/free-solid-svg-icons';
+import { addToCart } from '../../redux/apis/CartApi';
+import { toast } from 'react-toastify';
 import ProductModal from './ProductModal';
 
 export default function ProductCard({ product, showAddToCart = false }) {
   const [showModal, setShowModal] = useState(false);
+  const dispatch = useDispatch();
+  const { user } = useSelector((state) => state.AuthSlice);
+  const { loading } = useSelector((state) => state.CartSlice);
 
   // Map API data to component props
   const productData = {
@@ -29,6 +35,31 @@ export default function ProductCard({ product, showAddToCart = false }) {
       'combo': 'Combo Pack'
     };
     return `${categoryMap[category] || 'Perfume'} • For Men`;
+  };
+
+  const handleAddToCart = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!user) {
+      // Store pending cart item
+      sessionStorage.setItem('pendingCartItem', JSON.stringify({
+        productId: productData.id,
+        quantity: 1
+      }));
+      toast.info('Please login to add items to cart');
+      window.openAuthModal('login');
+      return;
+    }
+
+    const result = await dispatch(addToCart({ 
+      productId: productData.id, 
+      quantity: 1 
+    }));
+
+    if (result.payload?.success) {
+      toast.success('Added to cart!');
+    }
   };
 
   return (
@@ -132,12 +163,13 @@ export default function ProductCard({ product, showAddToCart = false }) {
           </div>
           {showAddToCart && (
             <button 
-              onClick={(e) => { e.preventDefault(); alert('Added to cart!'); }} 
-              style={{ width: '100%', marginTop: '0.5rem', padding: '0.4rem', border: 'none', borderRadius: '5px', backgroundColor: 'var(--sand-600)', color: 'white', fontSize: '0.85rem', fontWeight: '600', cursor: 'pointer', transition: 'all 0.3s ease' }}
-              onMouseEnter={(e) => e.target.style.backgroundColor = 'var(--sand-700)'}
-              onMouseLeave={(e) => e.target.style.backgroundColor = 'var(--sand-600)'}
+              onClick={handleAddToCart}
+              disabled={loading}
+              style={{ width: '100%', marginTop: '0.5rem', padding: '0.4rem', border: 'none', borderRadius: '5px', backgroundColor: 'var(--sand-600)', color: 'white', fontSize: '0.85rem', fontWeight: '600', cursor: 'pointer', transition: 'all 0.3s ease', opacity: loading ? 0.7 : 1 }}
+              onMouseEnter={(e) => !loading && (e.target.style.backgroundColor = 'var(--sand-700)')}
+              onMouseLeave={(e) => !loading && (e.target.style.backgroundColor = 'var(--sand-600)')}
             >
-              <FontAwesomeIcon icon={faShoppingCart} /> Add to Cart
+              <FontAwesomeIcon icon={faShoppingCart} /> {loading ? 'Adding...' : 'Add to Cart'}
             </button>
           )}
         </div>

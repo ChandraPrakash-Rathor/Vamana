@@ -1,20 +1,18 @@
 import { createAsyncThunk } from '@reduxjs/toolkit'
-import axios from "axios";
-import { baseUrl } from './config';
+import { api } from './Authapi'; // Import authenticated api instance
 
 // Insert/Create Sale
 export const insertSale = createAsyncThunk(
   'insertSale',
   async (data) => {
-    let url = baseUrl + 'insertSale';
     try {
-      const response = (await axios.post(url, data)).data
-      if (response.status === "success") {
-        return Promise.resolve(response)
-      } else if (response.status === "error") {
-        return Promise.resolve(response)
+      const response = await api.post('insertSale', data);
+      if (response.data.status === "success") {
+        return Promise.resolve(response.data)
+      } else if (response.data.status === "error") {
+        return Promise.resolve(response.data)
       } else {
-        return Promise.reject(response)
+        return Promise.reject(response.data)
       }
     } catch (err) {
       return Promise.reject(err)
@@ -26,15 +24,14 @@ export const insertSale = createAsyncThunk(
 export const GetSales = createAsyncThunk(
   'GetSales',
   async () => {
-    let url = baseUrl + 'GetSales';
     try {
-      const response = (await axios.get(url)).data
-      if (response.status === "success") {
-        return Promise.resolve(response)
-      } else if (response.status === "error") {
-        return Promise.resolve(response)
+      const response = await api.get('GetSales');
+      if (response.data.status === "success") {
+        return Promise.resolve(response.data)
+      } else if (response.data.status === "error") {
+        return Promise.resolve(response.data)
       } else {
-        return Promise.reject(response)
+        return Promise.reject(response.data)
       }
     } catch (err) {
       return Promise.reject(err)
@@ -46,15 +43,14 @@ export const GetSales = createAsyncThunk(
 export const GetSaleById = createAsyncThunk(
   'GetSaleById',
   async (id) => {
-    let url = baseUrl + `sales/${id}`;
     try {
-      const response = (await axios.get(url)).data
-      if (response.status === "success") {
-        return Promise.resolve(response)
-      } else if (response.status === "error") {
-        return Promise.resolve(response)
+      const response = await api.get(`sales/${id}`);
+      if (response.data.status === "success") {
+        return Promise.resolve(response.data)
+      } else if (response.data.status === "error") {
+        return Promise.resolve(response.data)
       } else {
-        return Promise.reject(response)
+        return Promise.reject(response.data)
       }
     } catch (err) {
       return Promise.reject(err)
@@ -66,15 +62,14 @@ export const GetSaleById = createAsyncThunk(
 export const UpdateSale = createAsyncThunk(
   'UpdateSale',
   async ({ id, data }) => {
-    let url = baseUrl + `sales/${id}`;
     try {
-      const response = (await axios.put(url, data)).data
-      if (response.status === "success") {
-        return Promise.resolve(response)
-      } else if (response.status === "error") {
-        return Promise.resolve(response)
+      const response = await api.put(`sales/${id}`, data);
+      if (response.data.status === "success") {
+        return Promise.resolve(response.data)
+      } else if (response.data.status === "error") {
+        return Promise.resolve(response.data)
       } else {
-        return Promise.reject(response)
+        return Promise.reject(response.data)
       }
     } catch (err) {
       return Promise.reject(err)
@@ -86,15 +81,14 @@ export const UpdateSale = createAsyncThunk(
 export const DeleteSale = createAsyncThunk(
   'DeleteSale',
   async (id) => {
-    let url = baseUrl + `sales/${id}`;
     try {
-      const response = (await axios.delete(url)).data
-      if (response.status === "success") {
-        return Promise.resolve(response)
-      } else if (response.status === "error") {
-        return Promise.resolve(response)
+      const response = await api.delete(`sales/${id}`);
+      if (response.data.status === "success") {
+        return Promise.resolve(response.data)
+      } else if (response.data.status === "error") {
+        return Promise.resolve(response.data)
       } else {
-        return Promise.reject(response)
+        return Promise.reject(response.data)
       }
     } catch (err) {
       return Promise.reject(err)
@@ -106,15 +100,14 @@ export const DeleteSale = createAsyncThunk(
 export const GetSaleStats = createAsyncThunk(
   'GetSaleStats',
   async () => {
-    let url = baseUrl + 'sales/stats';
     try {
-      const response = (await axios.get(url)).data
-      if (response.status === "success") {
-        return Promise.resolve(response)
-      } else if (response.status === "error") {
-        return Promise.resolve(response)
+      const response = await api.get('sales/stats');
+      if (response.data.status === "success") {
+        return Promise.resolve(response.data)
+      } else if (response.data.status === "error") {
+        return Promise.resolve(response.data)
       } else {
-        return Promise.reject(response)
+        return Promise.reject(response.data)
       }
     } catch (err) {
       return Promise.reject(err)
@@ -126,15 +119,14 @@ export const GetSaleStats = createAsyncThunk(
 export const UpdateAllSaleStatuses = createAsyncThunk(
   'UpdateAllSaleStatuses',
   async () => {
-    let url = baseUrl + 'sales/update-statuses';
     try {
-      const response = (await axios.post(url)).data
-      if (response.status === "success") {
-        return Promise.resolve(response)
-      } else if (response.status === "error") {
-        return Promise.resolve(response)
+      const response = await api.post('sales/update-statuses');
+      if (response.data.status === "success") {
+        return Promise.resolve(response.data)
+      } else if (response.data.status === "error") {
+        return Promise.resolve(response.data)
       } else {
-        return Promise.reject(response)
+        return Promise.reject(response.data)
       }
     } catch (err) {
       return Promise.reject(err)

@@ -1,20 +1,18 @@
 import { createAsyncThunk } from '@reduxjs/toolkit'
-import axios from "axios";
-import { baseUrl } from './config';
+import { api } from './Authapi'; // Import authenticated api instance
 
 // Insert/Create Limited Offer
 export const insertLimitedOffer = createAsyncThunk(
   'insertLimitedOffer',
   async (data) => {
-    let url = baseUrl + 'insertLimitedOffer';
     try {
-      const response = (await axios.post(url, data)).data
-      if (response.status === "success") {
-        return Promise.resolve(response)
-      } else if (response.status === "error") {
-        return Promise.resolve(response)
+      const response = await api.post('insertLimitedOffer', data);
+      if (response.data.status === "success") {
+        return Promise.resolve(response.data)
+      } else if (response.data.status === "error") {
+        return Promise.resolve(response.data)
       } else {
-        return Promise.reject(response)
+        return Promise.reject(response.data)
       }
     } catch (err) {
       return Promise.reject(err)
@@ -26,15 +24,14 @@ export const insertLimitedOffer = createAsyncThunk(
 export const GetLimitedOffers = createAsyncThunk(
   'GetLimitedOffers',
   async () => {
-    let url = baseUrl + 'GetLimitedOffers';
     try {
-      const response = (await axios.get(url)).data
-      if (response.status === "success") {
-        return Promise.resolve(response)
-      } else if (response.status === "error") {
-        return Promise.resolve(response)
+      const response = await api.get('GetLimitedOffers');
+      if (response.data.status === "success") {
+        return Promise.resolve(response.data)
+      } else if (response.data.status === "error") {
+        return Promise.resolve(response.data)
       } else {
-        return Promise.reject(response)
+        return Promise.reject(response.data)
       }
     } catch (err) {
       return Promise.reject(err)
@@ -46,15 +43,14 @@ export const GetLimitedOffers = createAsyncThunk(
 export const GetLimitedOfferById = createAsyncThunk(
   'GetLimitedOfferById',
   async (id) => {
-    let url = baseUrl + `limited-offers/${id}`;
     try {
-      const response = (await axios.get(url)).data
-      if (response.status === "success") {
-        return Promise.resolve(response)
-      } else if (response.status === "error") {
-        return Promise.resolve(response)
+      const response = await api.get(`limited-offers/${id}`);
+      if (response.data.status === "success") {
+        return Promise.resolve(response.data)
+      } else if (response.data.status === "error") {
+        return Promise.resolve(response.data)
       } else {
-        return Promise.reject(response)
+        return Promise.reject(response.data)
       }
     } catch (err) {
       return Promise.reject(err)
@@ -66,15 +62,14 @@ export const GetLimitedOfferById = createAsyncThunk(
 export const UpdateLimitedOffer = createAsyncThunk(
   'UpdateLimitedOffer',
   async ({ id, data }) => {
-    let url = baseUrl + `limited-offers/${id}`;
     try {
-      const response = (await axios.put(url, data)).data
-      if (response.status === "success") {
-        return Promise.resolve(response)
-      } else if (response.status === "error") {
-        return Promise.resolve(response)
+      const response = await api.put(`limited-offers/${id}`, data);
+      if (response.data.status === "success") {
+        return Promise.resolve(response.data)
+      } else if (response.data.status === "error") {
+        return Promise.resolve(response.data)
       } else {
-        return Promise.reject(response)
+        return Promise.reject(response.data)
       }
     } catch (err) {
       return Promise.reject(err)
@@ -86,15 +81,14 @@ export const UpdateLimitedOffer = createAsyncThunk(
 export const DeleteLimitedOffer = createAsyncThunk(
   'DeleteLimitedOffer',
   async (id) => {
-    let url = baseUrl + `limited-offers/${id}`;
     try {
-      const response = (await axios.delete(url)).data
-      if (response.status === "success") {
-        return Promise.resolve(response)
-      } else if (response.status === "error") {
-        return Promise.resolve(response)
+      const response = await api.delete(`limited-offers/${id}`);
+      if (response.data.status === "success") {
+        return Promise.resolve(response.data)
+      } else if (response.data.status === "error") {
+        return Promise.resolve(response.data)
       } else {
-        return Promise.reject(response)
+        return Promise.reject(response.data)
       }
     } catch (err) {
       return Promise.reject(err)
@@ -106,15 +100,14 @@ export const DeleteLimitedOffer = createAsyncThunk(
 export const GetLimitedOfferStats = createAsyncThunk(
   'GetLimitedOfferStats',
   async () => {
-    let url = baseUrl + 'limited-offers/stats';
     try {
-      const response = (await axios.get(url)).data
-      if (response.status === "success") {
-        return Promise.resolve(response)
-      } else if (response.status === "error") {
-        return Promise.resolve(response)
+      const response = await api.get('limited-offers/stats');
+      if (response.data.status === "success") {
+        return Promise.resolve(response.data)
+      } else if (response.data.status === "error") {
+        return Promise.resolve(response.data)
       } else {
-        return Promise.reject(response)
+        return Promise.reject(response.data)
       }
     } catch (err) {
       return Promise.reject(err)

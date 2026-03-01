@@ -3,6 +3,22 @@
 /* Google Fonts - elegant for perfume site */
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Roboto:wght@300;400;500;600;700&display=swap');
 
+/* CRITICAL FIX: Remove any stuck overlays/backdrops */
+body {
+  overflow: auto !important;
+  pointer-events: auto !important;
+}
+
+/* Remove Bootstrap modal backdrop if stuck */
+.modal-backdrop {
+  display: none !important;
+}
+
+/* Remove any fixed overlays */
+body > div[style*="position: fixed"][style*="rgba(0, 0, 0"] {
+  display: none !important;
+}
+
 /* Custom theme variables - Same as member site */
 :root {
   --sand-100: #f9f6ed;
@@ -25,12 +41,18 @@
   box-sizing: border-box;
 }
 
+/* Ensure no element blocks interaction */
+*:not(.modal):not(.modal *) {
+  pointer-events: auto !important;
+}
+
 body {
   margin: 0;
   font-family: 'Roboto', sans-serif;
   background-color: var(--sand-100) !important;
   color: var(--sand-dark);
   overflow-x: hidden;
+  overflow-y: auto !important;
 }
 
 h1, h2, h3, h4, h5, h6 {

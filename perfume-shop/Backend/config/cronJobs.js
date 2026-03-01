@@ -1,6 +1,7 @@
 const cron = require('node-cron');
 const Sale = require('../Admin/models/Sale');
 const LimitedOffer = require('../Admin/models/LimitedOffer');
+const Coupon = require('../Admin/models/Coupon');
 
 // Function to delete expired sales (1 hour after end time)
 const deleteExpiredSales = async () => {
@@ -127,27 +128,80 @@ const updateLimitedOfferStatuses = async () => {
   }
 };
 
+// Function to expire coupons at midnight based on their end date
+const expireCoupons = async () => {
+  try {
+    const now = new Date();
+
+    // Expire active coupons whose end date has passed
+    const expiredCoupons = await Coupon.updateMany(
+      {
+        status: 'active',
+        endDate: { $lt: now }
+      },
+      { $set: { status: 'expired' } }
+    );
+
+    if (expiredCoupons.modifiedCount > 0) {
+      console.log(`✅ Expired ${expiredCoupons.modifiedCount} coupons at ${now.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}`);
+    }
+
+    // Also activate coupons whose start date has arrived
+    const activatedCoupons = await Coupon.updateMany(
+      {
+        status: 'inactive',
+        startDate: { $lte: now },
+        endDate: { $gte: now }
+      },
+      { $set: { status: 'active' } }
+    );
+
+    if (activatedCoupons.modifiedCount > 0) {
+      console.log(`✅ Activated ${activatedCoupons.modifiedCount} scheduled coupons`);
+    }
+  } catch (error) {
+    console.error('❌ Error expiring coupons:', error);
+  }
+};
+
 // Initialize cron jobs
 const initCronJobs = () => {
   // Run every minute to update sale and limited offer statuses
+  // Timezone: Asia/Kolkata (India) - UTC+5:30
   cron.schedule('* * * * *', () => {
     updateSaleStatuses();
     updateLimitedOfferStatuses();
+  }, {
+    timezone: "Asia/Kolkata"
   });
 
   // Run every hour to delete expired sales (1 hour after end time)
+  // Timezone: Asia/Kolkata (India) - UTC+5:30
   cron.schedule('0 * * * *', () => {
     deleteExpiredSales();
+  }, {
+    timezone: "Asia/Kolkata"
   });
 
-  console.log('⏰ Cron jobs initialized:');
+  // Run at midnight (12:00 AM) every day to expire coupons
+  // Timezone: Asia/Kolkata (India) - UTC+5:30
+  cron.schedule('0 0 * * *', () => {
+    expireCoupons();
+  }, {
+    timezone: "Asia/Kolkata"
+  });
+
+  console.log('⏰ Cron jobs initialized (Timezone: Asia/Kolkata - IST):');
   console.log('   - Sale status updater: Every minute');
   console.log('   - Limited offer status updater: Every minute');
   console.log('   - Expired sale cleanup: Every hour');
+  console.log('   - Coupon expiry check: Daily at 12:00 AM IST');
+  console.log(`   - Current server time: ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}`);
   
   // Run immediately on startup
   updateSaleStatuses();
   updateLimitedOfferStatuses();
+  expireCoupons();
 };
 
-module.exports = { initCronJobs, deleteExpiredSales, updateSaleStatuses, updateLimitedOfferStatuses };
+module.exports = { initCronJobs, deleteExpiredSales, updateSaleStatuses, updateLimitedOfferStatuses, expireCoupons };

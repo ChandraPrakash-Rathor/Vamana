@@ -65,7 +65,7 @@ export default function EditCouponModal({ isOpen, onClose, coupon }) {
 
   // Prefill form when coupon changes
   useEffect(() => {
-    if (coupon && isOpen && productOptions.length > 0) {
+    if (coupon && isOpen && productData && productData.length > 0) {
       console.log('EditCouponModal - Prefilling with coupon:', {
         rawApplicableProducts: coupon.rawApplicableProducts,
         rawApplicableCategories: coupon.rawApplicableCategories,
@@ -123,7 +123,7 @@ export default function EditCouponModal({ isOpen, onClose, coupon }) {
         setValue('applicationType', applicationTypeOptions.find(opt => opt.value === 'all'));
       }
     }
-  }, [coupon, isOpen, productOptions, setValue, discountTypeOptions, statusOptions, applicationTypeOptions, categoryOptions]);
+  }, [coupon, isOpen, productData, setValue]);
 
   const customSelectStyles = {
     control: (base, state) => ({

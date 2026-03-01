@@ -112,17 +112,19 @@ couponSchema.methods.canUse = function(purchaseAmount, productIds = [], categori
   }
 
   // Check applicable products (if specified)
+  // If specific products are listed, coupon ONLY applies to those products
   if (this.applicableProducts.length > 0) {
     const hasApplicableProduct = productIds.some(id => 
-      this.applicableProducts.includes(id)
+      this.applicableProducts.some(p => p.toString() === id.toString())
     );
     if (!hasApplicableProduct) {
-      return { valid: false, message: 'Coupon not applicable to selected products' };
+      return { valid: false, message: 'Coupon not applicable to cart items. Add eligible products to use this coupon.' };
     }
   }
 
-  // Check applicable categories (if not 'all')
-  if (!this.applicableCategories.includes('all')) {
+  // Check applicable categories (if not 'all' AND no specific products)
+  // Category check only applies when no specific products are defined
+  if (this.applicableProducts.length === 0 && !this.applicableCategories.includes('all')) {
     const hasApplicableCategory = categories.some(cat => 
       this.applicableCategories.includes(cat)
     );

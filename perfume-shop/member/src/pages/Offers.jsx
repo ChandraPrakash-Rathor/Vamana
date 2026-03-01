@@ -1,14 +1,47 @@
 import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { GetActiveLimitedOffers } from '../redux/apis/LimitedOfferApi';
+import { addToCart } from '../redux/apis/CartApi';
 import Breadcrumb from '../components/common/Breadcrumb';
 import ScrollToTop from '../components/common/ScrollToTop';
 import OfferModal from '../components/common/OfferModal';
+import { toast } from 'react-toastify';
 
 // Individual Offer Card Component with its own timer
 function OfferCard({ offer }) {
+  const dispatch = useDispatch();
+  const { isAuthenticated } = useSelector(state => state.AuthSlice);
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [showModal, setShowModal] = useState(false);
+
+  const handleAddToCart = async (e) => {
+    e.stopPropagation();
+    
+    if (!isAuthenticated) {
+      // Store pending item and show login modal
+      sessionStorage.setItem('pendingCartItem', JSON.stringify({
+        productId: offer.product._id,
+        quantity: 1
+      }));
+      window.openAuthModal?.();
+      return;
+    }
+
+    try {
+      const result = await dispatch(addToCart({ 
+        productId: offer.product._id, 
+        quantity: 1 
+      }));
+      
+      if (result.payload?.success) {
+        toast.success('Added to cart!');
+      } else {
+        toast.error(result.payload?.message || 'Failed to add to cart');
+      }
+    } catch (error) {
+      toast.error('Failed to add to cart');
+    }
+  };
 
   useEffect(() => {
     const calculateTimeLeft = () => {
@@ -46,7 +79,7 @@ function OfferCard({ offer }) {
         boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
         position: 'relative',
         height: '100%',
-        border: '1px solid #f0f0f0'
+        border: '1px solid var(--sand-200)'
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.transform = 'translateY(-4px)';
@@ -108,12 +141,12 @@ function OfferCard({ offer }) {
           width: '100%',
           paddingTop: '100%',
           position: 'relative',
-          backgroundColor: '#f8f9fa',
+          backgroundColor: 'var(--sand-100)',
           overflow: 'hidden'
         }}
       >
         <img
-          src={`http://localhost:5000/uploads/${offer.product?.mainImage}`}
+          src={offer.product?.mainImage}
           alt={offer.product?.name}
           style={{
             position: 'absolute',
@@ -174,7 +207,7 @@ function OfferCard({ offer }) {
           style={{
             fontSize: '1.1rem',
             fontWeight: '700',
-            color: '#2c3e50',
+            color: 'var(--sand-900)',
             marginBottom: '6px',
             lineHeight: '1.3',
             overflow: 'hidden',
@@ -188,7 +221,7 @@ function OfferCard({ offer }) {
         <p
           style={{
             fontSize: '0.85rem',
-            color: '#7f8c8d',
+            color: 'var(--sand-700)',
             marginBottom: '10px',
             lineHeight: '1.4',
             height: '34px',
@@ -216,7 +249,7 @@ function OfferCard({ offer }) {
             <span
               style={{
                 fontSize: '1rem',
-                color: '#95a5a6',
+                color: 'var(--sand-600)',
                 textDecoration: 'line-through'
               }}
             >
@@ -272,10 +305,11 @@ function OfferCard({ offer }) {
 
         {/* Add to Cart Button */}
         <button
+          onClick={handleAddToCart}
           style={{
             width: '100%',
             padding: '10px',
-            background: 'linear-gradient(135deg, #b8860b 0%, #cd9a3a 100%)',
+            background: 'linear-gradient(135deg, var(--sand-600) 0%, var(--sand-700) 100%)',
             color: 'white',
             border: 'none',
             borderRadius: '8px',
@@ -286,11 +320,11 @@ function OfferCard({ offer }) {
             boxShadow: '0 2px 8px rgba(184, 134, 11, 0.3)'
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.background = 'linear-gradient(135deg, #cd9a3a 0%, #b8860b 100%)';
+            e.currentTarget.style.background = 'linear-gradient(135deg, var(--sand-700) 0%, var(--sand-600) 100%)';
             e.currentTarget.style.transform = 'translateY(-1px)';
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'linear-gradient(135deg, #b8860b 0%, #cd9a3a 100%)';
+            e.currentTarget.style.background = 'linear-gradient(135deg, var(--sand-600) 0%, var(--sand-700) 100%)';
             e.currentTarget.style.transform = 'translateY(0)';
           }}
         >
@@ -396,7 +430,7 @@ export default function Offers() {
       {/* Compact Hero Section */}
       <section 
         style={{
-          background: 'linear-gradient(135deg, #b8860b 0%, #daa520 50%, #b8860b 100%)',
+          background: 'linear-gradient(135deg, var(--sand-600) 0%, var(--sand-700) 50%, var(--sand-600) 100%)',
           padding: '2.5rem 0',
           position: 'relative',
           overflow: 'hidden',
@@ -497,7 +531,7 @@ export default function Offers() {
                 <div style={{
                   fontSize: '1.8rem',
                   fontWeight: '800',
-                  background: 'linear-gradient(135deg, #b8860b 0%, #daa520 100%)',
+                  background: 'linear-gradient(135deg, var(--sand-600) 0%, var(--sand-700) 100%)',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
                   backgroundClip: 'text',
@@ -508,7 +542,7 @@ export default function Offers() {
                 </div>
                 <div style={{
                   fontSize: '0.7rem',
-                  color: '#666',
+                  color: 'var(--sand-700)',
                   fontWeight: '600',
                   marginTop: '6px',
                   textTransform: 'uppercase'
@@ -529,13 +563,13 @@ export default function Offers() {
             style={{
               fontSize: 'clamp(1.5rem, 3vw, 2rem)',
               fontWeight: '700',
-              color: '#2c3e50',
+              color: 'var(--sand-900)',
               marginBottom: '0.5rem'
             }}
           >
             🔥 Hot Deals
           </h2>
-          <p style={{ fontSize: '0.95rem', color: '#7f8c8d' }}>
+          <p style={{ fontSize: '0.95rem', color: 'var(--sand-700)' }}>
             Grab these amazing offers before they expire!
           </p>
         </div>
@@ -552,23 +586,23 @@ export default function Offers() {
         <div className="row mt-4 pt-3 border-top g-3">
           <div className="col-6 col-md-3 text-center">
             <div style={{ fontSize: '1.8rem', marginBottom: '0.3rem' }}>🚚</div>
-            <h6 style={{ fontWeight: '700', color: '#2c3e50', fontSize: '0.9rem', marginBottom: '0.2rem' }}>Free Delivery</h6>
-            <p style={{ fontSize: '0.75rem', color: '#7f8c8d', margin: 0 }}>On orders above ₹999</p>
+            <h6 style={{ fontWeight: '700', color: 'var(--sand-900)', fontSize: '0.9rem', marginBottom: '0.2rem' }}>Free Delivery</h6>
+            <p style={{ fontSize: '0.75rem', color: 'var(--sand-700)', margin: 0 }}>On orders above ₹999</p>
           </div>
           <div className="col-6 col-md-3 text-center">
             <div style={{ fontSize: '1.8rem', marginBottom: '0.3rem' }}>✅</div>
-            <h6 style={{ fontWeight: '700', color: '#2c3e50', fontSize: '0.9rem', marginBottom: '0.2rem' }}>100% Authentic</h6>
-            <p style={{ fontSize: '0.75rem', color: '#7f8c8d', margin: 0 }}>Original products</p>
+            <h6 style={{ fontWeight: '700', color: 'var(--sand-900)', fontSize: '0.9rem', marginBottom: '0.2rem' }}>100% Authentic</h6>
+            <p style={{ fontSize: '0.75rem', color: 'var(--sand-700)', margin: 0 }}>Original products</p>
           </div>
           <div className="col-6 col-md-3 text-center">
             <div style={{ fontSize: '1.8rem', marginBottom: '0.3rem' }}>🔄</div>
-            <h6 style={{ fontWeight: '700', color: '#2c3e50', fontSize: '0.9rem', marginBottom: '0.2rem' }}>Easy Returns</h6>
-            <p style={{ fontSize: '0.75rem', color: '#7f8c8d', margin: 0 }}>7 days policy</p>
+            <h6 style={{ fontWeight: '700', color: 'var(--sand-900)', fontSize: '0.9rem', marginBottom: '0.2rem' }}>Easy Returns</h6>
+            <p style={{ fontSize: '0.75rem', color: 'var(--sand-700)', margin: 0 }}>7 days policy</p>
           </div>
           <div className="col-6 col-md-3 text-center">
             <div style={{ fontSize: '1.8rem', marginBottom: '0.3rem' }}>💳</div>
-            <h6 style={{ fontWeight: '700', color: '#2c3e50', fontSize: '0.9rem', marginBottom: '0.2rem' }}>Secure Payment</h6>
-            <p style={{ fontSize: '0.75rem', color: '#7f8c8d', margin: 0 }}>Safe & encrypted</p>
+            <h6 style={{ fontWeight: '700', color: 'var(--sand-900)', fontSize: '0.9rem', marginBottom: '0.2rem' }}>Secure Payment</h6>
+            <p style={{ fontSize: '0.75rem', color: 'var(--sand-700)', margin: 0 }}>Safe & encrypted</p>
           </div>
         </div>
       </div>

@@ -1,20 +1,18 @@
 import { createAsyncThunk } from '@reduxjs/toolkit'
-import axios from "axios";
-import { baseUrl } from './config';
+import { api } from './Authapi'; // Import authenticated api instance
 
 // Insert/Create Coupon
 export const insertCoupon = createAsyncThunk(
   'insertCoupon',
   async (data) => {
-    let url = baseUrl + 'insertCoupon';
     try {
-      const response = (await axios.post(url, data)).data
-      if (response.status === "success") {
-        return Promise.resolve(response)
-      } else if (response.status === "error") {
-        return Promise.resolve(response)
+      const response = await api.post('insertCoupon', data);
+      if (response.data.status === "success") {
+        return Promise.resolve(response.data)
+      } else if (response.data.status === "error") {
+        return Promise.resolve(response.data)
       } else {
-        return Promise.reject(response)
+        return Promise.reject(response.data)
       }
     } catch (err) {
       return Promise.reject(err)
@@ -26,15 +24,14 @@ export const insertCoupon = createAsyncThunk(
 export const GetCoupons = createAsyncThunk(
   'GetCoupons',
   async () => {
-    let url = baseUrl + 'GetCoupons';
     try {
-      const response = (await axios.get(url)).data
-      if (response.status === "success") {
-        return Promise.resolve(response)
-      } else if (response.status === "error") {
-        return Promise.resolve(response)
+      const response = await api.get('GetCoupons');
+      if (response.data.status === "success") {
+        return Promise.resolve(response.data)
+      } else if (response.data.status === "error") {
+        return Promise.resolve(response.data)
       } else {
-        return Promise.reject(response)
+        return Promise.reject(response.data)
       }
     } catch (err) {
       return Promise.reject(err)
@@ -46,15 +43,14 @@ export const GetCoupons = createAsyncThunk(
 export const GetCouponById = createAsyncThunk(
   'GetCouponById',
   async (id) => {
-    let url = baseUrl + `coupons/${id}`;
     try {
-      const response = (await axios.get(url)).data
-      if (response.status === "success") {
-        return Promise.resolve(response)
-      } else if (response.status === "error") {
-        return Promise.resolve(response)
+      const response = await api.get(`coupons/${id}`);
+      if (response.data.status === "success") {
+        return Promise.resolve(response.data)
+      } else if (response.data.status === "error") {
+        return Promise.resolve(response.data)
       } else {
-        return Promise.reject(response)
+        return Promise.reject(response.data)
       }
     } catch (err) {
       return Promise.reject(err)
@@ -66,15 +62,14 @@ export const GetCouponById = createAsyncThunk(
 export const UpdateCoupon = createAsyncThunk(
   'UpdateCoupon',
   async ({ id, data }) => {
-    let url = baseUrl + `coupons/${id}`;
     try {
-      const response = (await axios.put(url, data)).data
-      if (response.status === "success") {
-        return Promise.resolve(response)
-      } else if (response.status === "error") {
-        return Promise.resolve(response)
+      const response = await api.put(`coupons/${id}`, data);
+      if (response.data.status === "success") {
+        return Promise.resolve(response.data)
+      } else if (response.data.status === "error") {
+        return Promise.resolve(response.data)
       } else {
-        return Promise.reject(response)
+        return Promise.reject(response.data)
       }
     } catch (err) {
       return Promise.reject(err)
@@ -86,15 +81,14 @@ export const UpdateCoupon = createAsyncThunk(
 export const DeleteCoupon = createAsyncThunk(
   'DeleteCoupon',
   async (id) => {
-    let url = baseUrl + `coupons/${id}`;
     try {
-      const response = (await axios.delete(url)).data
-      if (response.status === "success") {
-        return Promise.resolve(response)
-      } else if (response.status === "error") {
-        return Promise.resolve(response)
+      const response = await api.delete(`coupons/${id}`);
+      if (response.data.status === "success") {
+        return Promise.resolve(response.data)
+      } else if (response.data.status === "error") {
+        return Promise.resolve(response.data)
       } else {
-        return Promise.reject(response)
+        return Promise.reject(response.data)
       }
     } catch (err) {
       return Promise.reject(err)
@@ -106,15 +100,14 @@ export const DeleteCoupon = createAsyncThunk(
 export const ValidateCoupon = createAsyncThunk(
   'ValidateCoupon',
   async (data) => {
-    let url = baseUrl + 'coupons/validate';
     try {
-      const response = (await axios.post(url, data)).data
-      if (response.status === "success") {
-        return Promise.resolve(response)
-      } else if (response.status === "error") {
-        return Promise.resolve(response)
+      const response = await api.post('coupons/validate', data);
+      if (response.data.status === "success") {
+        return Promise.resolve(response.data)
+      } else if (response.data.status === "error") {
+        return Promise.resolve(response.data)
       } else {
-        return Promise.reject(response)
+        return Promise.reject(response.data)
       }
     } catch (err) {
       return Promise.reject(err)
@@ -126,15 +119,14 @@ export const ValidateCoupon = createAsyncThunk(
 export const GetCouponStats = createAsyncThunk(
   'GetCouponStats',
   async () => {
-    let url = baseUrl + 'coupons/stats';
     try {
-      const response = (await axios.get(url)).data
-      if (response.status === "success") {
-        return Promise.resolve(response)
-      } else if (response.status === "error") {
-        return Promise.resolve(response)
+      const response = await api.get('coupons/stats');
+      if (response.data.status === "success") {
+        return Promise.resolve(response.data)
+      } else if (response.data.status === "error") {
+        return Promise.resolve(response.data)
       } else {
-        return Promise.reject(response)
+        return Promise.reject(response.data)
       }
     } catch (err) {
       return Promise.reject(err)

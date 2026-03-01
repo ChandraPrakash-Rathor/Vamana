@@ -1,32 +1,30 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
+import { useSelector } from 'react-redux';
 import HeroSlider from '../components/home/HeroSlider';
 import FeaturedPerfumes from '../components/home/FeaturedPerfumes';
 import DiscountSection from '../components/home/DiscountSection';
 import BestSellers from '../components/home/BestSellers';
 import Testimonials from '../components/home/Testimonials';
 import ScrollToTop from '../components/common/ScrollToTop';
-import LoginModal from '../components/common/LoginModal';
 
 export default function Home() {
-  const [showLoginModal, setShowLoginModal] = useState(false);
+  const { user } = useSelector((state) => state.AuthSlice);
 
   useEffect(() => {
-    // Check if user is already logged in
-    const isLoggedIn = localStorage.getItem('userLoggedIn');
     // Check if modal was already shown automatically
     const modalShownBefore = localStorage.getItem('loginModalShown');
     
     // Show login modal after 3 seconds only if not logged in and not shown before
-    if (!isLoggedIn && !modalShownBefore) {
+    if (!user && !modalShownBefore) {
       const timer = setTimeout(() => {
-        setShowLoginModal(true);
+        window.openAuthModal('login');
         // Mark that modal has been shown automatically
         localStorage.setItem('loginModalShown', 'true');
       }, 3000);
 
       return () => clearTimeout(timer);
     }
-  }, []);
+  }, [user]);
 
   return (
     <div>
@@ -78,12 +76,6 @@ export default function Home() {
       
       {/* Scroll to Top Button */}
       <ScrollToTop />
-
-      {/* Login Modal */}
-      <LoginModal 
-        show={showLoginModal} 
-        onClose={() => setShowLoginModal(false)} 
-      />
     </div>
   );
 }

@@ -1,42 +1,72 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import Select from 'react-select';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faUsers, faUserCheck, faUserClock, faUserShield,
   faSearch, faFilter, faEye, faEdit, faBan, faEnvelope, faPhone
 } from '@fortawesome/free-solid-svg-icons';
+import { fetchMembers, updateMemberStatus, deleteMember, clearError, clearSuccess } from '../APIS/slice/MemberSlice';
+import { toast } from 'react-toastify';
+import ViewMemberModal from '../components/modals/ViewMemberModal';
+import EditMemberModal from '../components/modals/EditMemberModal';
 
 export default function Users() {
+  const dispatch = useDispatch();
+  const { members, loading, error, success } = useSelector(state => state.MemberSlice);
+  
   const [selectedStatus, setSelectedStatus] = useState(null);
   const [selectedRole, setSelectedRole] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortField, setSortField] = useState('name');
   const [sortDirection, setSortDirection] = useState('asc');
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
 
-  // Sample users data
-  const users = [
-    { id: 1, name: 'Rahul Sharma', email: 'rahul@example.com', phone: '+91 98765 43210', role: 'Customer', status: 'Active', orders: 12, totalSpent: 45890, joinDate: '2024-01-15', lastActive: '2024-02-17' },
-    { id: 2, name: 'Priya Patel', email: 'priya@example.com', phone: '+91 98765 43211', role: 'Customer', status: 'Active', orders: 8, totalSpent: 32450, joinDate: '2024-01-20', lastActive: '2024-02-16' },
-    { id: 3, name: 'Amit Kumar', email: 'amit@example.com', phone: '+91 98765 43212', role: 'Customer', status: 'Active', orders: 15, totalSpent: 67890, joinDate: '2024-01-10', lastActive: '2024-02-18' },
-    { id: 4, name: 'Sneha Reddy', email: 'sneha@example.com', phone: '+91 98765 43213', role: 'Customer', status: 'Inactive', orders: 3, totalSpent: 12340, joinDate: '2024-02-01', lastActive: '2024-02-10' },
-    { id: 5, name: 'Vikram Singh', email: 'vikram@example.com', phone: '+91 98765 43214', role: 'Customer', status: 'Active', orders: 20, totalSpent: 89560, joinDate: '2023-12-15', lastActive: '2024-02-17' },
-    { id: 6, name: 'Anjali Gupta', email: 'anjali@example.com', phone: '+91 98765 43215', role: 'Customer', status: 'Blocked', orders: 2, totalSpent: 5670, joinDate: '2024-02-05', lastActive: '2024-02-08' },
-    { id: 7, name: 'Admin User', email: 'admin@vamana.com', phone: '+91 98765 43216', role: 'Admin', status: 'Active', orders: 0, totalSpent: 0, joinDate: '2023-11-01', lastActive: '2024-02-18' },
-    { id: 8, name: 'Rohan Mehta', email: 'rohan@example.com', phone: '+91 98765 43217', role: 'Customer', status: 'Active', orders: 6, totalSpent: 28900, joinDate: '2024-01-25', lastActive: '2024-02-15' }
-  ];
+  // Fetch members on component mount
+  useEffect(() => {
+    dispatch(fetchMembers());
+  }, [dispatch]);
+
+  // Show success/error messages
+  useEffect(() => {
+    if (success) {
+      toast.success(success);
+      dispatch(clearSuccess());
+      dispatch(fetchMembers()); // Refresh data
+    }
+    if (error) {
+      toast.error(error);
+      dispatch(clearError());
+    }
+  }, [success, error, dispatch]);
+
+  // Map members to users format
+  const users = members.map(member => ({
+    id: member._id,
+    name: member.name,
+    email: member.email,
+    phone: member.phone,
+    role: member.role,
+    status: member.status === 'active' ? 'Active' : 'Inactive',
+    orders: member.orders,
+    totalSpent: member.totalSpent,
+    joinDate: new Date(member.joinDate).toISOString().split('T')[0],
+    lastActive: new Date(member.lastActive).toISOString().split('T')[0]
+  }));
 
   // Calculate stats
   const totalUsers = users.length;
   const activeUsers = users.filter(u => u.status === 'Active').length;
-  const newUsers = users.filter(u => new Date(u.joinDate) > new Date('2024-02-01')).length;
+  const newUsers = users.filter(u => new Date(u.joinDate) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)).length; // Last 30 days
   const adminUsers = users.filter(u => u.role === 'Admin').length;
 
   // Status options
   const statusOptions = [
     { value: 'all', label: 'All Status' },
     { value: 'active', label: 'Active' },
-    { value: 'inactive', label: 'Inactive' },
-    { value: 'blocked', label: 'Blocked' }
+    { value: 'inactive', label: 'Inactive' }
   ];
 
   // Role options
@@ -125,7 +155,6 @@ export default function Users() {
     switch (status) {
       case 'Active': return '#28a745';
       case 'Inactive': return '#ffc107';
-      case 'Blocked': return '#dc3545';
       default: return '#6c757d';
     }
   };
@@ -136,6 +165,32 @@ export default function Users() {
       case 'Admin': return '#007bff';
       case 'Customer': return '#17a2b8';
       default: return '#6c757d';
+    }
+  };
+
+  // Handle view user
+  const handleViewUser = (user) => {
+    setSelectedUser(user);
+    setShowViewModal(true);
+  };
+
+  // Handle edit user
+  const handleEditUser = (user) => {
+    setSelectedUser(user);
+    setShowEditModal(true);
+  };
+
+  // Handle toggle user status
+  const handleToggleStatus = async (userId, currentStatus) => {
+    const newStatus = currentStatus === 'Active' ? 'inactive' : 'active';
+    const action = currentStatus === 'Active' ? 'deactivate' : 'activate';
+    
+    if (window.confirm(`Are you sure you want to ${action} this user?`)) {
+      try {
+        await dispatch(updateMemberStatus({ id: userId, status: newStatus }));
+      } catch (error) {
+        toast.error(`Failed to ${action} user`);
+      }
     }
   };
 
@@ -766,59 +821,72 @@ export default function Users() {
                   </td>
                   <td className="px-3 py-3" style={{ borderRadius: '0 12px 12px 0' }}>
                     <div className="d-flex gap-2">
-                      <button className="btn btn-sm" style={{
-                        backgroundColor: 'var(--sand-200)',
-                        border: 'none',
-                        color: 'var(--sand-900)',
-                        padding: '0.4rem 0.6rem',
-                        borderRadius: '6px',
-                        fontSize: '0.85rem',
-                        transition: 'all 0.3s ease'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = 'var(--sand-300)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = 'var(--sand-200)';
-                      }}>
-                        <FontAwesomeIcon icon={faEye} />
-                      </button>
-                      <button className="btn btn-sm d-none d-sm-inline" style={{
-                        backgroundColor: '#007bff20',
-                        border: 'none',
-                        color: '#007bff',
-                        padding: '0.4rem 0.6rem',
-                        borderRadius: '6px',
-                        fontSize: '0.85rem',
-                        transition: 'all 0.3s ease'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = '#007bff40';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = '#007bff20';
-                      }}>
-                        <FontAwesomeIcon icon={faEdit} />
-                      </button>
-                      {user.status !== 'Blocked' && (
-                        <button className="btn btn-sm d-none d-md-inline" style={{
-                          backgroundColor: '#dc354520',
+                      <button 
+                        onClick={() => handleViewUser(user)}
+                        className="btn btn-sm" 
+                        title="View Details"
+                        style={{
+                          backgroundColor: 'var(--sand-200)',
                           border: 'none',
-                          color: '#dc3545',
+                          color: 'var(--sand-900)',
                           padding: '0.4rem 0.6rem',
                           borderRadius: '6px',
                           fontSize: '0.85rem',
                           transition: 'all 0.3s ease'
                         }}
                         onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor = '#dc354540';
+                          e.currentTarget.style.backgroundColor = 'var(--sand-300)';
                         }}
                         onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor = '#dc354520';
-                        }}>
-                          <FontAwesomeIcon icon={faBan} />
-                        </button>
-                      )}
+                          e.currentTarget.style.backgroundColor = 'var(--sand-200)';
+                        }}
+                      >
+                        <FontAwesomeIcon icon={faEye} />
+                      </button>
+                      <button 
+                        onClick={() => handleEditUser(user)}
+                        className="btn btn-sm d-none d-sm-inline" 
+                        title="Edit User"
+                        style={{
+                          backgroundColor: '#007bff20',
+                          border: 'none',
+                          color: '#007bff',
+                          padding: '0.4rem 0.6rem',
+                          borderRadius: '6px',
+                          fontSize: '0.85rem',
+                          transition: 'all 0.3s ease'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = '#007bff40';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = '#007bff20';
+                        }}
+                      >
+                        <FontAwesomeIcon icon={faEdit} />
+                      </button>
+                      <button 
+                        onClick={() => handleToggleStatus(user.id, user.status)}
+                        className="btn btn-sm d-none d-md-inline" 
+                        title={user.status === 'Active' ? 'Deactivate User' : 'Activate User'}
+                        style={{
+                          backgroundColor: user.status === 'Active' ? '#ffc10720' : '#28a74520',
+                          border: 'none',
+                          color: user.status === 'Active' ? '#ffc107' : '#28a745',
+                          padding: '0.4rem 0.6rem',
+                          borderRadius: '6px',
+                          fontSize: '0.85rem',
+                          transition: 'all 0.3s ease'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = user.status === 'Active' ? '#ffc10740' : '#28a74540';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = user.status === 'Active' ? '#ffc10720' : '#28a74520';
+                        }}
+                      >
+                        <FontAwesomeIcon icon={faBan} />
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -896,6 +964,29 @@ export default function Users() {
           }
         }
       `}</style>
+
+      {/* View Member Modal */}
+      <ViewMemberModal 
+        show={showViewModal}
+        onClose={() => {
+          setShowViewModal(false);
+          setSelectedUser(null);
+        }}
+        member={selectedUser}
+      />
+
+      {/* Edit Member Modal */}
+      <EditMemberModal 
+        show={showEditModal}
+        onClose={() => {
+          setShowEditModal(false);
+          setSelectedUser(null);
+        }}
+        member={selectedUser}
+        onSuccess={() => {
+          dispatch(fetchMembers());
+        }}
+      />
     </div>
   );
 }

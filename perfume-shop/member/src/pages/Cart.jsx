@@ -1,67 +1,107 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash, faPlus, faMinus, faShoppingBag, faTruck, faShieldAlt, faArrowLeft, faTag } from '@fortawesome/free-solid-svg-icons';
 import Breadcrumb from '../components/common/Breadcrumb';
+import { getCart, updateCartItem, removeFromCart } from '../redux/apis/CartApi';
+import { validateCoupon, getActiveCoupons } from '../redux/apis/CouponApi';
+import { removeCoupon } from '../redux/slices/CouponSlice';
+import { toast } from 'react-toastify';
 
 export default function Cart() {
-  // Sample cart items - in real app, this would come from state management
-  const [cartItems, setCartItems] = useState([
-    {
-      id: 1,
-      name: 'Eternal Rose',
-      brand: 'Vamana',
-      price: 2899,
-      originalPrice: 3499,
-      quantity: 1,
-      size: '50ml',
-      image: '/product1.jpg',
-      inStock: true
-    },
-    {
-      id: 3,
-      name: 'Midnight Oud',
-      brand: 'Vamana',
-      price: 3299,
-      originalPrice: 3999,
-      quantity: 2,
-      size: '100ml',
-      image: '/product3.jpg',
-      inStock: true
-    }
-  ]);
+  const dispatch = useDispatch();
+  const { items, loading } = useSelector(state => state.CartSlice);
+  const { isAuthenticated } = useSelector(state => state.AuthSlice);
+  const { appliedCoupon, coupons, loading: couponLoading } = useSelector(state => state.CouponSlice);
 
   const [couponCode, setCouponCode] = useState('');
-  const [appliedCoupon, setAppliedCoupon] = useState(null);
 
-  // Calculate totals
-  const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const discount = cartItems.reduce((sum, item) => sum + ((item.originalPrice - item.price) * item.quantity), 0);
-  const couponDiscount = appliedCoupon ? subtotal * 0.1 : 0; // 10% off with coupon
-  const shipping = subtotal > 999 ? 0 : 99;
+  // Fetch cart and coupons on component mount
+  useEffect(() => {
+    if (isAuthenticated) {
+      dispatch(getCart());
+    }
+    dispatch(getActiveCoupons());
+  }, [dispatch, isAuthenticated]);
+
+  // Calculate totals from Redux cart items
+  const subtotal = items?.reduce((sum, item) => sum + (item.price * item.quantity), 0) || 0;
+  const discount = items?.reduce((sum, item) => {
+    const product = item.product;
+    if (product && product.actualPrice > product.finalPrice) {
+      return sum + ((product.actualPrice - product.finalPrice) * item.quantity);
+    }
+    return sum;
+  }, 0) || 0;
+  
+  // Calculate coupon discount
+  const couponDiscount = appliedCoupon ? appliedCoupon.discount : 0;
+  
+  const shipping = subtotal >= 2000 ? 0 : 99; // Free shipping above ₹2000
   const total = subtotal - couponDiscount + shipping;
 
-  const updateQuantity = (id, newQuantity) => {
+  const updateQuantity = async (productId, newQuantity) => {
     if (newQuantity < 1) return;
-    setCartItems(cartItems.map(item => 
-      item.id === id ? { ...item, quantity: newQuantity } : item
-    ));
-  };
-
-  const removeItem = (id) => {
-    setCartItems(cartItems.filter(item => item.id !== id));
-  };
-
-  const applyCoupon = () => {
-    if (couponCode.toUpperCase() === 'VAMANA10') {
-      setAppliedCoupon({ code: 'VAMANA10', discount: 10 });
-      alert('Coupon applied! 10% discount added.');
-    } else {
-      alert('Invalid coupon code');
+    try {
+      await dispatch(updateCartItem({ productId, quantity: newQuantity }));
+      toast.success('Cart updated');
+      // Re-validate coupon if applied
+      if (appliedCoupon) {
+        dispatch(validateCoupon(appliedCoupon.code));
+      }
+    } catch (error) {
+      toast.error('Failed to update cart');
     }
   };
 
-  if (cartItems.length === 0) {
+  const removeItem = async (productId) => {
+    try {
+      await dispatch(removeFromCart(productId));
+      toast.success('Item removed from cart');
+      // Re-validate coupon if applied
+      if (appliedCoupon) {
+        dispatch(validateCoupon(appliedCoupon.code));
+      }
+    } catch (error) {
+      toast.error('Failed to remove item');
+    }
+  };
+
+  const applyCoupon = async () => {
+    if (!couponCode.trim()) {
+      toast.error('Please enter a coupon code');
+      return;
+    }
+    
+    const result = await dispatch(validateCoupon(couponCode.toUpperCase()));
+    
+    if (result.payload?.success) {
+      toast.success(result.payload.message);
+      setCouponCode('');
+    } else {
+      toast.error(result.payload?.message || 'Invalid coupon code');
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    dispatch(removeCoupon());
+    toast.info('Coupon removed');
+  };
+
+  if (loading) {
+    return (
+      <div style={{ backgroundColor: 'var(--sand-100)', minHeight: '100vh', paddingTop: '90px' }}>
+        <div className="container py-5 text-center">
+          <div className="spinner-border" role="status" style={{ color: 'var(--sand-600)' }}>
+            <span className="visually-hidden">Loading...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!items || items.length === 0) {
     return (
       <div style={{ backgroundColor: 'var(--sand-100)', minHeight: '100vh', paddingTop: '90px' }}>
         <Breadcrumb items={[{ label: 'Shopping Cart', path: '/cart' }]} />
@@ -131,7 +171,7 @@ export default function Cart() {
                   fontSize: 'clamp(1.5rem, 3vw, 2rem)',
                   marginBottom: 0
                 }}>
-                  Shopping Cart ({cartItems.length} {cartItems.length === 1 ? 'item' : 'items'})
+                  Shopping Cart ({items.length} {items.length === 1 ? 'item' : 'items'})
                 </h2>
                 <Link
                   to="/catalog"
@@ -150,9 +190,14 @@ export default function Cart() {
               </div>
 
               {/* Cart Items */}
-              {cartItems.map((item) => (
+              {items
+                .filter(item => item.product) // Filter out items without product
+                .map((item) => {
+                const product = item.product;
+                
+                return (
                 <div
-                  key={item.id}
+                  key={item._id}
                   style={{
                     backgroundColor: 'var(--sand-100)',
                     borderRadius: '15px',
@@ -164,10 +209,10 @@ export default function Cart() {
                   <div className="row g-3 align-items-center">
                     {/* Product Image */}
                     <div className="col-md-2 col-3">
-                      <Link to={`/product/${item.id}`}>
+                      <Link to={`/product/${product._id}`}>
                         <img
-                          src={item.image}
-                          alt={item.name}
+                          src={product.mainImage || '/product1.jpg'}
+                          alt={product.name}
                           style={{
                             width: '100%',
                             height: '80px',
@@ -181,7 +226,7 @@ export default function Cart() {
                     {/* Product Details */}
                     <div className="col-md-4 col-9">
                       <Link 
-                        to={`/product/${item.id}`}
+                        to={`/product/${product._id}`}
                         style={{ textDecoration: 'none' }}
                       >
                         <h6 style={{
@@ -190,7 +235,7 @@ export default function Cart() {
                           fontWeight: '700',
                           marginBottom: '0.3rem'
                         }}>
-                          {item.name}
+                          {product.name}
                         </h6>
                       </Link>
                       <p style={{
@@ -198,9 +243,9 @@ export default function Cart() {
                         fontSize: '0.85rem',
                         marginBottom: '0.3rem'
                       }}>
-                        {item.brand} • {item.size}
+                        {product.brand} • {product.size}ml
                       </p>
-                      {item.inStock ? (
+                      {product.status === 'active' ? (
                         <span style={{
                           color: '#27ae60',
                           fontSize: '0.8rem',
@@ -208,13 +253,21 @@ export default function Cart() {
                         }}>
                           ✓ In Stock
                         </span>
-                      ) : (
+                      ) : product.status === 'out-of-stock' ? (
                         <span style={{
                           color: '#e74c3c',
                           fontSize: '0.8rem',
                           fontWeight: '600'
                         }}>
                           Out of Stock
+                        </span>
+                      ) : (
+                        <span style={{
+                          color: '#f39c12',
+                          fontSize: '0.8rem',
+                          fontWeight: '600'
+                        }}>
+                          Unavailable
                         </span>
                       )}
                     </div>
@@ -223,7 +276,7 @@ export default function Cart() {
                     <div className="col-md-3 col-6">
                       <div className="d-flex align-items-center gap-2">
                         <button
-                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                          onClick={() => updateQuantity(product._id, item.quantity - 1)}
                           style={{
                             width: '32px',
                             height: '32px',
@@ -251,7 +304,7 @@ export default function Cart() {
                           {item.quantity}
                         </span>
                         <button
-                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                          onClick={() => updateQuantity(product._id, item.quantity + 1)}
                           style={{
                             width: '32px',
                             height: '32px',
@@ -280,20 +333,20 @@ export default function Cart() {
                         fontWeight: '700',
                         marginBottom: '0.3rem'
                       }}>
-                        ₹{item.price * item.quantity}
+                        ₹{Math.round(item.price * item.quantity)}
                       </div>
-                      {item.originalPrice > item.price && (
+                      {product.actualPrice > product.finalPrice && (
                         <div style={{
                           color: 'var(--sand-600)',
                           fontSize: '0.85rem',
                           textDecoration: 'line-through',
                           marginBottom: '0.5rem'
                         }}>
-                          ₹{item.originalPrice * item.quantity}
+                          ₹{Math.round(product.actualPrice * item.quantity)}
                         </div>
                       )}
                       <button
-                        onClick={() => removeItem(item.id)}
+                        onClick={() => removeItem(product._id)}
                         style={{
                           border: 'none',
                           backgroundColor: 'transparent',
@@ -311,7 +364,7 @@ export default function Cart() {
                     </div>
                   </div>
                 </div>
-              ))}
+              )})}
             </div>
 
             {/* Coupon Section */}
@@ -332,57 +385,160 @@ export default function Cart() {
                 <input
                   type="text"
                   value={couponCode}
-                  onChange={(e) => setCouponCode(e.target.value)}
+                  onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
                   placeholder="Enter coupon code"
+                  disabled={appliedCoupon !== null}
                   style={{
                     flex: 1,
                     padding: '0.7rem 1rem',
                     border: '2px solid var(--sand-400)',
                     borderRadius: '10px',
                     fontSize: '0.95rem',
-                    backgroundColor: 'white'
+                    backgroundColor: appliedCoupon ? 'var(--sand-200)' : 'white',
+                    textTransform: 'uppercase'
                   }}
                 />
-                <button
-                  onClick={applyCoupon}
-                  style={{
-                    padding: '0.7rem 1.5rem',
-                    border: 'none',
-                    borderRadius: '10px',
-                    backgroundColor: 'var(--sand-600)',
-                    color: 'white',
-                    fontSize: '0.95rem',
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                    transition: 'all 0.3s ease'
-                  }}
-                  onMouseEnter={(e) => e.target.style.backgroundColor = 'var(--sand-700)'}
-                  onMouseLeave={(e) => e.target.style.backgroundColor = 'var(--sand-600)'}
-                >
-                  Apply
-                </button>
+                {!appliedCoupon ? (
+                  <button
+                    onClick={applyCoupon}
+                    disabled={couponLoading}
+                    style={{
+                      padding: '0.7rem 1.5rem',
+                      border: 'none',
+                      borderRadius: '10px',
+                      backgroundColor: 'var(--sand-600)',
+                      color: 'white',
+                      fontSize: '0.95rem',
+                      fontWeight: '600',
+                      cursor: couponLoading ? 'not-allowed' : 'pointer',
+                      transition: 'all 0.3s ease',
+                      opacity: couponLoading ? 0.7 : 1
+                    }}
+                    onMouseEnter={(e) => !couponLoading && (e.target.style.backgroundColor = 'var(--sand-700)')}
+                    onMouseLeave={(e) => e.target.style.backgroundColor = 'var(--sand-600)'}
+                  >
+                    {couponLoading ? 'Applying...' : 'Apply'}
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleRemoveCoupon}
+                    style={{
+                      padding: '0.7rem 1.5rem',
+                      border: 'none',
+                      borderRadius: '10px',
+                      backgroundColor: '#e74c3c',
+                      color: 'white',
+                      fontSize: '0.95rem',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s ease'
+                    }}
+                    onMouseEnter={(e) => e.target.style.backgroundColor = '#c0392b'}
+                    onMouseLeave={(e) => e.target.style.backgroundColor = '#e74c3c'}
+                  >
+                    Remove
+                  </button>
+                )}
               </div>
               {appliedCoupon && (
                 <div style={{
                   marginTop: '0.8rem',
-                  padding: '0.6rem 1rem',
+                  padding: '0.8rem 1rem',
                   backgroundColor: '#d4edda',
                   border: '1px solid #c3e6cb',
                   borderRadius: '8px',
                   color: '#155724',
                   fontSize: '0.9rem'
                 }}>
-                  ✓ Coupon "{appliedCoupon.code}" applied! {appliedCoupon.discount}% discount
+                  <div style={{ fontWeight: '600', marginBottom: '0.3rem' }}>
+                    ✓ Coupon "{appliedCoupon.code}" Applied!
+                  </div>
+                  <div style={{ fontSize: '0.85rem' }}>
+                    {appliedCoupon.description}
+                  </div>
+                  <div style={{ fontSize: '0.85rem', marginTop: '0.3rem' }}>
+                    Discount: ₹{Math.round(appliedCoupon.discount)}
+                  </div>
+                  {appliedCoupon.applicableItems && appliedCoupon.applicableItems.length > 0 && (
+                    <div style={{ fontSize: '0.8rem', marginTop: '0.3rem', color: '#0c5460' }}>
+                      Applied to {appliedCoupon.applicableItems.length} item(s)
+                    </div>
+                  )}
                 </div>
               )}
-              <p style={{
-                color: 'var(--sand-600)',
-                fontSize: '0.85rem',
-                marginTop: '0.8rem',
-                marginBottom: 0
-              }}>
-                Try code: <strong>VAMANA10</strong> for 10% off
-              </p>
+              
+              {/* Available Coupons */}
+              {coupons && coupons.length > 0 && !appliedCoupon && (
+                <div style={{ marginTop: '1rem' }}>
+                  <p style={{
+                    color: 'var(--sand-700)',
+                    fontSize: '0.85rem',
+                    fontWeight: '600',
+                    marginBottom: '0.5rem'
+                  }}>
+                    Available Coupons:
+                  </p>
+                  {coupons.slice(0, 3).map((coupon) => (
+                    <div
+                      key={coupon._id}
+                      onClick={() => setCouponCode(coupon.code)}
+                      style={{
+                        padding: '0.6rem 0.8rem',
+                        backgroundColor: 'var(--sand-100)',
+                        border: '1px dashed var(--sand-500)',
+                        borderRadius: '6px',
+                        marginBottom: '0.5rem',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = 'var(--sand-300)';
+                        e.currentTarget.style.borderColor = 'var(--sand-600)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = 'var(--sand-100)';
+                        e.currentTarget.style.borderColor = 'var(--sand-500)';
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ 
+                          color: 'var(--sand-900)', 
+                          fontSize: '0.9rem', 
+                          fontWeight: '700',
+                          fontFamily: 'monospace'
+                        }}>
+                          {coupon.code}
+                        </span>
+                        <span style={{ 
+                          color: '#27ae60', 
+                          fontSize: '0.85rem', 
+                          fontWeight: '600' 
+                        }}>
+                          {coupon.discountType === 'percentage' 
+                            ? `${coupon.discountValue}% OFF` 
+                            : `₹${coupon.discountValue} OFF`}
+                        </span>
+                      </div>
+                      <div style={{ 
+                        color: 'var(--sand-600)', 
+                        fontSize: '0.75rem',
+                        marginTop: '0.2rem'
+                      }}>
+                        {coupon.description}
+                      </div>
+                      {coupon.minPurchase > 0 && (
+                        <div style={{ 
+                          color: 'var(--sand-600)', 
+                          fontSize: '0.7rem',
+                          marginTop: '0.2rem'
+                        }}>
+                          Min. purchase: ₹{coupon.minPurchase}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
@@ -408,16 +564,16 @@ export default function Cart() {
               <div style={{ marginBottom: '1.5rem' }}>
                 <div className="d-flex justify-content-between mb-2">
                   <span style={{ color: 'var(--sand-700)', fontSize: '0.95rem' }}>Subtotal</span>
-                  <span style={{ color: 'var(--sand-900)', fontSize: '0.95rem', fontWeight: '600' }}>₹{subtotal}</span>
+                  <span style={{ color: 'var(--sand-900)', fontSize: '0.95rem', fontWeight: '600' }}>₹{Math.round(subtotal)}</span>
                 </div>
                 <div className="d-flex justify-content-between mb-2">
                   <span style={{ color: 'var(--sand-700)', fontSize: '0.95rem' }}>Savings</span>
-                  <span style={{ color: '#27ae60', fontSize: '0.95rem', fontWeight: '600' }}>-₹{discount}</span>
+                  <span style={{ color: '#27ae60', fontSize: '0.95rem', fontWeight: '600' }}>-₹{Math.round(discount)}</span>
                 </div>
                 {appliedCoupon && (
                   <div className="d-flex justify-content-between mb-2">
                     <span style={{ color: 'var(--sand-700)', fontSize: '0.95rem' }}>Coupon Discount</span>
-                    <span style={{ color: '#27ae60', fontSize: '0.95rem', fontWeight: '600' }}>-₹{couponDiscount.toFixed(0)}</span>
+                    <span style={{ color: '#27ae60', fontSize: '0.95rem', fontWeight: '600' }}>-₹{Math.round(couponDiscount)}</span>
                   </div>
                 )}
                 <div className="d-flex justify-content-between mb-2">
@@ -429,7 +585,7 @@ export default function Cart() {
                 <hr style={{ borderColor: 'var(--sand-400)', margin: '1rem 0' }} />
                 <div className="d-flex justify-content-between">
                   <span style={{ color: 'var(--sand-900)', fontSize: '1.2rem', fontWeight: '700' }}>Total</span>
-                  <span style={{ color: 'var(--sand-900)', fontSize: '1.2rem', fontWeight: '700' }}>₹{total.toFixed(0)}</span>
+                  <span style={{ color: 'var(--sand-900)', fontSize: '1.2rem', fontWeight: '700' }}>₹{Math.round(total)}</span>
                 </div>
               </div>
 
@@ -477,7 +633,7 @@ export default function Cart() {
                       Free Delivery
                     </div>
                     <div style={{ fontSize: '0.8rem', color: 'var(--sand-700)' }}>
-                      On orders above ₹999
+                      On orders above ₹2000
                     </div>
                   </div>
                 </div>
@@ -504,7 +660,7 @@ export default function Cart() {
                   fontSize: '0.85rem',
                   color: '#856404'
                 }}>
-                  💡 Add ₹{999 - subtotal} more to get FREE delivery!
+                  💡 Add ₹{Math.ceil(2000 - subtotal)} more to get FREE delivery!
                 </div>
               )}
             </div>

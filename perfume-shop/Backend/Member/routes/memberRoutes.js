@@ -7,6 +7,26 @@ const limitedOfferController = require('../controllers/limitedOfferController');
 const saleController = require('../controllers/saleController');
 const bannerController = require('../controllers/bannerController');
 const reviewController = require('../controllers/reviewController');
+const themeController = require('../../Admin/controllers/themeController');
+const orderController =require("../controllers/orderController");
+const paymentController =require("../controllers/paymentController");
+
+// Import routes
+const authRoutes = require('./authRoutes');
+const cartRoutes = require('./cartRoutes');
+const couponRoutes = require('./couponRoutes');
+
+// ============ AUTH ROUTES ============
+router.use('/auth', authRoutes);
+
+// ============ CART ROUTES ============
+router.use('/cart', cartRoutes);
+
+// ============ COUPON ROUTES ============
+router.use('/coupons', couponRoutes);
+
+// ============ THEME ROUTES (Public) ============
+router.get('/theme/active', themeController.getActiveTheme);
 
 // ============ PRODUCT ROUTES ============
 // Get featured products (must be before /:id route)
@@ -140,6 +160,11 @@ router.get('/reviews', reviewController.getAllReviews);
 
 // Get single review by ID
 router.get('/reviews/:id', reviewController.getReviewById);
+ // ORDER CREATE
+router.post("/create-order", orderController.createOrder);
+
+// PAYMENT VERIFY
+router.post("/verify-payment", paymentController.verifyPayment);
 
 // ============ HEALTH CHECK ============
 router.get('/health', (req, res) => {

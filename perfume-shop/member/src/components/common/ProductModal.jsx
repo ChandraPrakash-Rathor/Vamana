@@ -1,10 +1,16 @@
 import { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faStar, faShoppingCart, faTimes, faCheck } from '@fortawesome/free-solid-svg-icons';
+import { addToCart } from '../../redux/apis/CartApi';
+import { toast } from 'react-toastify';
 
 export default function ProductModal({ product, isOpen, onClose }) {
+  const dispatch = useDispatch();
+  const { isAuthenticated } = useSelector(state => state.AuthSlice);
+  
   const benefits = [
     'Long-lasting fragrance',
     'Premium quality ingredients',
@@ -46,6 +52,39 @@ export default function ProductModal({ product, isOpen, onClose }) {
     volume: product.volume,
     stock: product.stock,
     status: product.status
+  };
+
+  const handleAddToCart = async () => {
+    if (productData.status === 'out-of-stock') {
+      return;
+    }
+
+    if (!isAuthenticated) {
+      // Store pending item and show login modal
+      sessionStorage.setItem('pendingCartItem', JSON.stringify({
+        productId: productData.id,
+        quantity: 1
+      }));
+      window.openAuthModal?.();
+      onClose();
+      return;
+    }
+
+    try {
+      const result = await dispatch(addToCart({ 
+        productId: productData.id, 
+        quantity: 1 
+      }));
+      
+      if (result.payload?.success) {
+        toast.success('Added to cart!');
+        onClose();
+      } else {
+        toast.error(result.payload?.message || 'Failed to add to cart');
+      }
+    } catch (error) {
+      toast.error('Failed to add to cart');
+    }
   };
 
   // Format category display for men's products
@@ -356,14 +395,7 @@ export default function ProductModal({ product, isOpen, onClose }) {
                   View Details
                 </Link>
                 <button
-                  onClick={() => {
-                    if (productData.status === 'out-of-stock') {
-                      alert('This product is currently out of stock');
-                    } else {
-                      alert('Added to cart!');
-                      onClose();
-                    }
-                  }}
+                  onClick={handleAddToCart}
                   disabled={productData.status === 'out-of-stock'}
                   style={{
                     flex: 1,

@@ -52,7 +52,7 @@ export default function EditLimitedOfferModal({ isOpen, onClose, offer }) {
 
   // Prefill form when offer changes
   useEffect(() => {
-    if (offer && isOpen && productOptions.length > 0) {
+    if (offer && isOpen && productData && productData.length > 0) {
       // Convert date strings to YYYY-MM-DD format
       const parseDate = (dateStr) => {
         const date = new Date(dateStr);
@@ -97,7 +97,7 @@ export default function EditLimitedOfferModal({ isOpen, onClose, offer }) {
       console.log('🔍 Edit modal - Product ID:', productId);
       console.log('🔍 Edit modal - Selected product:', selectedProductOption);
     }
-  }, [offer, isOpen, productOptions, reset]);
+  }, [offer, isOpen, productData, reset]);
 
   // Reset when modal closes
   useEffect(() => {

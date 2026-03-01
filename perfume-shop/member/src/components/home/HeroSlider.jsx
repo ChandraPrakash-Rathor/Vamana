@@ -88,19 +88,25 @@ export default function HeroSlider() {
                     <div className="col-lg-6 mb-5 mb-lg-0 px-2 px-sm-3 px-md-4 px-lg-3">
                       {/* Brand Badge */}
                       <div className="mb-3 mb-md-4">
-                        <span 
-                          className="px-2 px-sm-3 py-2 rounded-pill d-inline-block"
+                        <div 
+                          className="px-3 px-sm-4 py-2 rounded-pill mt-4 mt-lg-0"
                           style={{
                             border: `2px solid var(--sand-700)`,
                             color: 'var(--sand-800)',
-                            fontSize: 'clamp(0.65rem, 1.8vw, 0.85rem)',
+                            fontSize: 'clamp(0.7rem, 2vw, 0.9rem)',
                             fontWeight: '500',
-                            maxWidth: '95%',
-                            textAlign: 'center'
+                            maxWidth: '100%',
+                            width: 'fit-content',
+                            textAlign: 'center',
+                            wordBreak: 'break-word',
+                            overflowWrap: 'break-word',
+                            whiteSpace: 'normal',
+                            lineHeight: '1.5',
+                            display: 'inline-block'
                           }}
                         >
                           {banner.topBadge}
-                        </span>
+                        </div>
                       </div>
 
                       {/* Main Heading */}
@@ -133,18 +139,24 @@ export default function HeroSlider() {
                       {/* Bottom Badge */}
                       {banner.bottomBadge && (
                         <div>
-                          <span 
-                            className="px-2 px-sm-3 py-2 rounded-pill d-inline-block"
+                          <div 
+                            className="px-3 px-sm-4 py-2 rounded-pill mt-4 mt-lg-0"
                             style={{
                               border: `2px solid var(--sand-700)`,
                               color: 'var(--sand-800)',
-                              fontSize: 'clamp(0.65rem, 1.8vw, 0.85rem)',
-                              maxWidth: '95%',
-                              textAlign: 'center'
+                              fontSize: 'clamp(0.7rem, 2vw, 0.9rem)',
+                              maxWidth: '100%',
+                              width: 'fit-content',
+                              textAlign: 'center',
+                              wordBreak: 'break-word',
+                              overflowWrap: 'break-word',
+                              whiteSpace: 'normal',
+                              lineHeight: '1.5',
+                              display: 'inline-block'
                             }}
                           >
                             {banner.bottomBadge}
-                          </span>
+                          </div>
                         </div>
                       )}
                     </div>
@@ -421,12 +433,19 @@ export default function HeroSlider() {
                       {/* Top Badge */}
                       <div className="mb-3 mb-md-4">
                         <div
-                          className="d-inline-block px-2 px-sm-3 py-2 rounded-pill"
+                          className="d-inline-block px-3 px-sm-4 py-2 rounded-pill mt-4 mt-lg-0"
                           style={{
                             backgroundColor: 'var(--sand-400)',
                             color: 'var(--sand-900)',
-                            fontSize: 'clamp(0.65rem, 1.8vw, 0.85rem)',
-                            fontWeight: '600'
+                            fontSize: 'clamp(0.7rem, 2vw, 0.9rem)',
+                            fontWeight: '600',
+                            maxWidth: '100%',
+                            width: 'fit-content',
+                            textAlign: 'center',
+                            wordBreak: 'break-word',
+                            overflowWrap: 'break-word',
+                            whiteSpace: 'normal',
+                            lineHeight: '1.5'
                           }}
                         >
                           {banner.topBadge}
