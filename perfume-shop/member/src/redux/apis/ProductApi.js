@@ -2,7 +2,7 @@ import { createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 import { baseUrl } from './config';
 
-// Get all products for home page
+
 export const GetProducts = createAsyncThunk(
   'GetProducts',
   async () => {
@@ -20,7 +20,7 @@ export const GetProducts = createAsyncThunk(
   }
 );
 
-// Get featured products
+
 export const GetFeaturedProducts = createAsyncThunk(
   'GetFeaturedProducts',
   async () => {
@@ -38,7 +38,7 @@ export const GetFeaturedProducts = createAsyncThunk(
   }
 );
 
-// Get bestseller products
+
 export const GetBestsellerProducts = createAsyncThunk(
   'GetBestsellerProducts',
   async () => {
@@ -56,7 +56,7 @@ export const GetBestsellerProducts = createAsyncThunk(
   }
 );
 
-// Get top rated products (3+ reviews)
+
 export const GetTopRatedProducts = createAsyncThunk(
   'GetTopRatedProducts',
   async (limit = 8) => {
@@ -74,7 +74,7 @@ export const GetTopRatedProducts = createAsyncThunk(
   }
 );
 
-// Get product by ID
+
 export const GetProductById = createAsyncThunk(
   'GetProductById',
   async (id) => {
@@ -92,7 +92,7 @@ export const GetProductById = createAsyncThunk(
   }
 );
 
-// Get products by category
+
 export const GetProductsByCategory = createAsyncThunk(
   'GetProductsByCategory',
   async (category) => {

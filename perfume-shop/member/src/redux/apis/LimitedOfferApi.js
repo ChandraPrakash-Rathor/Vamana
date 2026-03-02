@@ -2,7 +2,7 @@ import { createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 import { baseUrl } from './config';
 
-// Get all active limited offers
+
 export const GetActiveLimitedOffers = createAsyncThunk(
   'GetActiveLimitedOffers',
   async () => {
@@ -20,7 +20,7 @@ export const GetActiveLimitedOffers = createAsyncThunk(
   }
 );
 
-// Get limited offer by ID
+
 export const GetLimitedOfferById = createAsyncThunk(
   'GetLimitedOfferById',
   async (id) => {

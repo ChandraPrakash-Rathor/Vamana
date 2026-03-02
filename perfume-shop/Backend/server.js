@@ -10,13 +10,14 @@ connectDB();
 const app = express();
 app.use("/uploads", express.static("uploads"));
 
-app.use(
-  cors({
-    origin: true, // Allow all origins
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    credentials: true,
-  })
-);
+app.use(cors({
+  origin: [
+    "https://vamana.store",
+    "https://admin.vamana.store",
+    "http://localhost:3000"
+  ],
+  credentials: true
+}));
 app.use(express.json());
 
 // Routes
