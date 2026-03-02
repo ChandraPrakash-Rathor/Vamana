@@ -11,12 +11,10 @@ const app = express();
 app.use("/uploads", express.static("uploads"));
 
 app.use(cors({
-  origin: [
-    "https://vamana.store",
-    "https://admin.vamana.store",
-    "http://localhost:3000"
-  ],
-  credentials: true
+  origin: "*",          
+  methods: ["GET","POST","PUT","DELETE","OPTIONS"],
+  allowedHeaders: ["Content-Type","Authorization","X-Requested-With","Accept"],
+  credentials: true     
 }));
 app.use(express.json());
 
@@ -24,13 +22,13 @@ app.use(express.json());
 app.use("/api/admin", require("./Admin/routes/adminRoutes"));
 app.use("/api/member", require("./Member/routes/memberRoutes"));
 
-// Initialize cron jobs for auto status updates
+
 initCronJobs();
 
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
-  console.log(`✅ Server running on http://localhost:${PORT}`);
+  console.log(`✅ Server running on http://localhost:${PORT}`); 
   console.log(`📋 Admin API: http://localhost:${PORT}/api/admin/health`);
   console.log(`📋 Member API: http://localhost:${PORT}/api/member/health`);
 });
