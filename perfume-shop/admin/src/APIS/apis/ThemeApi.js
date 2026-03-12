@@ -1,9 +1,11 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 import Cookies from 'js-cookie';
+import { baseUrl } from './config';
 
-const API_URL = 'https://admin.vamana.store/api/admin/themes';
+// const API_URL = 'https://admin.vamana.store/api/admin/themes';
 
+const API_URL = `${baseUrl}themes`;
 // Get token from Cookies (admin uses cookies, not localStorage)
 const getAuthToken = () => {
   return Cookies.get('authToken');

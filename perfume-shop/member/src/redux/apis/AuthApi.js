@@ -11,13 +11,8 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('memberToken');
-    console.log('Axios Interceptor - Token from localStorage:', token); // Debug
-    console.log('Axios Interceptor - Request URL:', config.url); // Debug
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
-      console.log('Axios Interceptor - Authorization header set:', config.headers.Authorization); // Debug
-    } else {
-      console.log('Axios Interceptor - No token found in localStorage'); // Debug
     }
     return config;
   },
@@ -31,7 +26,6 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      console.log('401 Unauthorized - but NOT clearing localStorage to prevent race conditions');
       // Don't automatically clear localStorage - let the app handle it
       // This prevents race conditions where token is being set while a request is in flight
       // window.dispatchEvent(new Event('unauthorized'));

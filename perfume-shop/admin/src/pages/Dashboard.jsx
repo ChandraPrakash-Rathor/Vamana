@@ -7,60 +7,102 @@ import {
   faArrowTrendUp,
   faClock
 } from '@fortawesome/free-solid-svg-icons';
+import { useState, useEffect } from 'react';
+import { getDashboardStats } from '../APIS/apis/DashboardApi';
+import { toast } from 'react-toastify';
+import { useNavigate } from 'react-router-dom';
 
 export default function Dashboard() {
-  const stats = [
+  const [stats, setStats] = useState(null);
+  const [recentOrders, setRecentOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const fetchDashboardData = async () => {
+    try {
+      const data = await getDashboardStats();
+      if (data.success) {
+        setStats(data.stats);
+        setRecentOrders(data.recentOrders);
+      }
+    } catch (error) {
+      toast.error('Failed to load dashboard data');
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const statsCards = stats ? [
     {
       title: 'Total Revenue',
-      value: '₹2,45,890',
-      change: '+12.5%',
+      value: `₹${stats.totalRevenue.toLocaleString()}`,
+      change: stats.revenueChange,
       icon: faRupeeSign,
       gradient: 'linear-gradient(135deg, #28a745 0%, #20c997 100%)',
       bgGradient: 'linear-gradient(135deg, rgba(40, 167, 69, 0.1) 0%, rgba(32, 201, 151, 0.1) 100%)'
     },
     {
       title: 'Total Orders',
-      value: '1,234',
-      change: '+8.2%',
+      value: stats.totalOrders.toString(),
+      change: stats.ordersChange,
       icon: faShoppingCart,
       gradient: 'linear-gradient(135deg, #007bff 0%, #0056b3 100%)',
       bgGradient: 'linear-gradient(135deg, rgba(0, 123, 255, 0.1) 0%, rgba(0, 86, 179, 0.1) 100%)'
     },
     {
       title: 'Total Products',
-      value: '156',
-      change: '+3',
+      value: stats.totalProducts.toString(),
+      change: stats.productsChange,
       icon: faBox,
       gradient: 'linear-gradient(135deg, #ffc107 0%, #ff9800 100%)',
       bgGradient: 'linear-gradient(135deg, rgba(255, 193, 7, 0.1) 0%, rgba(255, 152, 0, 0.1) 100%)'
     },
     {
       title: 'Total Users',
-      value: '892',
-      change: '+15.3%',
+      value: stats.totalUsers.toString(),
+      change: stats.usersChange,
       icon: faUsers,
       gradient: 'linear-gradient(135deg, #17a2b8 0%, #138496 100%)',
       bgGradient: 'linear-gradient(135deg, rgba(23, 162, 184, 0.1) 0%, rgba(19, 132, 150, 0.1) 100%)'
     }
-  ];
-
-  const recentOrders = [
-    { id: 'VN001234', customer: 'Rahul Sharma', product: 'Eternal Rose', amount: '₹2,499', status: 'Delivered', date: '2024-02-15' },
-    { id: 'VN001235', customer: 'Priya Patel', product: 'Midnight Oud', amount: '₹3,999', status: 'Shipped', date: '2024-02-16' },
-    { id: 'VN001236', customer: 'Amit Kumar', product: 'Ocean Breeze', amount: '₹1,999', status: 'Processing', date: '2024-02-17' },
-    { id: 'VN001237', customer: 'Sneha Reddy', product: 'Golden Amber', amount: '₹2,799', status: 'Pending', date: '2024-02-17' },
-    { id: 'VN001238', customer: 'Vikram Singh', product: 'Royal Musk', amount: '₹4,499', status: 'Delivered', date: '2024-02-17' }
-  ];
+  ] : [];
 
   const getStatusColor = (status) => {
-    switch (status) {
-      case 'Delivered': return '#28a745';
-      case 'Shipped': return '#007bff';
-      case 'Processing': return '#ffc107';
-      case 'Pending': return '#dc3545';
-      default: return '#6c757d';
-    }
+    const statusMap = {
+      'delivered': '#28a745',
+      'shipped': '#007bff',
+      'processing': '#ffc107',
+      'ordered': '#dc3545',
+      'out_for_delivery': '#17a2b8'
+    };
+    return statusMap[status] || '#6c757d';
   };
+
+  const getStatusLabel = (status) => {
+    const labels = {
+      'ordered': 'Ordered',
+      'processing': 'Processing',
+      'shipped': 'Shipped',
+      'out_for_delivery': 'Out for Delivery',
+      'delivered': 'Delivered'
+    };
+    return labels[status] || status;
+  };
+
+  if (loading) {
+    return (
+      <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div className="spinner-border" style={{ color: 'var(--sand-600)', width: '3rem', height: '3rem' }} role="status">
+          <span className="visually-hidden">Loading...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -85,7 +127,7 @@ export default function Dashboard() {
 
       {/* Stats Cards */}
       <div className="row g-3 g-md-4 mb-4 mb-md-5">
-        {stats.map((stat, index) => (
+        {statsCards.map((stat, index) => (
           <div 
             key={index} 
             className="col-6 col-lg-3"
@@ -194,7 +236,9 @@ export default function Dashboard() {
               Latest transactions from your store
             </p>
           </div>
-          <button className="btn btn-primary px-3 px-md-4 py-2" style={{
+          <button 
+            onClick={() => navigate('/orders')}
+            className="btn btn-primary px-3 px-md-4 py-2" style={{
             borderRadius: '12px',
             background: 'linear-gradient(135deg, var(--sand-600) 0%, var(--sand-700) 100%)',
             border: 'none',
@@ -247,51 +291,63 @@ export default function Dashboard() {
               </tr>
             </thead>
             <tbody>
-              {recentOrders.map((order, index) => (
-                <tr key={index} className="border-0" style={{
-                  backgroundColor: 'var(--sand-100)',
-                  cursor: 'pointer',
-                  animation: `fadeIn 0.5s ease-out ${index * 0.1}s backwards`
-                }}>
-                  <td className="px-3 py-3 fw-bold font-monospace" style={{
-                    color: 'var(--sand-900)',
-                    fontSize: 'clamp(0.75rem, 1.5vw, 0.9rem)',
-                    borderRadius: '12px 0 0 12px'
-                  }}>{order.id}</td>
-                  <td className="px-3 py-3 d-none d-md-table-cell" style={{
-                    color: 'var(--sand-800)',
-                    fontSize: 'clamp(0.8rem, 1.5vw, 0.95rem)',
-                    fontWeight: '500'
-                  }}>{order.customer}</td>
-                  <td className="px-3 py-3" style={{
-                    color: 'var(--sand-800)',
-                    fontSize: 'clamp(0.8rem, 1.5vw, 0.95rem)'
-                  }}>{order.product}</td>
-                  <td className="px-3 py-3 fw-bold" style={{
-                    color: 'var(--sand-900)',
-                    fontSize: 'clamp(0.85rem, 1.5vw, 1rem)'
-                  }}>{order.amount}</td>
-                  <td className="px-3 py-3">
-                    <span className="badge rounded-pill px-2 px-md-3 py-2 text-uppercase fw-bold" style={{
-                      fontSize: 'clamp(0.65rem, 1.2vw, 0.8rem)',
-                      backgroundColor: `${getStatusColor(order.status)}20`,
-                      color: getStatusColor(order.status),
-                      letterSpacing: '0.5px',
-                      border: `2px solid ${getStatusColor(order.status)}40`
-                    }}>
-                      {order.status}
-                    </span>
-                  </td>
-                  <td className="px-3 py-3 d-none d-lg-table-cell" style={{
-                    color: 'var(--sand-700)',
-                    fontSize: 'clamp(0.75rem, 1.5vw, 0.9rem)',
-                    borderRadius: '0 12px 12px 0'
+              {recentOrders.length > 0 ? (
+                recentOrders.map((order, index) => (
+                  <tr key={index} className="border-0" style={{
+                    backgroundColor: 'var(--sand-100)',
+                    cursor: 'pointer',
+                    animation: `fadeIn 0.5s ease-out ${index * 0.1}s backwards`
                   }}>
-                    <FontAwesomeIcon icon={faClock} className="me-2" style={{ color: 'var(--sand-600)' }} />
-                    {order.date}
+                    <td className="px-3 py-3 fw-bold font-monospace" style={{
+                      color: 'var(--sand-900)',
+                      fontSize: 'clamp(0.75rem, 1.5vw, 0.9rem)',
+                      borderRadius: '12px 0 0 12px'
+                    }}>{order.id}</td>
+                    <td className="px-3 py-3 d-none d-md-table-cell" style={{
+                      color: 'var(--sand-800)',
+                      fontSize: 'clamp(0.8rem, 1.5vw, 0.95rem)',
+                      fontWeight: '500'
+                    }}>{order.customer}</td>
+                    <td className="px-3 py-3" style={{
+                      color: 'var(--sand-800)',
+                      fontSize: 'clamp(0.8rem, 1.5vw, 0.95rem)'
+                    }}>{order.product}</td>
+                    <td className="px-3 py-3 fw-bold" style={{
+                      color: 'var(--sand-900)',
+                      fontSize: 'clamp(0.85rem, 1.5vw, 1rem)'
+                    }}>₹{order.amount.toLocaleString()}</td>
+                    <td className="px-3 py-3">
+                      <span className="badge rounded-pill px-2 px-md-3 py-2 text-uppercase fw-bold" style={{
+                        fontSize: 'clamp(0.65rem, 1.2vw, 0.8rem)',
+                        backgroundColor: `${getStatusColor(order.status)}20`,
+                        color: getStatusColor(order.status),
+                        letterSpacing: '0.5px',
+                        border: `2px solid ${getStatusColor(order.status)}40`
+                      }}>
+                        {getStatusLabel(order.status)}
+                      </span>
+                    </td>
+                    <td className="px-3 py-3 d-none d-lg-table-cell" style={{
+                      color: 'var(--sand-700)',
+                      fontSize: 'clamp(0.75rem, 1.5vw, 0.9rem)',
+                      borderRadius: '0 12px 12px 0'
+                    }}>
+                      <FontAwesomeIcon icon={faClock} className="me-2" style={{ color: 'var(--sand-600)' }} />
+                      {new Date(order.date).toLocaleDateString('en-IN', {
+                        day: '2-digit',
+                        month: 'short',
+                        year: 'numeric'
+                      })}
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="6" className="text-center py-5" style={{ color: 'var(--sand-600)' }}>
+                    No orders yet
                   </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>

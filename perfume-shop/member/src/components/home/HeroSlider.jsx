@@ -79,7 +79,292 @@ export default function HeroSlider() {
               flexShrink: 0
             }}
           >
-            {banner.type === 'circle' ? (
+            {banner.type === 'modern' ? (
+              // Modern Creative Design Slide - Inspired by organic shapes
+              <div style={{ minHeight: '80vh', backgroundColor: 'var(--sand-200)' }} className="d-flex align-items-center position-relative overflow-hidden">
+                {/* Large Decorative Circle - Top Right */}
+                <div
+                  className="position-absolute d-none d-lg-block"
+                  style={{
+                    top: '-100px',
+                    right: '-100px',
+                    width: '400px',
+                    height: '400px',
+                    borderRadius: '50%',
+                    background: 'linear-gradient(135deg, rgba(226, 211, 166, 0.3), rgba(209, 181, 115, 0.4))',
+                    border: '2px solid var(--sand-500)',
+                    zIndex: 0
+                  }}
+                />
+
+                {/* Medium Circle - Bottom Right */}
+                <div
+                  className="position-absolute d-none d-lg-block"
+                  style={{
+                    bottom: '10%',
+                    right: '5%',
+                    width: '200px',
+                    height: '200px',
+                    borderRadius: '50%',
+                    backgroundColor: 'var(--sand-400)',
+                    opacity: 0.4,
+                    zIndex: 0
+                  }}
+                />
+
+                {/* Small Accent Circle */}
+                <div
+                  className="position-absolute d-none d-lg-block"
+                  style={{
+                    top: '20%',
+                    right: '12%',
+                    width: '100px',
+                    height: '100px',
+                    borderRadius: '50%',
+                    backgroundColor: 'var(--sand-600)',
+                    opacity: 0.6,
+                    zIndex: 0
+                  }}
+                />
+
+                {/* Decorative Dots - Left Side */}
+                <div className="position-absolute d-none d-md-flex flex-column gap-3" style={{ left: '30px', top: '50%', transform: 'translateY(-50%)', zIndex: 1 }}>
+                  <div style={{ width: '18px', height: '18px', borderRadius: '50%', backgroundColor: 'var(--sand-700)', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }} />
+                  <div style={{ width: '18px', height: '18px', borderRadius: '50%', backgroundColor: 'var(--sand-700)', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }} />
+                  <div style={{ width: '18px', height: '18px', borderRadius: '50%', backgroundColor: 'var(--sand-700)', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }} />
+                  <div style={{ width: '18px', height: '18px', borderRadius: '50%', backgroundColor: 'var(--sand-700)', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }} />
+                </div>
+
+                {/* Diagonal Lines Decoration - Top Right */}
+                <div className="position-absolute d-none d-lg-block" style={{ top: '12%', right: '18%', zIndex: 1 }}>
+                  <div style={{ width: '80px', height: '3px', backgroundColor: 'var(--sand-700)', marginBottom: '12px', transform: 'rotate(-45deg)', opacity: 0.7 }} />
+                  <div style={{ width: '60px', height: '3px', backgroundColor: 'var(--sand-700)', transform: 'rotate(-45deg)', opacity: 0.7 }} />
+                </div>
+
+                <div className="container px-2 px-sm-3" style={{ position: 'relative', zIndex: 2 }}>
+                  <div className="row align-items-center">
+                    {/* Left Side - Product Image with Modern Frame */}
+                    <div className="col-lg-6 mb-5 mb-lg-0 px-4 px-sm-5">
+                      <div className="position-relative d-flex justify-content-center" style={{ padding: '0 10px' }}>
+                        {/* Main Image Container with Shadow */}
+                        <div
+                          className="position-relative"
+                          style={{
+                            width: 'min(340px, 75vw)',
+                            height: 'min(420px, 80vw)',
+                            borderRadius: '25px',
+                            overflow: 'visible'
+                          }}
+                        >
+                          {/* Image with Border */}
+                          <div
+                            style={{
+                              width: '100%',
+                              height: '100%',
+                              border: '5px solid var(--sand-700)',
+                              borderRadius: '25px',
+                              overflow: 'hidden',
+                              boxShadow: window.innerWidth < 768 ? '10px 10px 0px rgba(179, 135, 63, 0.25)' : 'clamp(15px, 4vw, 25px) clamp(15px, 4vw, 25px) 0px rgba(179, 135, 63, 0.25)',
+                              position: 'relative',
+                              backgroundColor: 'white'
+                            }}
+                          >
+                            {banner.image ? (
+                              <img
+                                src={banner.image}
+                                alt={banner.title}
+                                style={{
+                                  width: '100%',
+                                  height: '100%',
+                                  objectFit: 'cover',
+                                  objectPosition: 'center'
+                                }}
+                              />
+                            ) : (
+                              <div style={{
+                                width: '100%',
+                                height: '100%',
+                                background: 'linear-gradient(135deg, rgba(240, 233, 209, 0.5), rgba(226, 211, 166, 0.7))',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                              }}>
+                                <img
+                                  src="/product1.jpg"
+                                  alt="Perfume Collection"
+                                  style={{
+                                    width: '80%',
+                                    height: '80%',
+                                    objectFit: 'contain'
+                                  }}
+                                />
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Decorative Badge - Bottom Left */}
+                          <div
+                            className="position-absolute d-none d-md-flex"
+                            style={{
+                              bottom: '-25px',
+                              left: '-25px',
+                              width: '140px',
+                              height: '140px',
+                              borderRadius: '50%',
+                              backgroundColor: 'var(--sand-600)',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              boxShadow: '0 8px 20px rgba(0,0,0,0.15)',
+                              zIndex: 10,
+                              border: '4px solid white'
+                            }}
+                          >
+                            <div className="text-center">
+                              <div style={{ fontSize: '2.5rem', marginBottom: '5px' }}>✨</div>
+                              <div style={{ fontSize: '0.75rem', color: 'white', fontWeight: '700', letterSpacing: '1px' }}>
+                                LUXURY
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Small Decorative Element - Top Right */}
+                          <div
+                            className="position-absolute d-none d-lg-block"
+                            style={{
+                              top: '-15px',
+                              right: '-15px',
+                              width: '60px',
+                              height: '60px',
+                              borderRadius: '50%',
+                              backgroundColor: 'var(--sand-500)',
+                              border: '3px solid white',
+                              boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                              zIndex: 10
+                            }}
+                          />
+                        </div>
+
+                        {/* Website URL - Bottom */}
+                        <div
+                          className="position-absolute d-none d-lg-block"
+                          style={{
+                            bottom: '-50px',
+                            left: '50%',
+                            transform: 'translateX(-50%)',
+                            fontSize: '0.85rem',
+                            color: 'var(--sand-800)',
+                            fontWeight: '600',
+                            letterSpacing: '0.5px',
+                            zIndex: 5
+                          }}
+                        >
+                          {banner.websiteUrl || 'www.vamanaperfumes.com'}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Right Side - Text Content */}
+                    <div className="col-lg-6 px-2 px-sm-3 px-md-4 px-lg-5">
+                      {/* Brand Logo - Top */}
+                      <div className="mb-4 d-none d-lg-block">
+                        <div style={{
+                          fontSize: '1.1rem',
+                          fontWeight: '800',
+                          color: 'var(--sand-900)',
+                          letterSpacing: '3px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '10px'
+                        }}>
+                          <span style={{ fontSize: '1.5rem' }}>⚜️</span>
+                          VAMANA
+                        </div>
+                      </div>
+
+                      {/* Top Badge */}
+                      <div className="mb-3">
+                        <div
+                          style={{
+                            color: 'var(--sand-700)',
+                            fontSize: 'clamp(0.95rem, 2vw, 1.15rem)',
+                            fontWeight: '500',
+                            fontStyle: 'italic',
+                            letterSpacing: '0.5px'
+                          }}
+                        >
+                          {banner.topBadge}
+                        </div>
+                      </div>
+
+                      {/* Main Heading */}
+                      <h1
+                        className="fw-bold mb-4"
+                        style={{
+                          color: 'var(--sand-900)',
+                          fontFamily: "'Playfair Display', serif",
+                          lineHeight: '1.1',
+                          fontSize: 'clamp(2.5rem, 7vw, 4.5rem)',
+                          whiteSpace: 'pre-line',
+                          letterSpacing: '-2px',
+                          textShadow: '2px 2px 4px rgba(0,0,0,0.05)'
+                        }}
+                      >
+                        {banner.title}
+                      </h1>
+
+                      {/* Subtitle */}
+                      <p
+                        className="mb-5"
+                        style={{
+                          color: 'var(--sand-800)',
+                          maxWidth: '480px',
+                          lineHeight: '1.8',
+                          fontSize: 'clamp(1rem, 2.5vw, 1.25rem)',
+                          fontWeight: '400'
+                        }}
+                      >
+                        {banner.subtitle}
+                      </p>
+
+                      {/* Bottom Info with Presenter */}
+                      <div className="d-flex align-items-center gap-3 flex-wrap">
+                        {banner.bottomBadge && (
+                          <div style={{
+                            padding: '12px 24px',
+                            backgroundColor: 'var(--sand-300)',
+                            borderRadius: '50px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '10px',
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.08)'
+                          }}>
+                            <span style={{ color: 'var(--sand-700)', fontSize: '0.9rem', fontWeight: '500' }}>
+                              Presented By:
+                            </span>
+                            <span style={{
+                              color: 'var(--sand-900)',
+                              fontSize: '1rem',
+                              fontWeight: '700'
+                            }}>
+                              {banner.bottomBadge}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Decorative Lines - Bottom */}
+                      <div className="d-none d-xl-block mt-5">
+                        <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+                          <div style={{ width: '60px', height: '3px', backgroundColor: 'var(--sand-700)' }} />
+                          <div style={{ width: '40px', height: '3px', backgroundColor: 'var(--sand-600)' }} />
+                          <div style={{ width: '20px', height: '3px', backgroundColor: 'var(--sand-500)' }} />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : banner.type === 'circle' ? (
               // Circle Design Slide
               <div style={{ minHeight: '80vh' }} className="d-flex align-items-center position-relative">
                 <div className="container px-2 px-sm-3">
@@ -178,7 +463,7 @@ export default function HeroSlider() {
                           →
                         </div>
 
-                        {/* Main Circle with Products */}
+                        {/* Main Square Container with Curved Border */}
                         <div 
                           className="position-relative"
                           style={{
@@ -188,12 +473,12 @@ export default function HeroSlider() {
                             maxHeight: '500px'
                           }}
                         >
-                          {/* Double Circle Border */}
+                          {/* Double Square Border with Curved Corners */}
                           <div
                             style={{
                               width: '100%',
                               height: '100%',
-                              borderRadius: '50%',
+                              borderRadius: '30px',
                               border: `3px solid var(--sand-700)`,
                               position: 'absolute',
                               top: '0',
@@ -204,7 +489,7 @@ export default function HeroSlider() {
                             style={{
                               width: '96%',
                               height: '96%',
-                              borderRadius: '50%',
+                              borderRadius: '28px',
                               border: `2px solid var(--sand-600)`,
                               position: 'absolute',
                               top: '2%',
@@ -212,12 +497,12 @@ export default function HeroSlider() {
                             }}
                           />
 
-                          {/* Inner Circle Background with Image Fill */}
+                          {/* Inner Square Background with Image Fill */}
                           <div
                             style={{
                               width: '90%',
                               height: '90%',
-                              borderRadius: '50%',
+                              borderRadius: '25px',
                               position: 'absolute',
                               top: '5%',
                               left: '5%',
@@ -257,7 +542,7 @@ export default function HeroSlider() {
                             </div>
                           </div>
 
-                          {/* Decorative Leaves - Right Side of Circle */}
+                          {/* Decorative Leaves - Right Side of Square */}
                           <img
                             src="/leaf.png"
                             alt="Leaf"

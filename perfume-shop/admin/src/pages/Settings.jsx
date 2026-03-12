@@ -2,12 +2,13 @@ import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
-  faUserPlus, faEye, faEdit, faTrash, faShieldAlt, faUserSlash, faPalette, faCheck 
+  faUserPlus, faEye, faEdit, faTrash, faShieldAlt, faUserSlash, faPalette, faCheck, faCog 
 } from '@fortawesome/free-solid-svg-icons';
 import { 
   getMe, getAllAdmins, deleteAdmin 
 } from '../APIS/apis/Authapi';
 import { getAllThemes, activateTheme } from '../APIS/apis/ThemeApi';
+import { getSiteSettings, updateSiteSettings } from '../APIS/apis/SiteSettingsApi';
 import { toast } from 'react-toastify';
 import ViewAdminModal from '../components/modals/ViewAdminModal';
 import EditAdminModal from '../components/modals/EditAdminModal';
@@ -36,10 +37,17 @@ export default function Settings() {
   const [showAddAdmin, setShowAddAdmin] = useState(false);
   const [selectedAdmin, setSelectedAdmin] = useState(null);
 
+  // Site Settings state
+  const [siteSettings, setSiteSettings] = useState(null);
+  const [logoPreview, setLogoPreview] = useState(null);
+  const [logoFile, setLogoFile] = useState(null);
+  const [settingsLoading, setSettingsLoading] = useState(false);
+
   useEffect(() => {
     fetchCurrentUser();
     fetchAllAdmins();
     fetchAllThemes();
+    fetchSiteSettings();
   }, []);
 
   const fetchCurrentUser = async () => {
@@ -82,6 +90,41 @@ export default function Settings() {
     } catch (error) {
       const errorMsg = error?.response?.data?.message || error?.message || 'Failed to load themes';
       toast.error(errorMsg);
+    }
+  };
+
+  const fetchSiteSettings = async () => {
+    try {
+      const data = await getSiteSettings();
+      setSiteSettings(data.data);
+      setLogoPreview(`http://localhost:5000${data.data.logo}`);
+    } catch (error) {
+      toast.error('Failed to load site settings');
+    }
+  };
+
+  const handleSaveSettings = async () => {
+    try {
+      setSettingsLoading(true);
+      const formData = new FormData();
+      if (logoFile) formData.append('logo', logoFile);
+      formData.append('siteName', siteSettings.siteName);
+      formData.append('tagline', siteSettings.tagline);
+      formData.append('email', siteSettings.email);
+      formData.append('phone', siteSettings.phone);
+      formData.append('address', siteSettings.address);
+      formData.append('socialLinks', JSON.stringify(siteSettings.socialLinks));
+      formData.append('footerAbout', siteSettings.footerAbout);
+      formData.append('footerCopyright', siteSettings.footerCopyright);
+      
+      await updateSiteSettings(formData);
+      toast.success('Settings updated successfully!');
+      fetchSiteSettings();
+      setLogoFile(null);
+    } catch (error) {
+      toast.error('Failed to update settings');
+    } finally {
+      setSettingsLoading(false);
     }
   };
 
@@ -239,6 +282,39 @@ export default function Settings() {
           >
             <FontAwesomeIcon icon={faPalette} />
             Theme Management
+          </button>
+
+          <button
+            onClick={() => setActiveTab('site')}
+            style={{
+              flex: 1,
+              padding: '1.2rem 2rem',
+              backgroundColor: activeTab === 'site' ? 'var(--sand-100)' : 'white',
+              border: 'none',
+              borderBottom: activeTab === 'site' ? '3px solid var(--sand-600)' : '3px solid transparent',
+              color: activeTab === 'site' ? 'var(--sand-900)' : 'var(--sand-600)',
+              fontWeight: activeTab === 'site' ? '700' : '600',
+              fontSize: '1.05rem',
+              cursor: 'pointer',
+              transition: 'all 0.3s',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.5rem'
+            }}
+            onMouseEnter={(e) => {
+              if (activeTab !== 'site') {
+                e.target.style.backgroundColor = 'var(--sand-50)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (activeTab !== 'site') {
+                e.target.style.backgroundColor = 'white';
+              }
+            }}
+          >
+            <FontAwesomeIcon icon={faCog} />
+            Site Settings
           </button>
         </div>
       </div>
@@ -756,6 +832,482 @@ export default function Settings() {
                       </div>
                     </div>
                   ))}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Site Settings Tab Content */}
+      {activeTab === 'site' && (
+        <div className="card" style={{
+          border: 'none',
+          borderRadius: '16px',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+          overflow: 'hidden'
+        }}>
+          <div style={{ padding: '2rem' }}>
+            {!siteSettings ? (
+              <div className="text-center py-5">
+                <div className="spinner-border" style={{ color: 'var(--sand-600)' }} role="status">
+                  <span className="visually-hidden">Loading...</span>
+                </div>
+                <p style={{ marginTop: '1rem', color: 'var(--sand-600)' }}>Loading settings...</p>
+              </div>
+            ) : (
+              <>
+                <div style={{ marginBottom: '2rem' }}>
+                  <h4 style={{
+                    color: 'var(--sand-900)',
+                    fontWeight: '700',
+                    marginBottom: '0.5rem'
+                  }}>
+                    Site Settings
+                  </h4>
+                  <p style={{ color: 'var(--sand-700)', marginBottom: 0 }}>
+                    Manage your site logo, contact information, and footer content
+                  </p>
+                </div>
+
+                <div className="row g-4">
+                  {/* Logo Upload */}
+                  <div className="col-12">
+                    <div style={{
+                      padding: '1.5rem',
+                      backgroundColor: 'var(--sand-50)',
+                      borderRadius: '12px',
+                      border: '2px dashed var(--sand-300)'
+                    }}>
+                      <label style={{
+                        display: 'block',
+                        fontWeight: '700',
+                        color: 'var(--sand-900)',
+                        marginBottom: '1rem',
+                        fontSize: '1rem'
+                      }}>
+                        Site Logo
+                      </label>
+                      {logoPreview && (
+                        <div style={{ marginBottom: '1rem' }}>
+                          <img 
+                            src={logoPreview} 
+                            alt="Logo Preview" 
+                            style={{
+                              maxWidth: '200px',
+                              maxHeight: '100px',
+                              objectFit: 'contain',
+                              backgroundColor: 'white',
+                              padding: '0.5rem',
+                              borderRadius: '8px',
+                              border: '1px solid var(--sand-300)'
+                            }}
+                          />
+                        </div>
+                      )}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files[0];
+                          if (file) {
+                            setLogoFile(file);
+                            setLogoPreview(URL.createObjectURL(file));
+                          }
+                        }}
+                        style={{
+                          padding: '0.75rem',
+                          border: '1px solid var(--sand-300)',
+                          borderRadius: '8px',
+                          width: '100%',
+                          backgroundColor: 'white'
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Site Name */}
+                  <div className="col-md-6">
+                    <label style={{
+                      display: 'block',
+                      fontWeight: '700',
+                      color: 'var(--sand-900)',
+                      marginBottom: '0.5rem',
+                      fontSize: '0.95rem'
+                    }}>
+                      Site Name
+                    </label>
+                    <input
+                      type="text"
+                      value={siteSettings.siteName}
+                      onChange={(e) => setSiteSettings({...siteSettings, siteName: e.target.value})}
+                      style={{
+                        width: '100%',
+                        padding: '0.75rem',
+                        border: '1px solid var(--sand-300)',
+                        borderRadius: '8px',
+                        fontSize: '1rem'
+                      }}
+                    />
+                  </div>
+
+                  {/* Tagline */}
+                  <div className="col-md-6">
+                    <label style={{
+                      display: 'block',
+                      fontWeight: '700',
+                      color: 'var(--sand-900)',
+                      marginBottom: '0.5rem',
+                      fontSize: '0.95rem'
+                    }}>
+                      Tagline
+                    </label>
+                    <input
+                      type="text"
+                      value={siteSettings.tagline}
+                      onChange={(e) => setSiteSettings({...siteSettings, tagline: e.target.value})}
+                      style={{
+                        width: '100%',
+                        padding: '0.75rem',
+                        border: '1px solid var(--sand-300)',
+                        borderRadius: '8px',
+                        fontSize: '1rem'
+                      }}
+                    />
+                  </div>
+
+                  {/* Email */}
+                  <div className="col-md-6">
+                    <label style={{
+                      display: 'block',
+                      fontWeight: '700',
+                      color: 'var(--sand-900)',
+                      marginBottom: '0.5rem',
+                      fontSize: '0.95rem'
+                    }}>
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      value={siteSettings.email}
+                      onChange={(e) => setSiteSettings({...siteSettings, email: e.target.value})}
+                      style={{
+                        width: '100%',
+                        padding: '0.75rem',
+                        border: '1px solid var(--sand-300)',
+                        borderRadius: '8px',
+                        fontSize: '1rem'
+                      }}
+                    />
+                  </div>
+
+                  {/* Phone */}
+                  <div className="col-md-6">
+                    <label style={{
+                      display: 'block',
+                      fontWeight: '700',
+                      color: 'var(--sand-900)',
+                      marginBottom: '0.5rem',
+                      fontSize: '0.95rem'
+                    }}>
+                      Phone
+                    </label>
+                    <input
+                      type="text"
+                      value={siteSettings.phone}
+                      onChange={(e) => setSiteSettings({...siteSettings, phone: e.target.value})}
+                      style={{
+                        width: '100%',
+                        padding: '0.75rem',
+                        border: '1px solid var(--sand-300)',
+                        borderRadius: '8px',
+                        fontSize: '1rem'
+                      }}
+                    />
+                  </div>
+
+                  {/* Address */}
+                  <div className="col-12">
+                    <label style={{
+                      display: 'block',
+                      fontWeight: '700',
+                      color: 'var(--sand-900)',
+                      marginBottom: '0.5rem',
+                      fontSize: '0.95rem'
+                    }}>
+                      Address
+                    </label>
+                    <input
+                      type="text"
+                      value={siteSettings.address}
+                      onChange={(e) => setSiteSettings({...siteSettings, address: e.target.value})}
+                      style={{
+                        width: '100%',
+                        padding: '0.75rem',
+                        border: '1px solid var(--sand-300)',
+                        borderRadius: '8px',
+                        fontSize: '1rem'
+                      }}
+                    />
+                  </div>
+
+                  {/* Social Links */}
+                  <div className="col-12">
+                    <h5 style={{
+                      color: 'var(--sand-900)',
+                      fontWeight: '700',
+                      marginBottom: '1rem',
+                      marginTop: '1rem'
+                    }}>
+                      Social Media Links
+                    </h5>
+                  </div>
+
+                  <div className="col-md-6">
+                    <label style={{
+                      display: 'block',
+                      fontWeight: '700',
+                      color: 'var(--sand-900)',
+                      marginBottom: '0.5rem',
+                      fontSize: '0.95rem'
+                    }}>
+                      Facebook
+                    </label>
+                    <input
+                      type="url"
+                      value={siteSettings.socialLinks.facebook}
+                      onChange={(e) => setSiteSettings({
+                        ...siteSettings, 
+                        socialLinks: {...siteSettings.socialLinks, facebook: e.target.value}
+                      })}
+                      placeholder="https://facebook.com/yourpage"
+                      style={{
+                        width: '100%',
+                        padding: '0.75rem',
+                        border: '1px solid var(--sand-300)',
+                        borderRadius: '8px',
+                        fontSize: '1rem'
+                      }}
+                    />
+                  </div>
+
+                  <div className="col-md-6">
+                    <label style={{
+                      display: 'block',
+                      fontWeight: '700',
+                      color: 'var(--sand-900)',
+                      marginBottom: '0.5rem',
+                      fontSize: '0.95rem'
+                    }}>
+                      Instagram
+                    </label>
+                    <input
+                      type="url"
+                      value={siteSettings.socialLinks.instagram}
+                      onChange={(e) => setSiteSettings({
+                        ...siteSettings, 
+                        socialLinks: {...siteSettings.socialLinks, instagram: e.target.value}
+                      })}
+                      placeholder="https://instagram.com/yourpage"
+                      style={{
+                        width: '100%',
+                        padding: '0.75rem',
+                        border: '1px solid var(--sand-300)',
+                        borderRadius: '8px',
+                        fontSize: '1rem'
+                      }}
+                    />
+                  </div>
+
+                  <div className="col-md-6">
+                    <label style={{
+                      display: 'block',
+                      fontWeight: '700',
+                      color: 'var(--sand-900)',
+                      marginBottom: '0.5rem',
+                      fontSize: '0.95rem'
+                    }}>
+                      Twitter
+                    </label>
+                    <input
+                      type="url"
+                      value={siteSettings.socialLinks.twitter}
+                      onChange={(e) => setSiteSettings({
+                        ...siteSettings, 
+                        socialLinks: {...siteSettings.socialLinks, twitter: e.target.value}
+                      })}
+                      placeholder="https://twitter.com/yourpage"
+                      style={{
+                        width: '100%',
+                        padding: '0.75rem',
+                        border: '1px solid var(--sand-300)',
+                        borderRadius: '8px',
+                        fontSize: '1rem'
+                      }}
+                    />
+                  </div>
+
+                  <div className="col-md-6">
+                    <label style={{
+                      display: 'block',
+                      fontWeight: '700',
+                      color: 'var(--sand-900)',
+                      marginBottom: '0.5rem',
+                      fontSize: '0.95rem'
+                    }}>
+                      YouTube
+                    </label>
+                    <input
+                      type="url"
+                      value={siteSettings.socialLinks.youtube}
+                      onChange={(e) => setSiteSettings({
+                        ...siteSettings, 
+                        socialLinks: {...siteSettings.socialLinks, youtube: e.target.value}
+                      })}
+                      placeholder="https://youtube.com/yourchannel"
+                      style={{
+                        width: '100%',
+                        padding: '0.75rem',
+                        border: '1px solid var(--sand-300)',
+                        borderRadius: '8px',
+                        fontSize: '1rem'
+                      }}
+                    />
+                  </div>
+
+                  <div className="col-md-6">
+                    <label style={{
+                      display: 'block',
+                      fontWeight: '700',
+                      color: 'var(--sand-900)',
+                      marginBottom: '0.5rem',
+                      fontSize: '0.95rem'
+                    }}>
+                      LinkedIn
+                    </label>
+                    <input
+                      type="url"
+                      value={siteSettings.socialLinks.linkedin}
+                      onChange={(e) => setSiteSettings({
+                        ...siteSettings, 
+                        socialLinks: {...siteSettings.socialLinks, linkedin: e.target.value}
+                      })}
+                      placeholder="https://linkedin.com/company/yourcompany"
+                      style={{
+                        width: '100%',
+                        padding: '0.75rem',
+                        border: '1px solid var(--sand-300)',
+                        borderRadius: '8px',
+                        fontSize: '1rem'
+                      }}
+                    />
+                  </div>
+
+                  {/* Footer Content */}
+                  <div className="col-12">
+                    <h5 style={{
+                      color: 'var(--sand-900)',
+                      fontWeight: '700',
+                      marginBottom: '1rem',
+                      marginTop: '1rem'
+                    }}>
+                      Footer Content
+                    </h5>
+                  </div>
+
+                  <div className="col-12">
+                    <label style={{
+                      display: 'block',
+                      fontWeight: '700',
+                      color: 'var(--sand-900)',
+                      marginBottom: '0.5rem',
+                      fontSize: '0.95rem'
+                    }}>
+                      About Text
+                    </label>
+                    <textarea
+                      value={siteSettings.footerAbout}
+                      onChange={(e) => setSiteSettings({...siteSettings, footerAbout: e.target.value})}
+                      rows="3"
+                      style={{
+                        width: '100%',
+                        padding: '0.75rem',
+                        border: '1px solid var(--sand-300)',
+                        borderRadius: '8px',
+                        fontSize: '1rem',
+                        resize: 'vertical'
+                      }}
+                    />
+                  </div>
+
+                  <div className="col-12">
+                    <label style={{
+                      display: 'block',
+                      fontWeight: '700',
+                      color: 'var(--sand-900)',
+                      marginBottom: '0.5rem',
+                      fontSize: '0.95rem'
+                    }}>
+                      Copyright Text
+                    </label>
+                    <input
+                      type="text"
+                      value={siteSettings.footerCopyright}
+                      onChange={(e) => setSiteSettings({...siteSettings, footerCopyright: e.target.value})}
+                      style={{
+                        width: '100%',
+                        padding: '0.75rem',
+                        border: '1px solid var(--sand-300)',
+                        borderRadius: '8px',
+                        fontSize: '1rem'
+                      }}
+                    />
+                  </div>
+
+                  {/* Save Button */}
+                  <div className="col-12">
+                    <button
+                      onClick={handleSaveSettings}
+                      disabled={settingsLoading}
+                      className="btn"
+                      style={{
+                        padding: '1rem 2rem',
+                        backgroundColor: 'var(--sand-600)',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '10px',
+                        fontWeight: '700',
+                        fontSize: '1.1rem',
+                        transition: 'all 0.3s',
+                        boxShadow: '0 4px 12px rgba(179, 135, 63, 0.3)',
+                        marginTop: '1rem'
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!settingsLoading) {
+                          e.target.style.backgroundColor = 'var(--sand-700)';
+                          e.target.style.transform = 'translateY(-2px)';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!settingsLoading) {
+                          e.target.style.backgroundColor = 'var(--sand-600)';
+                          e.target.style.transform = 'translateY(0)';
+                        }
+                      }}
+                    >
+                      {settingsLoading ? (
+                        <>
+                          <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                          Saving...
+                        </>
+                      ) : (
+                        <>
+                          <FontAwesomeIcon icon={faCheck} style={{ marginRight: '0.5rem' }} />
+                          Save Settings
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </div>
               </>
             )}

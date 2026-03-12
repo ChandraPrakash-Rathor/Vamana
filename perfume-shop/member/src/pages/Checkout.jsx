@@ -22,13 +22,15 @@ import {
   faPaypal 
 } from '@fortawesome/free-brands-svg-icons';
 import Breadcrumb from '../components/common/Breadcrumb';
-import { getCart } from '../redux/apis/CartApi';
+import { getCart, clearCart } from '../redux/apis/CartApi';
+import { createOrder, verifyPayment } from '../redux/apis/OrderApi';
 import { toast } from 'react-toastify';
 
 export default function Checkout() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const [paymentMethod, setPaymentMethod] = useState('cod');
+  const [paymentMethod, setPaymentMethod] = useState('razorpay');
+  const [processing, setProcessing] = useState(false);
   const { register, handleSubmit, formState: { errors } } = useForm();
   
   // Get cart and user data from Redux
@@ -53,60 +55,128 @@ export default function Checkout() {
     }
   }, [items, loading, navigate]);
 
+  // Load Razorpay script
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.async = true;
+    document.body.appendChild(script);
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, []);
+
   // Calculate totals from Redux cart items
   const subtotal = items?.reduce((sum, item) => sum + (item.price * item.quantity), 0) || 0;
   const shipping = subtotal >= 2000 ? 0 : 99; // Free shipping above ₹2000
   const tax = Math.round(subtotal * 0.18); // 18% GST
   const total = subtotal + shipping + tax;
 
+  const handleRazorpayPayment = async (orderData) => {
+    try {
+      setProcessing(true);
+      const orderResponse = await dispatch(createOrder({
+        userId: user._id || user.id,
+        products: items.map(item => ({
+          productId: item.product._id,
+          quantity: item.quantity,
+          price: item.price
+        })),
+        address: {
+          firstName: orderData.firstName,
+          lastName: orderData.lastName,
+          email: orderData.email,
+          phone: orderData.phone,
+          address: orderData.address,
+          city: orderData.city,
+          state: orderData.state,
+          pincode: orderData.pincode
+        },
+        totalAmount: total
+      })).unwrap();
+
+      const options = {
+        key: process.env.REACT_APP_RAZORPAY_KEY,
+        amount: orderResponse.amount,
+        currency: 'INR',
+        name: 'Vamana Perfumes',
+        description: 'Order Payment',
+        order_id: orderResponse.razorpayOrderId,
+        handler: async function (response) {
+          try {
+            await dispatch(verifyPayment({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature
+            })).unwrap();
+            await dispatch(clearCart());
+            toast.success('Payment successful! Order placed.');
+            navigate(`/invoice/${orderResponse.orderId}`);
+          } catch (error) {
+            toast.error('Payment verification failed');
+          }
+        },
+        prefill: {
+          name: `${orderData.firstName} ${orderData.lastName}`,
+          email: orderData.email,
+          contact: orderData.phone
+        },
+        theme: { color: '#B3873F' },
+        modal: {
+          ondismiss: function() {
+            setProcessing(false);
+            toast.info('Payment cancelled');
+          }
+        }
+      };
+      const razorpay = new window.Razorpay(options);
+      razorpay.open();
+      setProcessing(false);
+    } catch (error) {
+      setProcessing(false);
+      toast.error(error.message || 'Failed to create order');
+    }
+  };
+
+  const handleCODPayment = async (orderData) => {
+    try {
+      setProcessing(true);
+      const orderResponse = await dispatch(createOrder({
+        userId: user._id || user.id,
+        products: items.map(item => ({
+          productId: item.product._id,
+          quantity: item.quantity,
+          price: item.price
+        })),
+        address: {
+          firstName: orderData.firstName,
+          lastName: orderData.lastName,
+          email: orderData.email,
+          phone: orderData.phone,
+          address: orderData.address,
+          city: orderData.city,
+          state: orderData.state,
+          pincode: orderData.pincode
+        },
+        totalAmount: total,
+        paymentMethod: 'cod'
+      })).unwrap();
+      await dispatch(clearCart());
+      toast.success('Order placed successfully! Pay on delivery.');
+      navigate(`/invoice/${orderResponse.orderId}`);
+      setProcessing(false);
+    } catch (error) {
+      setProcessing(false);
+      toast.error(error.message || 'Failed to create order');
+    }
+  };
+
   const onSubmit = (data) => {
-    // Prepare order data
-    const orderData = {
-      // Customer info
-      customer: {
-        firstName: data.firstName,
-        lastName: data.lastName,
-        email: data.email,
-        phone: data.phone
-      },
-      // Shipping address
-      shippingAddress: {
-        address: data.address,
-        city: data.city,
-        state: data.state,
-        pincode: data.pincode
-      },
-      // Payment details
-      paymentMethod: paymentMethod,
-      paymentDetails: paymentMethod === 'card' ? {
-        cardNumber: data.cardNumber?.slice(-4), // Store only last 4 digits
-        cardName: data.cardName
-      } : paymentMethod === 'upi' ? {
-        upiId: data.upiId
-      } : null,
-      // Order summary
-      items: items.map(item => ({
-        productId: item.product._id,
-        name: item.product.name,
-        quantity: item.quantity,
-        price: item.price,
-        image: item.product.mainImage
-      })),
-      subtotal,
-      shipping,
-      tax,
-      total,
-      orderDate: new Date().toISOString()
-    };
-    
-    // Store order data in sessionStorage for invoice page
-    sessionStorage.setItem('orderData', JSON.stringify(orderData));
-    
-    // Show success message
-    toast.success('Order placed successfully!');
-    
-    // Redirect to invoice page
-    navigate('/invoice');
+    if (paymentMethod === 'razorpay') {
+      handleRazorpayPayment(data);
+    } else if (paymentMethod === 'cod') {
+      handleCODPayment(data);
+    }
   };
 
   if (loading) {
@@ -386,12 +456,12 @@ export default function Checkout() {
                 <div className="d-flex gap-3 mb-3 flex-wrap">
                   <button
                     type="button"
-                    onClick={() => setPaymentMethod('card')}
+                    onClick={() => setPaymentMethod('razorpay')}
                     style={{
                       padding: '1rem 1.5rem',
-                      border: `2px solid ${paymentMethod === 'card' ? 'var(--sand-600)' : 'var(--sand-400)'}`,
+                      border: `2px solid ${paymentMethod === 'razorpay' ? 'var(--sand-600)' : 'var(--sand-400)'}`,
                       borderRadius: '10px',
-                      backgroundColor: paymentMethod === 'card' ? 'var(--sand-100)' : 'white',
+                      backgroundColor: paymentMethod === 'razorpay' ? 'var(--sand-100)' : 'white',
                       cursor: 'pointer',
                       transition: 'all 0.3s ease',
                       flex: 1,
@@ -402,27 +472,7 @@ export default function Checkout() {
                       <FontAwesomeIcon icon={faCcVisa} /> <FontAwesomeIcon icon={faCcMastercard} />
                     </div>
                     <div style={{ fontSize: '0.9rem', fontWeight: '600', color: 'var(--sand-900)' }}>
-                      Credit/Debit Card
-                    </div>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setPaymentMethod('upi')}
-                    style={{
-                      padding: '1rem 1.5rem',
-                      border: `2px solid ${paymentMethod === 'upi' ? 'var(--sand-600)' : 'var(--sand-400)'}`,
-                      borderRadius: '10px',
-                      backgroundColor: paymentMethod === 'upi' ? 'var(--sand-100)' : 'white',
-                      cursor: 'pointer',
-                      transition: 'all 0.3s ease',
-                      flex: 1,
-                      minWidth: '150px'
-                    }}
-                  >
-                    <div style={{ fontSize: '1.5rem', marginBottom: '0.3rem' }}>💳</div>
-                    <div style={{ fontSize: '0.9rem', fontWeight: '600', color: 'var(--sand-900)' }}>
-                      UPI
+                      Razorpay
                     </div>
                   </button>
 
@@ -447,141 +497,22 @@ export default function Checkout() {
                   </button>
                 </div>
 
-                {/* Card Details */}
-                {paymentMethod === 'card' && (
-                  <div className="row g-3 mt-2">
-                    <div className="col-12">
-                      <label style={{ display: 'block', color: 'var(--sand-800)', fontSize: '0.9rem', fontWeight: '600', marginBottom: '0.5rem' }}>
-                        Card Number *
-                      </label>
-                      <input
-                        type="text"
-                        {...register('cardNumber', { 
-                          required: paymentMethod === 'card' ? 'Card number is required' : false,
-                          pattern: {
-                            value: /^[0-9\s]{13,19}$/,
-                            message: 'Please enter a valid card number'
-                          }
-                        })}
-                        placeholder="1234 5678 9012 3456"
-                        maxLength="19"
-                        style={{
-                          width: '100%',
-                          padding: '0.8rem',
-                          border: '2px solid var(--sand-400)',
-                          borderRadius: '8px',
-                          fontSize: '0.95rem',
-                          backgroundColor: 'white'
-                        }}
-                      />
-                      {errors.cardNumber && <small className="text-danger">{errors.cardNumber.message}</small>}
-                    </div>
-                    <div className="col-12">
-                      <label style={{ display: 'block', color: 'var(--sand-800)', fontSize: '0.9rem', fontWeight: '600', marginBottom: '0.5rem' }}>
-                        Cardholder Name *
-                      </label>
-                      <input
-                        type="text"
-                        {...register('cardName', { 
-                          required: paymentMethod === 'card' ? 'Cardholder name is required' : false
-                        })}
-                        placeholder="Name on card"
-                        style={{
-                          width: '100%',
-                          padding: '0.8rem',
-                          border: '2px solid var(--sand-400)',
-                          borderRadius: '8px',
-                          fontSize: '0.95rem',
-                          backgroundColor: 'white'
-                        }}
-                      />
-                      {errors.cardName && <small className="text-danger">{errors.cardName.message}</small>}
-                    </div>
-                    <div className="col-md-6">
-                      <label style={{ display: 'block', color: 'var(--sand-800)', fontSize: '0.9rem', fontWeight: '600', marginBottom: '0.5rem' }}>
-                        Expiry Date *
-                      </label>
-                      <input
-                        type="text"
-                        {...register('expiryDate', { 
-                          required: paymentMethod === 'card' ? 'Expiry date is required' : false,
-                          pattern: {
-                            value: /^(0[1-9]|1[0-2])\/([0-9]{2})$/,
-                            message: 'Please enter date in MM/YY format'
-                          }
-                        })}
-                        placeholder="MM/YY"
-                        maxLength="5"
-                        style={{
-                          width: '100%',
-                          padding: '0.8rem',
-                          border: '2px solid var(--sand-400)',
-                          borderRadius: '8px',
-                          fontSize: '0.95rem',
-                          backgroundColor: 'white'
-                        }}
-                      />
-                      {errors.expiryDate && <small className="text-danger">{errors.expiryDate.message}</small>}
-                    </div>
-                    <div className="col-md-6">
-                      <label style={{ display: 'block', color: 'var(--sand-800)', fontSize: '0.9rem', fontWeight: '600', marginBottom: '0.5rem' }}>
-                        CVV *
-                      </label>
-                      <input
-                        type="text"
-                        {...register('cvv', { 
-                          required: paymentMethod === 'card' ? 'CVV is required' : false,
-                          pattern: {
-                            value: /^[0-9]{3,4}$/,
-                            message: 'Please enter a valid CVV'
-                          }
-                        })}
-                        placeholder="123"
-                        maxLength="4"
-                        style={{
-                          width: '100%',
-                          padding: '0.8rem',
-                          border: '2px solid var(--sand-400)',
-                          borderRadius: '8px',
-                          fontSize: '0.95rem',
-                          backgroundColor: 'white'
-                        }}
-                      />
-                      {errors.cvv && <small className="text-danger">{errors.cvv.message}</small>}
-                    </div>
+                {/* Razorpay Message */}
+                {paymentMethod === 'razorpay' && (
+                  <div style={{
+                    marginTop: '1rem',
+                    padding: '1rem',
+                    backgroundColor: 'var(--sand-100)',
+                    borderRadius: '8px',
+                    borderLeft: '4px solid var(--sand-600)'
+                  }}>
+                    <p style={{ color: 'var(--sand-800)', fontSize: '0.9rem', marginBottom: 0 }}>
+                      💳 You will be redirected to Razorpay secure payment gateway. All major payment methods accepted.
+                    </p>
                   </div>
                 )}
 
-                {/* UPI Details */}
-                {paymentMethod === 'upi' && (
-                  <div className="mt-3">
-                    <label style={{ display: 'block', color: 'var(--sand-800)', fontSize: '0.9rem', fontWeight: '600', marginBottom: '0.5rem' }}>
-                      UPI ID *
-                    </label>
-                    <input
-                      type="text"
-                      {...register('upiId', { 
-                        required: paymentMethod === 'upi' ? 'UPI ID is required' : false,
-                        pattern: {
-                          value: /^[a-zA-Z0-9._-]+@[a-zA-Z0-9]+$/,
-                          message: 'Please enter a valid UPI ID'
-                        }
-                      })}
-                      placeholder="yourname@upi"
-                      style={{
-                        width: '100%',
-                        padding: '0.8rem',
-                        border: '2px solid var(--sand-400)',
-                        borderRadius: '8px',
-                        fontSize: '0.95rem',
-                        backgroundColor: 'white'
-                      }}
-                    />
-                    {errors.upiId && <small className="text-danger">{errors.upiId.message}</small>}
-                  </div>
-                )}
-
-                {/* COD Message */}
+                {/* COD Message */}}
                 {paymentMethod === 'cod' && (
                   <div style={{
                     marginTop: '1rem',

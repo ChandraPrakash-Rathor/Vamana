@@ -1,53 +1,63 @@
-import { createSlice } from "@reduxjs/toolkit";
-import { Orderinsert } from "../apis/OrderApi";
+import { createSlice } from '@reduxjs/toolkit';
+import { createOrder, verifyPayment } from '../apis/OrderApi';
 
 const initialState = {
+  currentOrder: null,
   orders: [],
-  orderData: null,
   loading: false,
   error: null,
+  paymentSuccess: false
 };
 
 const orderSlice = createSlice({
-  name: "orders",
+  name: 'order',
   initialState,
   reducers: {
-
     clearError: (state) => {
       state.error = null;
     },
-
-    clearOrder: (state) => {
-      state.orderData = null;
+    clearPaymentSuccess: (state) => {
+      state.paymentSuccess = false;
+    },
+    clearCurrentOrder: (state) => {
+      state.currentOrder = null;
     }
-
   },
-
   extraReducers: (builder) => {
     builder
-
-      // ✅ CREATE ORDER
-      .addCase(Orderinsert.pending, (state) => {
+      // Create Order
+      .addCase(createOrder.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-
-      .addCase(Orderinsert.fulfilled, (state, action) => {
+      .addCase(createOrder.fulfilled, (state, action) => {
         state.loading = false;
-
-        // backend se jo response ayega
-        state.orderData = action.payload;
-
-        state.error = null;
+        state.currentOrder = action.payload;
+      })
+      .addCase(createOrder.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
       })
 
-      .addCase(Orderinsert.rejected, (state, action) => {
+      // Verify Payment
+      .addCase(verifyPayment.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(verifyPayment.fulfilled, (state, action) => {
         state.loading = false;
-        state.error =
-          action.payload?.message || "Order creation failed";
+        state.paymentSuccess = action.payload.success;
+        if (action.payload.success) {
+          state.orders.push(state.currentOrder);
+        }
+      })
+      .addCase(verifyPayment.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+        state.paymentSuccess = false;
       });
-  },
+  }
 });
 
-export const { clearError, clearOrder } = orderSlice.actions;
+export const { clearError, clearPaymentSuccess, clearCurrentOrder } = orderSlice.actions;
 export default orderSlice.reducer;

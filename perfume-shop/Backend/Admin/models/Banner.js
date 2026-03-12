@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const bannerSchema = new mongoose.Schema({
   type: {
     type: String,
-    enum: ['circle', 'arch'],
+    enum: ['circle', 'arch', 'modern'],
     required: true
   },
   topBadge: {

@@ -287,7 +287,6 @@ export default function AddProductModal({ isOpen, onClose }) {
       });
 
       const res = await dispatch(insertProduct(formData));
-      console.log(res,"res")
      if(res?.payload?.status == "success"){
       toast.success("Product added successfully!");
       // Refresh product list immediately

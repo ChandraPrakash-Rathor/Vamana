@@ -28,6 +28,20 @@ router.use('/coupons', couponRoutes);
 // ============ THEME ROUTES (Public) ============
 router.get('/theme/active', themeController.getActiveTheme);
 
+// ============ SITE SETTINGS ROUTES (Public) ============
+router.get('/site-settings', async (req, res) => {
+  try {
+    const SiteSettings = require('../../Admin/models/SiteSettings');
+    let settings = await SiteSettings.findOne({ isActive: true });
+    if (!settings) {
+      settings = await SiteSettings.create({ isActive: true });
+    }
+    res.json({ success: true, data: settings });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 // ============ PRODUCT ROUTES ============
 // Get featured products (must be before /:id route)
 router.get('/products/featured', productController.getFeaturedProducts);
@@ -165,6 +179,12 @@ router.post("/create-order", orderController.createOrder);
 
 // PAYMENT VERIFY
 router.post("/verify-payment", paymentController.verifyPayment);
+
+// GET USER ORDERS
+router.get("/orders", orderController.getUserOrders);
+
+// GET SINGLE ORDER/INVOICE
+router.get("/orders/:id", orderController.getOrderById);
 
 // ============ HEALTH CHECK ============
 router.get('/health', (req, res) => {

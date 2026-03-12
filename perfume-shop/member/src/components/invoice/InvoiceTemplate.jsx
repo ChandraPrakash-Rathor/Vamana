@@ -1,7 +1,22 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPhone, faEnvelope, faMapMarkerAlt, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
+import { useState, useEffect } from 'react';
+import axios from 'axios';
 
 export default function InvoiceTemplate({ orderData }) {
+  const [siteSettings, setSiteSettings] = useState(null);
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const response = await axios.get('http://localhost:5000/api/member/site-settings');
+        setSiteSettings(response.data.data);
+      } catch (error) {
+        console.error('Failed to load site settings:', error);
+      }
+    };
+    fetchSettings();
+  }, []);
   // Sample order data structure
   const defaultOrderData = {
     invoiceNumber: 'VN-2024-001234',
@@ -91,20 +106,18 @@ export default function InvoiceTemplate({ orderData }) {
             From
           </div>
           <div style={{ fontSize: '16px', fontWeight: '700', marginBottom: '8px' }}>
-            Vamana Fragrances Pvt. Ltd.
+            {siteSettings?.siteName || 'Vamana Fragrances Pvt. Ltd.'}
           </div>
           <div style={{ fontSize: '13px', lineHeight: '1.6', color: '#666' }}>
             <div><FontAwesomeIcon icon={faMapMarkerAlt} style={{ marginRight: '8px', color: 'var(--sand-600)' }} />
-              123 Vamana Plaza, Fragrance Street</div>
-            <div style={{ marginLeft: '20px' }}>Mumbai, Maharashtra 400001</div>
-            <div style={{ marginLeft: '20px' }}>India</div>
+              {siteSettings?.address || 'Mumbai, India'}</div>
             <div style={{ marginTop: '8px' }}>
               <FontAwesomeIcon icon={faPhone} style={{ marginRight: '8px', color: 'var(--sand-600)' }} />
-              +91 123 456 7890
+              {siteSettings?.phone || '+91 123 456 7890'}
             </div>
             <div>
               <FontAwesomeIcon icon={faEnvelope} style={{ marginRight: '8px', color: 'var(--sand-600)' }} />
-              info@vamana.com
+              {siteSettings?.email || 'info@vamana.com'}
             </div>
           </div>
           <div style={{ fontSize: '12px', marginTop: '10px', color: '#666' }}>
@@ -365,7 +378,7 @@ export default function InvoiceTemplate({ orderData }) {
           <li>All products are 100% authentic and original</li>
           <li>Returns accepted within 7 days for unopened products</li>
           <li>Please inspect the package upon delivery</li>
-          <li>For any queries, contact us at info@vamana.com or +91 123 456 7890</li>
+          <li>For any queries, contact us at {siteSettings?.email || 'info@vamana.com'} or {siteSettings?.phone || '+91 123 456 7890'}</li>
         </ul>
       </div>
 
@@ -380,7 +393,7 @@ export default function InvoiceTemplate({ orderData }) {
           color: '#999',
           marginBottom: '5px'
         }}>
-          Thank you for shopping with Vamana!
+          Thank you for shopping with {siteSettings?.siteName || 'Vamana'}!
         </div>
         <div style={{
           fontSize: '11px',

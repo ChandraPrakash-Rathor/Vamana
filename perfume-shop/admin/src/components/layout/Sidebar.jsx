@@ -11,9 +11,25 @@ import {
   faFileAlt,
   faCog
 } from '@fortawesome/free-solid-svg-icons';
+import { useState, useEffect } from 'react';
+import { getSiteSettings } from '../../APIS/apis/SiteSettingsApi';
 
 export default function Sidebar({ collapsed, mobileOpen, onLinkClick }) {
   const location = useLocation();
+  const [siteSettings, setSiteSettings] = useState(null);
+
+  // Fetch site settings
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const data = await getSiteSettings();
+        setSiteSettings(data.data);
+      } catch (error) {
+        console.error('Failed to load site settings:', error);
+      }
+    };
+    fetchSettings();
+  }, []);
 
   const menuItems = [
     { path: '/dashboard', icon: faTachometerAlt, label: 'Dashboard' },
@@ -32,8 +48,8 @@ export default function Sidebar({ collapsed, mobileOpen, onLinkClick }) {
       {/* Logo */}
       <div className="text-center py-3 py-md-4 border-bottom border-secondary border-opacity-25">
         <img
-          src="/logo1.png"
-          alt="Vamana"
+          src={siteSettings?.logo ? `http://localhost:5000${siteSettings.logo}` : '/logo1.png'}
+          alt={siteSettings?.siteName || 'Vamana'}
           className="img-fluid"
           style={{
             height: collapsed ? '40px' : '60px',
@@ -48,7 +64,7 @@ export default function Sidebar({ collapsed, mobileOpen, onLinkClick }) {
             fontFamily: "'Playfair Display', serif",
             fontSize: '1.2rem'
           }}>
-            Admin Panel
+            {siteSettings?.siteName || 'Vamana'} Admin
           </h5>
         )}
       </div>

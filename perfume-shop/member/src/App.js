@@ -20,6 +20,8 @@ import Sale from './pages/Sale';
 import TrackOrder from './pages/TrackOrder';
 import ReturnsPage from './pages/Returns';
 import ShippingInfo from './pages/ShippingInfo';
+import AboutUs from './pages/AboutUs';
+import ContactUs from './pages/ContactUs';
 import { getCurrentUser } from './redux/apis/AuthApi';
 import { getCart } from './redux/apis/CartApi';
 
@@ -83,11 +85,13 @@ function App() {
               <Route path="/offers" element={<Offers />} />
               <Route path="/cart" element={<Cart />} />
               <Route path="/checkout" element={<Checkout />} />
-              <Route path="/invoice" element={<Invoice />} />
+              <Route path="/invoice/:orderId" element={<Invoice />} />
               <Route path="/sale" element={<Sale />} />
               <Route path="/track-order" element={<TrackOrder />} />
               <Route path="/returns" element={<ReturnsPage />} />
               <Route path="/shipping-info" element={<ShippingInfo />} />
+              <Route path="/about-us" element={<AboutUs />} />
+              <Route path="/contact-us" element={<ContactUs />} />
             </Routes>
           </main>
           <Footer />

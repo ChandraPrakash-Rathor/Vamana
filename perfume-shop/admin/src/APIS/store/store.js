@@ -9,6 +9,7 @@ import  ReviewReducer from '../slice/ReviewSlice'
 import  BannerReducer from '../slice/BannerSlice'
 import  MemberReducer from '../slice/MemberSlice'
 import  ThemeReducer from '../slice/ThemeSlice'
+import  OrderReducer from '../slice/OrderSlice'
  
 
 export const store = configureStore({
@@ -21,6 +22,7 @@ export const store = configureStore({
     ReviewSlice:ReviewReducer,
     BannerSlice:BannerReducer,
     MemberSlice:MemberReducer,
-    ThemeSlice:ThemeReducer
+    ThemeSlice:ThemeReducer,
+    OrderSlice:OrderReducer
   },
 })

@@ -7,17 +7,24 @@ const limitedOfferRoutes = require('./limitedOfferRoutes');
 const bannerRoutes = require('./bannerRoutes');
 const memberRoutes = require('./memberRoutes');
 const themeRoutes = require('./themeRoutes');
+const orderRoutes = require('./orderRoutes');
+const siteSettingsRoutes = require('./siteSettingsRoutes');
+const dashboardRoutes = require('./dashboardRoutes');
 const authController = require("../controllers/AuthController");
 const productController =require("../controllers/productController")
 const couponController = require("../controllers/couponController");
 const saleController = require("../controllers/saleController");
 const limitedOfferController = require("../controllers/limitedOfferController");
 const reviewController = require("../controllers/reviewController");
+const orderController = require("../controllers/orderController");
 const upload = require("../../config/multer");
 const { protect, isAdmin } = require("../../middleware/authMiddleware");
 
 // ============ AUTH ROUTES (Public) ============
 router.post("/login", upload.any(), authController.loginAdmin);
+
+// ============ DASHBOARD ROUTES (Protected) ============
+router.use('/dashboard', protect, isAdmin, dashboardRoutes);
 
 // ============ AUTH ROUTES (Protected) ============
 router.get("/auth/me", protect, authController.getMe); // Get current admin
@@ -61,6 +68,13 @@ router.use('/banners', protect, isAdmin, bannerRoutes);
 
 // Member routes (Users management)
 router.use('/members', protect, isAdmin, memberRoutes);
+
+// Order routes
+router.use('/orders', protect, isAdmin, orderRoutes);
+router.get('/GetOrders', protect, isAdmin, orderController.getAllOrders);
+
+// Site Settings routes
+router.use('/site-settings', protect, isAdmin, siteSettingsRoutes);
 
 // Theme routes
 router.use('/themes', protect, isAdmin, themeRoutes);

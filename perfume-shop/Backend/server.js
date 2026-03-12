@@ -5,25 +5,29 @@ const connectDB = require("./config/db");
 const { initCronJobs } = require("./config/cronJobs");
 
 dotenv.config();
-connectDB();
+
+connectDB().then(() => {
+  initCronJobs();
+});
 
 const app = express();
-app.use("/uploads", express.static("uploads"));
 
+const corsOptions = {
+  origin: "*",
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+};
+
+app.use(cors(corsOptions));
 
 app.use(express.json());
+app.use("/uploads", express.static("uploads"));
 
-// Routes
 app.use("/api/admin", require("./Admin/routes/adminRoutes"));
 app.use("/api/member", require("./Member/routes/memberRoutes"));
-
-
-initCronJobs();
 
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
-  console.log(`✅ Server running on http://localhost:${PORT}`); 
-  console.log(`📋 Admin API: http://localhost:${PORT}/api/admin/health`);
-  console.log(`📋 Member API: http://localhost:${PORT}/api/member/health`);
+  console.log(`✅ Server running on http://localhost:${PORT}`);
 });

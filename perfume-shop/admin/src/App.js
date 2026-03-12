@@ -4,6 +4,7 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Products from './pages/Products';
 import Orders from './pages/Orders';
+import OrderInvoice from './pages/OrderInvoice';
 import Users from './pages/Users';
 import Coupons from './pages/Coupons';
 import Sales from './pages/Sales';
@@ -61,6 +62,7 @@ function App() {
                     <Route path="/dashboard" element={<Dashboard />} />
                     <Route path="/products" element={<Products />} />
                     <Route path="/orders" element={<Orders />} />
+                    <Route path="/orders/invoice/:orderId" element={<OrderInvoice />} />
                     <Route path="/users" element={<Users />} />
                     <Route path="/coupons" element={<Coupons />} />
                     <Route path="/sales" element={<Sales />} />

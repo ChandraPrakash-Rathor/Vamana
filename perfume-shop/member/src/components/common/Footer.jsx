@@ -5,7 +5,7 @@ import {
   faInstagram, 
   faTwitter, 
   faYoutube, 
-  faPinterest,
+  faLinkedin,
   faCcVisa,
   faCcMastercard,
   faCcAmex,
@@ -18,9 +18,25 @@ import {
   faArrowRight,
   faHeart
 } from '@fortawesome/free-solid-svg-icons';
+import { useState, useEffect } from 'react';
+import axios from 'axios';
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
+  const [siteSettings, setSiteSettings] = useState(null);
+
+  // Fetch site settings
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const response = await axios.get('http://localhost:5000/api/member/site-settings');
+        setSiteSettings(response.data.data);
+      } catch (error) {
+        console.error('Failed to load site settings:', error);
+      }
+    };
+    fetchSettings();
+  }, []);
 
   return (
     <footer style={{ backgroundColor: 'var(--sand-900)', color: 'white' }}>
@@ -101,8 +117,8 @@ export default function Footer() {
             <div className="col-lg-4 col-md-6">
               <div style={{ marginBottom: '1.5rem' }}>
                 <img
-                  src="/logo1.png"
-                  alt="Vamana"
+                  src={siteSettings?.logo ? `http://localhost:5000${siteSettings.logo}` : '/logo3.png'}
+                  alt={siteSettings?.siteName || 'Vamana'}
                   style={{
                     height: '60px',
                     width: 'auto',
@@ -115,8 +131,7 @@ export default function Footer() {
                   opacity: 0.85,
                   marginBottom: '1.5rem'
                 }}>
-                  Vamana brings you the finest collection of luxury perfumes and traditional attars. 
-                  Experience timeless elegance with every fragrance.
+                  {siteSettings?.footerAbout || 'Vamana brings you the finest collection of luxury perfumes and traditional attars. Experience timeless elegance with every fragrance.'}
                 </p>
               </div>
 
@@ -132,12 +147,12 @@ export default function Footer() {
                 </h6>
                 <div className="d-flex gap-2">
                   {[
-                    { icon: faFacebookF, link: '#', color: '#1877f2' },
-                    { icon: faInstagram, link: '#', color: '#e4405f' },
-                    { icon: faTwitter, link: '#', color: '#1da1f2' },
-                    { icon: faYoutube, link: '#', color: '#ff0000' },
-                    { icon: faPinterest, link: '#', color: '#e60023' }
-                  ].map((social, index) => (
+                    { icon: faFacebookF, link: siteSettings?.socialLinks?.facebook || '#', color: '#1877f2', show: siteSettings?.socialLinks?.facebook },
+                    { icon: faInstagram, link: siteSettings?.socialLinks?.instagram || '#', color: '#e4405f', show: siteSettings?.socialLinks?.instagram },
+                    { icon: faTwitter, link: siteSettings?.socialLinks?.twitter || '#', color: '#1da1f2', show: siteSettings?.socialLinks?.twitter },
+                    { icon: faYoutube, link: siteSettings?.socialLinks?.youtube || '#', color: '#ff0000', show: siteSettings?.socialLinks?.youtube },
+                    { icon: faLinkedin, link: siteSettings?.socialLinks?.linkedin || '#', color: '#0077b5', show: siteSettings?.socialLinks?.linkedin }
+                  ].filter(social => social.show).map((social, index) => (
                     <a
                       key={index}
                       href={social.link}
@@ -186,9 +201,9 @@ export default function Footer() {
                 {[
                   { label: 'Home', path: '/' },
                   { label: 'Catalog', path: '/catalog' },
-                  { label: 'About Us', path: '#' },
-                  { label: 'Contact', path: '#' },
-                  { label: 'Blog', path: '#' }
+                  { label: 'About Us', path: '/about-us' },
+                  { label: 'Contact', path: '/contact-us' },
+                  { label: 'Sale', path: '/sale' }
                 ].map((link, index) => (
                   <li key={index} style={{ marginBottom: '0.7rem' }}>
                     <Link
@@ -226,7 +241,7 @@ export default function Footer() {
               }}>
                 Customer Service
               </h6>
-              <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+              {/* <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
                 {[
                   { label: 'Track Order', path: '/track-order' },
                   { label: 'Returns', path: '/returns' },
@@ -257,7 +272,7 @@ export default function Footer() {
                     </Link>
                   </li>
                 ))}
-              </ul>
+              </ul> */}
             </div>
 
             {/* Contact Info */}
@@ -287,9 +302,7 @@ export default function Footer() {
                   />
                   <div>
                     <div style={{ fontSize: '0.9rem', opacity: 0.85, lineHeight: '1.6' }}>
-                      123 Vamana Plaza, Fragrance Street<br />
-                      Mumbai, Maharashtra 400001<br />
-                      India
+                      {siteSettings?.address || 'Mumbai, India'}
                     </div>
                   </div>
                 </li>
@@ -304,7 +317,7 @@ export default function Footer() {
                     style={{ color: 'var(--sand-600)', fontSize: '1.1rem' }} 
                   />
                   <a
-                    href="tel:+911234567890"
+                    href={`tel:${siteSettings?.phone || '+911234567890'}`}
                     style={{
                       color: 'rgba(255, 255, 255, 0.85)',
                       textDecoration: 'none',
@@ -314,7 +327,7 @@ export default function Footer() {
                     onMouseEnter={(e) => e.target.style.color = 'white'}
                     onMouseLeave={(e) => e.target.style.color = 'rgba(255, 255, 255, 0.85)'}
                   >
-                    +91 123 456 7890
+                    {siteSettings?.phone || '+91 123 456 7890'}
                   </a>
                 </li>
                 <li style={{
@@ -328,7 +341,7 @@ export default function Footer() {
                     style={{ color: 'var(--sand-600)', fontSize: '1.1rem' }} 
                   />
                   <a
-                    href="mailto:info@vamana.com"
+                    href={`mailto:${siteSettings?.email || 'info@vamana.com'}`}
                     style={{
                       color: 'rgba(255, 255, 255, 0.85)',
                       textDecoration: 'none',
@@ -338,7 +351,7 @@ export default function Footer() {
                     onMouseEnter={(e) => e.target.style.color = 'white'}
                     onMouseLeave={(e) => e.target.style.color = 'rgba(255, 255, 255, 0.85)'}
                   >
-                    info@vamana.com
+                    {siteSettings?.email || 'info@vamana.com'}
                   </a>
                 </li>
               </ul>
@@ -377,7 +390,7 @@ export default function Footer() {
                 opacity: 0.7,
                 marginBottom: 0
               }}>
-                © {currentYear} Vamana. All rights reserved. Made with <FontAwesomeIcon icon={faHeart} style={{ color: '#e74c3c' }} /> in India
+                {siteSettings?.footerCopyright || `© ${currentYear} Vamana. All rights reserved.`} Made with <FontAwesomeIcon icon={faHeart} style={{ color: '#e74c3c' }} /> in India
               </p>
             </div>
             <div className="col-md-6">

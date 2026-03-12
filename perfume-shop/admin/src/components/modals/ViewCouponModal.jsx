@@ -26,13 +26,6 @@ export default function ViewCouponModal({ isOpen, onClose, coupon, onEdit }) {
     ?.filter(p => typeof p === 'object' && p.name)
     .map(p => p.name) || [];
 
-  // Debug log
-  console.log('Coupon data in ViewCouponModal:', {
-    rawApplicableProducts: coupon.rawApplicableProducts,
-    rawApplicableProductsWithNames: coupon.rawApplicableProductsWithNames,
-    applicableProductNames
-  });
-
   const handleCopyCode = () => {
     navigator.clipboard.writeText(coupon.code);
     toast.success(`Coupon code "${coupon.code}" copied!`);

@@ -26,12 +26,10 @@ export default function AuthModal({ isOpen, onClose }) {
       
       // Verify token is in localStorage before proceeding
       const token = localStorage.getItem('memberToken');
-      console.log('Token in localStorage after login:', token); // Debug
       
       if (token) {
         // Fetch cart after successful login/registration
         dispatch(getCart()).then((result) => {
-          console.log('Cart fetched:', result);
           
           // Check for pending cart item after cart is loaded
           const pendingItem = sessionStorage.getItem('pendingCartItem');

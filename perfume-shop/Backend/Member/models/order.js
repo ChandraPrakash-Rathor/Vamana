@@ -14,14 +14,27 @@ const OrderSchema = new mongoose.Schema({
 
   address:Object,
 
+  paymentMethod:{
+    type:String,
+    enum:["razorpay","cod"],
+    default:"razorpay"
+  },
+
   paymentStatus:{
     type:String,
     enum:["pending","paid","failed"],
     default:"pending"
   },
 
+  trackingStatus:{
+    type:String,
+    enum:["ordered","processing","shipped","out_for_delivery","delivered"],
+    default:"ordered"
+  },
+
   razorpayOrderId:String,
-  razorpayPaymentId:String
+  razorpayPaymentId:String,
+  razorpaySignature:String
 
 },{timestamps:true});
 

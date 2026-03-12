@@ -66,12 +66,6 @@ export default function EditCouponModal({ isOpen, onClose, coupon }) {
   // Prefill form when coupon changes
   useEffect(() => {
     if (coupon && isOpen && productData && productData.length > 0) {
-      console.log('EditCouponModal - Prefilling with coupon:', {
-        rawApplicableProducts: coupon.rawApplicableProducts,
-        rawApplicableCategories: coupon.rawApplicableCategories,
-        productOptions: productOptions.length
-      });
-
       // Map the display data back to API format
       const discountType = coupon.type === 'Percentage' ? 'percentage' : 'fixed';
       const status = coupon.status.toLowerCase();
@@ -100,7 +94,6 @@ export default function EditCouponModal({ isOpen, onClose, coupon }) {
       // Determine application type and set selected products/categories
       if (coupon.rawApplicableProducts && coupon.rawApplicableProducts.length > 0) {
         // Has specific products selected
-        console.log('Setting specific products:', coupon.rawApplicableProducts);
         setApplicationType('specific');
         setValue('applicationType', applicationTypeOptions.find(opt => opt.value === 'specific'));
         
@@ -108,17 +101,14 @@ export default function EditCouponModal({ isOpen, onClose, coupon }) {
         const selectedProducts = productOptions.filter(product => 
           coupon.rawApplicableProducts.includes(product.value)
         );
-        console.log('Matched products:', selectedProducts);
         setValue('specificProducts', selectedProducts);
       } else if (coupon.rawApplicableCategories && !coupon.rawApplicableCategories.includes('all')) {
         // Has category selected
-        console.log('Setting category:', coupon.rawApplicableCategories);
         setApplicationType('category');
         setValue('applicationType', applicationTypeOptions.find(opt => opt.value === 'category'));
         setValue('category', categoryOptions.find(opt => coupon.rawApplicableCategories.includes(opt.value)));
       } else {
         // All products
-        console.log('Setting all products');
         setApplicationType('all');
         setValue('applicationType', applicationTypeOptions.find(opt => opt.value === 'all'));
       }

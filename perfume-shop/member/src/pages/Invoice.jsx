@@ -1,190 +1,597 @@
-import { useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faDownload, faPrint, faArrowLeft, faHome } from '@fortawesome/free-solid-svg-icons';
-import InvoiceTemplate from '../components/invoice/InvoiceTemplate';
+import { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
+import axios from 'axios';
+import { toast } from 'react-toastify';
+import { baseUrl } from '../redux/apis/config';
 
 export default function Invoice() {
-  const navigate = useNavigate();
-  const invoiceRef = useRef();
+  const { orderId } = useParams();
+  const [order, setOrder] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [siteSettings, setSiteSettings] = useState(null);
+  const [showAnimation, setShowAnimation] = useState(true);
+  const [showInvoice, setShowInvoice] = useState(false);
 
-  // Sample order data - in real app, this would come from order state/API
-  const orderData = {
-    invoiceNumber: 'VN-2024-001234',
-    orderDate: '15 Feb 2024',
-    orderTime: '10:30 AM',
-    paymentMethod: 'Credit Card',
-    transactionId: 'TXN123456789',
-    customer: {
-      name: 'John Doe',
-      email: 'john.doe@example.com',
-      phone: '+91 98765 43210',
-      address: '123 Main Street, Apartment 4B',
-      city: 'Mumbai',
-      state: 'Maharashtra',
-      pincode: '400001'
-    },
-    items: [
-      { id: 1, name: 'Eternal Rose', size: '50ml', quantity: 1, price: 2499, total: 2499 },
-      { id: 2, name: 'Midnight Oud', size: '100ml', quantity: 2, price: 3999, total: 7998 }
-    ],
-    subtotal: 10497,
-    discount: 0,
-    shipping: 0,
-    tax: 1889,
-    total: 12386
+  useEffect(() => {
+    fetchOrderDetails();
+    fetchSiteSettings();
+    
+    // Hide animation after 4 seconds
+    const animationTimer = setTimeout(() => {
+      setShowAnimation(false);
+      // Show invoice with fade in after animation
+      setTimeout(() => {
+        setShowInvoice(true);
+      }, 500);
+    }, 4000);
+
+    return () => clearTimeout(animationTimer);
+  }, [orderId]);
+
+  const fetchSiteSettings = async () => {
+    try {
+      const response = await axios.get(`${baseUrl}site-settings`);
+      setSiteSettings(response.data.data);
+    } catch (error) {
+      console.error('Failed to load site settings:', error);
+    }
+  };
+
+  const fetchOrderDetails = async () => {
+    try {
+      const response = await axios.get(`${baseUrl}orders/${orderId}`);
+      if (response.data.success) {
+        setOrder(response.data.order);
+      }
+    } catch (error) {
+      toast.error('Failed to load invoice');
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handlePrint = () => {
     window.print();
   };
 
-  const handleDownload = () => {
-    // For actual PDF generation, you would use a library like jsPDF or html2pdf
-    // For now, we'll just trigger print which allows "Save as PDF"
-    alert('To download as PDF:\n1. Click Print button\n2. Select "Save as PDF" as printer\n3. Click Save');
-    window.print();
+  if (loading) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div className="spinner-border" style={{ color: 'var(--sand-600)' }} role="status">
+          <span className="visually-hidden">Loading...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!order) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <p style={{ color: 'var(--sand-600)', fontSize: '1.2rem' }}>Order not found</p>
+      </div>
+    );
+  }
+
+  const getStatusColor = (status) => {
+    const colors = {
+      pending: '#f59e0b',
+      paid: '#10b981',
+      failed: '#ef4444'
+    };
+    return colors[status] || '#6c757d';
+  };
+
+  const getTrackingLabel = (status) => {
+    const labels = {
+      ordered: 'Ordered',
+      processing: 'Processing',
+      shipped: 'Shipped',
+      out_for_delivery: 'Out for Delivery',
+      delivered: 'Delivered'
+    };
+    return labels[status] || status;
   };
 
   return (
-    <div style={{ backgroundColor: 'var(--sand-100)', minHeight: '100vh', paddingTop: '90px' }}>
-      <div className="container py-4">
-        {/* Action Buttons */}
+    <div style={{ background: 'var(--sand-50)', minHeight: '100vh', paddingTop: '120px', paddingBottom: '2rem', position: 'relative' }}>
+      
+      {/* Congratulations Animation Overlay */}
+      {showAnimation && (
         <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(255, 255, 255, 0.98)',
           display: 'flex',
-          justifyContent: 'space-between',
+          flexDirection: 'column',
           alignItems: 'center',
-          marginBottom: '30px',
-          flexWrap: 'wrap',
-          gap: '15px'
-        }} className="no-print">
-          <button
-            onClick={() => navigate('/')}
-            style={{
-              padding: '0.8rem 1.5rem',
-              border: '2px solid var(--sand-400)',
-              borderRadius: '10px',
-              backgroundColor: 'white',
-              color: 'var(--sand-800)',
-              fontSize: '0.95rem',
-              fontWeight: '600',
-              cursor: 'pointer',
-              transition: 'all 0.3s ease',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem'
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.backgroundColor = 'var(--sand-200)';
-              e.target.style.transform = 'translateY(-2px)';
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.backgroundColor = 'white';
-              e.target.style.transform = 'translateY(0)';
-            }}
-          >
-            <FontAwesomeIcon icon={faArrowLeft} /> Back to Home
-          </button>
+          justifyContent: 'center',
+          zIndex: 9999,
+          animation: 'fadeOut 0.5s ease 3.5s forwards'
+        }}>
+          {/* Simple Road */}
+          <div style={{
+            position: 'absolute',
+            bottom: '35%',
+            left: 0,
+            right: 0,
+            height: '80px',
+            background: '#6b7280',
+            borderTop: '3px solid #4b5563',
+            borderBottom: '3px solid #4b5563'
+          }}>
+            {/* Road center line */}
+            <div style={{
+              position: 'absolute',
+              top: '50%',
+              left: 0,
+              right: 0,
+              height: '4px',
+              background: 'repeating-linear-gradient(to right, #fbbf24 0px, #fbbf24 30px, transparent 30px, transparent 50px)',
+              transform: 'translateY(-50%)',
+              animation: 'roadLineMove 1s linear infinite'
+            }} />
+          </div>
 
-          <div style={{ display: 'flex', gap: '10px' }}>
+          {/* Truck Animation */}
+          <div style={{
+            position: 'absolute',
+            bottom: '35%',
+            animation: 'truckDrive 3.5s ease-in-out forwards',
+            fontSize: '5rem',
+            zIndex: 10
+          }}>
+            🚚
+            {/* Smoke behind truck (left side) */}
+            <span style={{
+              position: 'absolute',
+              left: '100%',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              fontSize: '2rem',
+              opacity: 0.6,
+              animation: 'smokeTrail 0.8s ease-out infinite'
+            }}>
+              💨
+            </span>
+          </div>
+
+          {/* Destination House */}
+          <div style={{
+            position: 'absolute',
+            left: '10%',
+            bottom: '42%',
+            fontSize: '4rem',
+            animation: 'houseAppear 1s ease 3s backwards'
+          }}>
+            🏠
+          </div>
+
+          {/* Coins Animation */}
+          <div style={{
+            position: 'absolute',
+            top: '30%',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            width: '100%',
+            height: '200px'
+          }}>
+            {[...Array(8)].map((_, i) => (
+              <div
+                key={i}
+                style={{
+                  position: 'absolute',
+                  left: `${20 + i * 10}%`,
+                  fontSize: '2.5rem',
+                  animation: `coinFall ${1 + i * 0.2}s ease-in ${i * 0.1}s infinite`
+                }}
+              >
+                🪙
+              </div>
+            ))}
+          </div>
+
+          {/* Success Message */}
+          <div style={{
+            textAlign: 'center',
+            animation: 'slideUp 1s ease 0.5s backwards',
+            zIndex: 1
+          }}>
+            <h1 style={{
+              fontFamily: "'Playfair Display', serif",
+              color: 'var(--sand-800)',
+              fontSize: 'clamp(2rem, 5vw, 3.5rem)',
+              marginBottom: '1rem',
+              fontWeight: '700'
+            }}>
+              🎉 Congratulations! 🎉
+            </h1>
+            <h2 style={{
+              color: 'var(--sand-700)',
+              fontSize: 'clamp(1.2rem, 3vw, 2rem)',
+              fontWeight: '600',
+              marginBottom: '1rem'
+            }}>
+              Your Order is Placed Successfully!
+            </h2>
+            <p style={{
+              color: 'var(--sand-600)',
+              fontSize: 'clamp(1rem, 2vw, 1.3rem)',
+              animation: 'pulse 1.5s ease-in-out infinite'
+            }}>
+              Preparing your invoice...
+            </p>
+          </div>
+
+          {/* Sparkles */}
+          {[...Array(12)].map((_, i) => (
+            <div
+              key={`sparkle-${i}`}
+              style={{
+                position: 'absolute',
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`,
+                fontSize: '1.5rem',
+                animation: `sparkle ${1 + Math.random()}s ease-in-out ${Math.random() * 2}s infinite`
+              }}
+            >
+              ✨
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Invoice Content */}
+      <div style={{
+        opacity: showInvoice ? 1 : 0,
+        transform: showInvoice ? 'scale(1)' : 'scale(0.95)',
+        transition: 'all 0.8s ease',
+        pointerEvents: showInvoice ? 'auto' : 'none'
+      }}>
+        <div className="container invoice-container" style={{ maxWidth: '900px' }}>
+          {/* Print Button */}
+          <div className="d-flex justify-content-end mb-3 no-print">
             <button
               onClick={handlePrint}
               style={{
-                padding: '0.8rem 1.5rem',
-                border: 'none',
-                borderRadius: '10px',
-                backgroundColor: 'var(--sand-600)',
+                padding: '0.75rem 2rem',
+                background: 'var(--sand-600)',
                 color: 'white',
-                fontSize: '0.95rem',
+                border: 'none',
+                borderRadius: '8px',
                 fontWeight: '600',
                 cursor: 'pointer',
-                transition: 'all 0.3s ease',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem'
+                transition: 'all 0.3s ease'
               }}
-              onMouseEnter={(e) => {
-                e.target.style.backgroundColor = 'var(--sand-700)';
-                e.target.style.transform = 'translateY(-2px)';
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.backgroundColor = 'var(--sand-600)';
-                e.target.style.transform = 'translateY(0)';
-              }}
+              onMouseEnter={(e) => e.target.style.background = 'var(--sand-700)'}
+              onMouseLeave={(e) => e.target.style.background = 'var(--sand-600)'}
             >
-              <FontAwesomeIcon icon={faPrint} /> Print
-            </button>
-
-            <button
-              onClick={handleDownload}
-              style={{
-                padding: '0.8rem 1.5rem',
-                border: 'none',
-                borderRadius: '10px',
-                backgroundColor: 'var(--sand-900)',
-                color: 'white',
-                fontSize: '0.95rem',
-                fontWeight: '600',
-                cursor: 'pointer',
-                transition: 'all 0.3s ease',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem'
-              }}
-              onMouseEnter={(e) => {
-                e.target.style.backgroundColor = '#000';
-                e.target.style.transform = 'translateY(-2px)';
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.backgroundColor = 'var(--sand-900)';
-                e.target.style.transform = 'translateY(0)';
-              }}
-            >
-              <FontAwesomeIcon icon={faDownload} /> Download PDF
+              Print Invoice
             </button>
           </div>
-        </div>
 
-        {/* Invoice Template */}
-        <div ref={invoiceRef} style={{
-          boxShadow: '0 0 30px rgba(0,0,0,0.1)',
-          borderRadius: '10px',
-          overflow: 'hidden'
-        }}>
-          <InvoiceTemplate orderData={orderData} />
-        </div>
+          {/* Invoice Card */}
+          <div style={{
+            background: 'white',
+            borderRadius: '12px',
+            padding: 'clamp(1.5rem, 4vw, 3rem)',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+          }}>
+            {/* Header */}
+            <div style={{ borderBottom: '3px solid var(--sand-600)', paddingBottom: '2rem', marginBottom: '2rem' }}>
+              <div className="row align-items-center">
+                <div className="col-md-6 mb-3 mb-md-0">
+                  <h1 style={{
+                    fontFamily: "'Playfair Display', serif",
+                    color: 'var(--sand-800)',
+                    fontSize: 'clamp(1.8rem, 5vw, 2.5rem)',
+                    marginBottom: '0.5rem'
+                  }}>
+                    INVOICE
+                  </h1>
+                  <p style={{ color: 'var(--sand-600)', fontSize: 'clamp(0.8rem, 2vw, 0.9rem)', margin: 0 }}>
+                    Order #{order._id.slice(-8).toUpperCase()}
+                  </p>
+                </div>
+                <div className="col-md-6 text-md-end">
+                  <h3 style={{
+                    fontFamily: "'Playfair Display', serif",
+                    color: 'var(--sand-700)',
+                    fontSize: 'clamp(1.3rem, 4vw, 1.8rem)',
+                    marginBottom: '0.5rem'
+                  }}>
+                    {siteSettings?.siteName || 'Vamana Perfumes'}
+                  </h3>
+                  <p style={{ color: 'var(--sand-600)', fontSize: 'clamp(0.75rem, 2vw, 0.9rem)', margin: 0 }}>
+                    {siteSettings?.tagline || 'Premium Fragrances'}<br />
+                    {siteSettings?.email || 'contact@vamana.com'}<br />
+                    {siteSettings?.phone || '+91 1234567890'}<br />
+                    {siteSettings?.address || 'Mumbai, India'}
+                  </p>
+                </div>
+              </div>
+            </div>
 
-        {/* Success Message */}
-        <div className="no-print" style={{
-          marginTop: '30px',
-          padding: '20px',
-          backgroundColor: '#d4edda',
-          border: '1px solid #c3e6cb',
-          borderRadius: '10px',
-          textAlign: 'center',
-          color: '#155724'
-        }}>
-          <div style={{ fontSize: '1.2rem', fontWeight: '700', marginBottom: '10px' }}>
-            🎉 Order Placed Successfully!
-          </div>
-          <div style={{ fontSize: '0.95rem' }}>
-            Your order has been confirmed. We'll send you tracking details via email once your order is shipped.
+            {/* Order Info */}
+            <div className="row mb-4">
+              <div className="col-md-6 mb-3 mb-md-0">
+                <h5 style={{ color: 'var(--sand-800)', fontWeight: '600', marginBottom: '1rem', fontSize: 'clamp(1rem, 3vw, 1.1rem)' }}>Bill To:</h5>
+                <p style={{ color: 'var(--sand-700)', lineHeight: '1.8', margin: 0, fontSize: 'clamp(0.85rem, 2vw, 1rem)' }}>
+                  <strong>{order.userDetails?.name || 'Customer'}</strong><br />
+                  {order.userDetails?.email}<br />
+                  {order.userDetails?.phone}<br />
+                  {order.address?.street}, {order.address?.city}<br />
+                  {order.address?.state} - {order.address?.pincode}
+                </p>
+              </div>
+              <div className="col-md-6">
+                <h5 style={{ color: 'var(--sand-800)', fontWeight: '600', marginBottom: '1rem', fontSize: 'clamp(1rem, 3vw, 1.1rem)' }}>Order Details:</h5>
+                <div style={{ fontSize: 'clamp(0.85rem, 2vw, 1rem)' }}>
+                  <div className="d-flex justify-content-between mb-2">
+                    <span style={{ color: 'var(--sand-700)' }}>Order Date:</span>
+                    <strong style={{ color: 'var(--sand-700)' }}>{new Date(order.createdAt).toLocaleDateString('en-IN', {
+                      day: '2-digit',
+                      month: 'short',
+                      year: 'numeric'
+                    })}</strong>
+                  </div>
+                  <div className="d-flex justify-content-between mb-2">
+                    <span style={{ color: 'var(--sand-700)' }}>Payment Method:</span>
+                    <strong style={{ color: 'var(--sand-700)' }}>{order.paymentMethod === 'cod' ? 'COD' : 'Online'}</strong>
+                  </div>
+                  <div className="d-flex justify-content-between mb-2">
+                    <span style={{ color: 'var(--sand-700)' }}>Payment Status:</span>
+                    <span style={{
+                      background: getStatusColor(order.paymentStatus),
+                      color: 'white',
+                      padding: '0.25rem 0.5rem',
+                      borderRadius: '6px',
+                      fontSize: 'clamp(0.75rem, 2vw, 0.85rem)',
+                      fontWeight: '600'
+                    }}>
+                      {order.paymentStatus.toUpperCase()}
+                    </span>
+                  </div>
+                  <div className="d-flex justify-content-between">
+                    <span style={{ color: 'var(--sand-700)' }}>Tracking:</span>
+                    <strong style={{ color: 'var(--sand-700)' }}>{getTrackingLabel(order.trackingStatus)}</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Products Table */}
+            <div style={{ marginBottom: '2rem', overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '500px' }}>
+                <thead>
+                  <tr style={{ background: 'var(--sand-100)', borderBottom: '2px solid var(--sand-300)' }}>
+                    <th style={{ padding: 'clamp(0.5rem, 2vw, 1rem)', textAlign: 'left', color: 'var(--sand-800)', fontWeight: '600', fontSize: 'clamp(0.85rem, 2vw, 1rem)' }}>Product</th>
+                    <th style={{ padding: 'clamp(0.5rem, 2vw, 1rem)', textAlign: 'center', color: 'var(--sand-800)', fontWeight: '600', fontSize: 'clamp(0.85rem, 2vw, 1rem)' }}>Qty</th>
+                    <th style={{ padding: 'clamp(0.5rem, 2vw, 1rem)', textAlign: 'right', color: 'var(--sand-800)', fontWeight: '600', fontSize: 'clamp(0.85rem, 2vw, 1rem)' }}>Price</th>
+                    <th style={{ padding: 'clamp(0.5rem, 2vw, 1rem)', textAlign: 'right', color: 'var(--sand-800)', fontWeight: '600', fontSize: 'clamp(0.85rem, 2vw, 1rem)' }}>Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {order.products.map((item, index) => (
+                    <tr key={index} style={{ borderBottom: '1px solid var(--sand-200)' }}>
+                      <td style={{ padding: 'clamp(0.5rem, 2vw, 1rem)' }}>
+                        <div className="d-flex align-items-center gap-2">
+                          {item.productDetails?.mainImage && (
+                            <img
+                              src={`http://localhost:5000/${item.productDetails.mainImage}`}
+                              alt={item.productDetails?.name}
+                              style={{
+                                width: 'clamp(40px, 10vw, 60px)',
+                                height: 'clamp(40px, 10vw, 60px)',
+                                objectFit: 'cover',
+                                borderRadius: '8px'
+                              }}
+                            />
+                          )}
+                          <div style={{ color: 'var(--sand-800)', fontWeight: '500', fontSize: 'clamp(0.85rem, 2vw, 1rem)' }}>
+                            {item.productDetails?.name || 'Product'}
+                          </div>
+                        </div>
+                      </td>
+                      <td style={{ padding: 'clamp(0.5rem, 2vw, 1rem)', textAlign: 'center', color: 'var(--sand-700)', fontSize: 'clamp(0.85rem, 2vw, 1rem)' }}>
+                        {item.quantity}
+                      </td>
+                      <td style={{ padding: 'clamp(0.5rem, 2vw, 1rem)', textAlign: 'right', color: 'var(--sand-700)', fontSize: 'clamp(0.85rem, 2vw, 1rem)' }}>
+                        ₹{item.price.toLocaleString()}
+                      </td>
+                      <td style={{ padding: 'clamp(0.5rem, 2vw, 1rem)', textAlign: 'right', color: 'var(--sand-800)', fontWeight: '600', fontSize: 'clamp(0.85rem, 2vw, 1rem)' }}>
+                        ₹{(item.price * item.quantity).toLocaleString()}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Total */}
+            <div style={{ borderTop: '2px solid var(--sand-300)', paddingTop: '1.5rem' }}>
+              <div className="row">
+                <div className="col-md-6"></div>
+                <div className="col-md-6">
+                  <div style={{ fontSize: 'clamp(0.9rem, 2vw, 1rem)' }}>
+                    <div className="d-flex justify-content-between mb-2">
+                      <span style={{ color: 'var(--sand-700)' }}>Subtotal:</span>
+                      <span style={{ color: 'var(--sand-700)' }}>₹{order.totalAmount.toLocaleString()}</span>
+                    </div>
+                    <div className="d-flex justify-content-between mb-2">
+                      <span style={{ color: 'var(--sand-700)' }}>Shipping:</span>
+                      <span style={{ color: 'var(--sand-700)' }}>Free</span>
+                    </div>
+                    <div className="d-flex justify-content-between pt-3" style={{ borderTop: '2px solid var(--sand-600)' }}>
+                      <span style={{ color: 'var(--sand-800)', fontSize: 'clamp(1.1rem, 3vw, 1.3rem)', fontWeight: '700' }}>Total:</span>
+                      <span style={{ color: 'var(--sand-800)', fontSize: 'clamp(1.1rem, 3vw, 1.3rem)', fontWeight: '700' }}>₹{order.totalAmount.toLocaleString()}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div style={{
+              marginTop: '3rem',
+              paddingTop: '2rem',
+              borderTop: '1px solid var(--sand-200)',
+              textAlign: 'center',
+              color: 'var(--sand-600)',
+              fontSize: 'clamp(0.8rem, 2vw, 0.9rem)'
+            }}>
+              <p style={{ margin: 0 }}>Thank you for your purchase!</p>
+              <p style={{ margin: '0.5rem 0 0 0' }}>
+                For any queries, contact us at {siteSettings?.email || 'support@vamana.com'} or call {siteSettings?.phone || '+91 1234567890'}
+              </p>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Print-specific styles */}
+      {/* Print Styles */}
       <style>{`
         @media print {
-          body {
-            background: white !important;
+          body * {
+            visibility: hidden;
+          }
+          .invoice-container, .invoice-container * {
+            visibility: visible;
+          }
+          .invoice-container {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
           }
           .no-print {
             display: none !important;
           }
-          .container {
-            padding: 0 !important;
-            max-width: 100% !important;
+          nav, header, footer {
+            display: none !important;
+          }
+          @page {
+            margin: 1cm;
+          }
+        }
+
+        @keyframes truckDrive {
+          0% {
+            left: 100%;
+            transform: translateY(0);
+          }
+          50% {
+            transform: translateY(-5px);
+          }
+          100% {
+            left: 15%;
+            transform: translateY(0);
+          }
+        }
+
+        @keyframes roadLineMove {
+          0% {
+            background-position: 0 0;
+          }
+          100% {
+            background-position: -50px 0;
+          }
+        }
+
+        @keyframes smokeTrail {
+          0% {
+            opacity: 0.6;
+            transform: translateY(-50%) scale(1);
+          }
+          100% {
+            opacity: 0;
+            transform: translateY(-50%) translateX(20px) scale(1.5);
+          }
+        }
+
+        @keyframes houseAppear {
+          0% {
+            opacity: 0;
+            transform: scale(0.5);
+          }
+          100% {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+
+        @keyframes bounce {
+          from {
+            transform: translateY(0);
+          }
+          to {
+            transform: translateY(-10px);
+          }
+        }
+
+        @keyframes smoke {
+          0% {
+            opacity: 0.5;
+            transform: translateX(0) scale(1);
+          }
+          100% {
+            opacity: 0;
+            transform: translateX(30px) scale(1.5);
+          }
+        }
+
+        @keyframes coinFall {
+          0% {
+            transform: translateY(-100px) rotate(0deg);
+            opacity: 0;
+          }
+          50% {
+            opacity: 1;
+          }
+          100% {
+            transform: translateY(200px) rotate(360deg);
+            opacity: 0;
+          }
+        }
+
+        @keyframes sparkle {
+          0%, 100% {
+            opacity: 0;
+            transform: scale(0) rotate(0deg);
+          }
+          50% {
+            opacity: 1;
+            transform: scale(1.5) rotate(180deg);
+          }
+        }
+
+        @keyframes slideUp {
+          from {
+            transform: translateY(50px);
+            opacity: 0;
+          }
+          to {
+            transform: translateY(0);
+            opacity: 1;
+          }
+        }
+
+        @keyframes fadeOut {
+          to {
+            opacity: 0;
+            visibility: hidden;
+          }
+        }
+
+        @keyframes pulse {
+          0%, 100% {
+            opacity: 1;
+          }
+          50% {
+            opacity: 0.5;
           }
         }
       `}</style>

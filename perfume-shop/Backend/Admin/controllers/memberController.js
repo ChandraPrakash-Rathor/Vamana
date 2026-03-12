@@ -1,4 +1,5 @@
 const Member = require('../../Member/models/Member');
+const Order = require('../../Member/models/order');
 
 // @desc    Get all members for admin
 // @route   GET /api/admin/members
@@ -9,21 +10,29 @@ exports.getAllMembers = async (req, res) => {
       .select('-password')
       .sort({ createdAt: -1 });
 
-    // Calculate stats for each member
-    const membersWithStats = members.map(member => ({
-      _id: member._id,
-      name: member.name || 'N/A',
-      email: member.email,
-      phone: member.phone,
-      status: member.status || 'active',
-      role: 'Customer', // All members are customers
-      orders: 0, // TODO: Calculate from orders collection when implemented
-      totalSpent: 0, // TODO: Calculate from orders collection when implemented
-      joinDate: member.createdAt,
-      lastActive: member.updatedAt,
-      createdAt: member.createdAt,
-      updatedAt: member.updatedAt
-    }));
+    // Calculate stats for each member from orders
+    const membersWithStats = await Promise.all(
+      members.map(async (member) => {
+        const orders = await Order.find({ userId: member._id.toString() });
+        const paidOrders = orders.filter(order => order.paymentStatus === 'paid');
+        const totalSpent = paidOrders.reduce((sum, order) => sum + order.totalAmount, 0);
+
+        return {
+          _id: member._id,
+          name: member.name || 'N/A',
+          email: member.email,
+          phone: member.phone,
+          status: member.status || 'active',
+          role: 'Customer',
+          orders: orders.length,
+          totalSpent: totalSpent,
+          joinDate: member.createdAt,
+          lastActive: member.updatedAt,
+          createdAt: member.createdAt,
+          updatedAt: member.updatedAt
+        };
+      })
+    );
 
     res.status(200).json({
       success: true,

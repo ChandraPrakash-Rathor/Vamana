@@ -43,20 +43,15 @@ const authSlice = createSlice({
       })
       .addCase(checkPhone.fulfilled, (state, action) => {
         state.loading = false;
-        console.log('CheckPhone Response:', action.payload); // Debug log
         if (action.payload.exists) {
           // Phone exists - auto login
           state.user = action.payload.user;
           state.isAuthenticated = true;
           state.success = action.payload.message;
           if (action.payload.token) {
-            console.log('Setting token in localStorage:', action.payload.token); // Debug log
             // Store token in localStorage (more reliable than cookies for SPAs)
             localStorage.setItem('memberToken', action.payload.token);
             localStorage.setItem('isAuthenticated', 'true');
-            console.log('Token stored, verifying:', localStorage.getItem('memberToken')); // Verify
-          } else {
-            console.error('No token in checkPhone response!'); // Debug log
           }
         } else {
           // Phone doesn't exist - need registration
@@ -78,7 +73,6 @@ const authSlice = createSlice({
       })
       .addCase(registerUser.fulfilled, (state, action) => {
         state.loading = false;
-        console.log('Register Response:', action.payload); // Debug log
         state.user = action.payload.user;
         state.isAuthenticated = true;
         state.success = action.payload.message;
@@ -86,11 +80,8 @@ const authSlice = createSlice({
         state.pendingPhone = null;
         // Store token in localStorage
         if (action.payload.token) {
-          console.log('Setting token in localStorage:', action.payload.token); // Debug log
           localStorage.setItem('memberToken', action.payload.token);
           localStorage.setItem('isAuthenticated', 'true');
-        } else {
-          console.error('No token in response!'); // Debug log
         }
       })
       .addCase(registerUser.rejected, (state, action) => {

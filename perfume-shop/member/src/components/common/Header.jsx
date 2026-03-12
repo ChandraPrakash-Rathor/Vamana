@@ -6,17 +6,32 @@ import { faShoppingCart, faUser, faSearch, faSignOutAlt } from '@fortawesome/fre
 import { GetActiveSales } from '../../redux/apis/SaleApi';
 import { logoutUser } from '../../redux/apis/AuthApi';
 import { toast } from 'react-toastify';
+import axios from 'axios';
 
 export default function Header({ onOpenAuth }) {
   const [scrolled, setScrolled] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [siteSettings, setSiteSettings] = useState(null);
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { sales } = useSelector((state) => state.SaleSlice);
   const { user } = useSelector((state) => state.AuthSlice);
   const { items } = useSelector((state) => state.CartSlice);
+
+  // Fetch site settings
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const response = await axios.get('http://localhost:5000/api/member/site-settings');
+        setSiteSettings(response.data.data);
+      } catch (error) {
+        console.error('Failed to load site settings:', error);
+      }
+    };
+    fetchSettings();
+  }, []);
 
   // Fetch active sales on component mount
   useEffect(() => {
@@ -90,8 +105,8 @@ export default function Header({ onOpenAuth }) {
         {/* Logo */}
         <Link className="navbar-brand p-0 m-0" to="/">
           <img
-            src="/logo1.png"
-            alt="Vamana"
+            src={siteSettings?.logo ? `http://localhost:5000${siteSettings.logo}` : '/logo3.png'}
+            alt={siteSettings?.siteName || 'Vamana'}
             style={{
               height: scrolled ? '50px' : '65px',
               width: 'auto',

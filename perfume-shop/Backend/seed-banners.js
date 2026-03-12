@@ -29,6 +29,16 @@ const banners = [
     websiteUrl: 'www.vamana.com',
     order: 2,
     isActive: true
+  },
+  {
+    type: 'modern',
+    topBadge: 'Refined Essentials',
+    title: 'Luxury Perfume\nPresentation',
+    subtitle: 'Elegance Crafted for Modern Connoisseurs',
+    bottomBadge: 'Master Perfumer',
+    websiteUrl: 'www.vamana.com',
+    order: 3,
+    isActive: true
   }
 ];
 

@@ -4,6 +4,7 @@ import HeroSlider from '../components/home/HeroSlider';
 import FeaturedPerfumes from '../components/home/FeaturedPerfumes';
 import DiscountSection from '../components/home/DiscountSection';
 import BestSellers from '../components/home/BestSellers';
+import FeaturesSlider from '../components/home/FeaturesSlider';
 import Testimonials from '../components/home/Testimonials';
 import ScrollToTop from '../components/common/ScrollToTop';
 
@@ -62,6 +63,17 @@ export default function Home() {
       />
       
       <BestSellers />
+      
+      {/* Section Separator */}
+      <div 
+        style={{
+          height: '1px',
+          background: 'linear-gradient(to right, transparent, var(--sand-400), transparent)',
+          margin: '2rem 0'
+        }}
+      />
+      
+      <FeaturesSlider />
       
       {/* Section Separator */}
       <div 

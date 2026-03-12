@@ -1,9 +1,24 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBars, faBell, faUser, faSignOutAlt } from '@fortawesome/free-solid-svg-icons';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { getSiteSettings } from '../../APIS/apis/SiteSettingsApi';
 
 export default function Topbar({ onToggleSidebar, onLogout, sidebarCollapsed, isMobile }) {
   const [showDropdown, setShowDropdown] = useState(false);
+  const [siteSettings, setSiteSettings] = useState(null);
+
+  // Fetch site settings
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const data = await getSiteSettings();
+        setSiteSettings(data.data);
+      } catch (error) {
+        console.error('Failed to load site settings:', error);
+      }
+    };
+    fetchSettings();
+  }, []);
 
   return (
     <div className="topbar">
@@ -25,7 +40,7 @@ export default function Topbar({ onToggleSidebar, onLogout, sidebarCollapsed, is
             fontFamily: "'Playfair Display', serif",
             fontSize: '1.5rem'
           }}>
-            Vamana Admin
+            {siteSettings?.siteName || 'Vamana'} Admin
           </h4>
           <h5 className="mb-0 d-md-none" style={{
             color: 'var(--sand-900)',

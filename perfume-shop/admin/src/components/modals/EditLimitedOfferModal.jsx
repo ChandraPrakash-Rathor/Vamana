@@ -93,9 +93,6 @@ export default function EditLimitedOfferModal({ isOpen, onClose, offer }) {
         : null;
       
       setSelectedProduct(selectedProductOption || null);
-      
-      console.log('🔍 Edit modal - Product ID:', productId);
-      console.log('🔍 Edit modal - Selected product:', selectedProductOption);
     }
   }, [offer, isOpen, productData, reset]);
 
