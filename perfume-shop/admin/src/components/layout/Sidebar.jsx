@@ -13,6 +13,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { useState, useEffect } from 'react';
 import { getSiteSettings } from '../../APIS/apis/SiteSettingsApi';
+import { imageBaseUrl } from '../../APIS/apis/config';
 
 export default function Sidebar({ collapsed, mobileOpen, onLinkClick }) {
   const location = useLocation();
@@ -48,7 +49,7 @@ export default function Sidebar({ collapsed, mobileOpen, onLinkClick }) {
       {/* Logo */}
       <div className="text-center py-3 py-md-4 border-bottom border-secondary border-opacity-25">
         <img
-          src={siteSettings?.logo ? `http://localhost:5000${siteSettings.logo}` : '/logo1.png'}
+          src={siteSettings?.logo || '/logo1.png'}
           alt={siteSettings?.siteName || 'Vamana'}
           className="img-fluid"
           style={{

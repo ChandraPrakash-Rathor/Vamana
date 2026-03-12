@@ -20,6 +20,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { baseUrl } from '../../redux/apis/config';
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
@@ -29,7 +30,7 @@ export default function Footer() {
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/member/site-settings');
+        const response = await axios.get(`${baseUrl}site-settings`);
         setSiteSettings(response.data.data);
       } catch (error) {
         console.error('Failed to load site settings:', error);
@@ -117,7 +118,7 @@ export default function Footer() {
             <div className="col-lg-4 col-md-6">
               <div style={{ marginBottom: '1.5rem' }}>
                 <img
-                  src={siteSettings?.logo ? `http://localhost:5000${siteSettings.logo}` : '/logo3.png'}
+                  src={siteSettings?.logo || '/logo3.png'}
                   alt={siteSettings?.siteName || 'Vamana'}
                   style={{
                     height: '60px',

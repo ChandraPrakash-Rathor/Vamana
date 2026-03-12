@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPhone, faEnvelope, faMapMarkerAlt, faClock } from '@fortawesome/free-solid-svg-icons';
+import { baseUrl } from '../redux/apis/config';
 
 export default function ContactUs() {
   const [siteSettings, setSiteSettings] = useState(null);
@@ -13,7 +14,7 @@ export default function ContactUs() {
 
   const fetchSiteSettings = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/member/site-settings');
+      const response = await axios.get(`${baseUrl}site-settings`);
       setSiteSettings(response.data.data);
     } catch (error) {
       console.error('Failed to load site settings:', error);

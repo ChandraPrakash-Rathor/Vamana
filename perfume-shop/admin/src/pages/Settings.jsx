@@ -13,6 +13,7 @@ import { toast } from 'react-toastify';
 import ViewAdminModal from '../components/modals/ViewAdminModal';
 import EditAdminModal from '../components/modals/EditAdminModal';
 import AddAdminModal from '../components/modals/AddAdminModal';
+import { imageBaseUrl } from '../APIS/apis/config';
 
 export default function Settings() {
   const dispatch = useDispatch();
@@ -97,7 +98,7 @@ export default function Settings() {
     try {
       const data = await getSiteSettings();
       setSiteSettings(data.data);
-      setLogoPreview(`http://localhost:5000${data.data.logo}`);
+      setLogoPreview(data.data.logo);
     } catch (error) {
       toast.error('Failed to load site settings');
     }

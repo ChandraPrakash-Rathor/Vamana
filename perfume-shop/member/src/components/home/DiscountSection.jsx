@@ -245,7 +245,7 @@ export default function DiscountSection() {
 
                     <div style={{ height: 'clamp(130px, 22vw, 180px)', overflow: 'hidden' }}>
                       <img
-                        src={`http://localhost:5000/uploads/${offer.product?.mainImage}`}
+                        src={offer.product?.mainImage || '/product4.jpg'}
                         alt={offer.product?.name}
                         style={{
                           width: '100%',

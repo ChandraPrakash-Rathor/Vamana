@@ -14,13 +14,13 @@ export default function FeaturesSlider() {
   const sliderRef = useRef(null);
 
   const features = [
-    { icon: faBan, title: 'Paraben Free', subtitle: 'Safe Formula', color: '#B3873F' },
-    { icon: faPaw, title: 'Cruelty Free', subtitle: 'No Testing', color: '#C9965F' },
-    { icon: faStar, title: 'Premium', subtitle: 'Luxury Quality', color: '#D4A574' },
-    { icon: faClock, title: 'Long Lasting', subtitle: '8-12 Hours', color: '#B3873F' },
-    { icon: faCertificate, title: 'Certified', subtitle: 'Quality Assured', color: '#C9965F' },
-    { icon: faLeaf, title: 'Natural', subtitle: 'Eco Friendly', color: '#D4A574' },
-    { icon: faCheckCircle, title: 'Authentic', subtitle: '100% Original', color: '#B3873F' }
+    { icon: faBan, title: 'Paraben Free', subtitle: 'Safe Formula', colorVar: '--sand-600' },
+    { icon: faPaw, title: 'Cruelty Free', subtitle: 'No Testing', colorVar: '--sand-500' },
+    { icon: faStar, title: 'Premium', subtitle: 'Luxury Quality', colorVar: '--sand-400' },
+    { icon: faClock, title: 'Long Lasting', subtitle: '8-12 Hours', colorVar: '--sand-600' },
+    { icon: faCertificate, title: 'Certified', subtitle: 'Quality Assured', colorVar: '--sand-500' },
+    { icon: faLeaf, title: 'Natural', subtitle: 'Eco Friendly', colorVar: '--sand-400' },
+    { icon: faCheckCircle, title: 'Authentic', subtitle: '100% Original', colorVar: '--sand-600' }
   ];
 
   const duplicatedFeatures = [...features, ...features, ...features];
@@ -59,7 +59,7 @@ export default function FeaturesSlider() {
 
   return (
     <div style={{
-      background: 'linear-gradient(135deg, #F0E9D1 0%, #E2D3A6 100%)',
+      background: 'linear-gradient(135deg, var(--sand-100) 0%, var(--sand-200) 100%)',
       padding: 'clamp(3rem, 6vw, 5rem) 0',
       position: 'relative',
       overflow: 'hidden'
@@ -70,7 +70,7 @@ export default function FeaturesSlider() {
           fontFamily: "'Playfair Display', serif",
           fontSize: 'clamp(2rem, 5vw, 3rem)',
           fontWeight: '700',
-          color: '#3D2817',
+          color: 'var(--sand-900)',
           marginBottom: '0.5rem',
           textShadow: '2px 2px 4px rgba(0,0,0,0.05)'
         }}>
@@ -78,7 +78,7 @@ export default function FeaturesSlider() {
         </h2>
         <p style={{
           fontSize: 'clamp(1rem, 2.5vw, 1.2rem)',
-          color: '#6B5744',
+          color: 'var(--sand-700)',
           fontWeight: '500'
         }}>
           Premium Quality • Trusted Excellence
@@ -94,7 +94,7 @@ export default function FeaturesSlider() {
           top: 0,
           bottom: 0,
           width: '120px',
-          background: 'linear-gradient(to right, #E2D3A6, transparent)',
+          background: 'linear-gradient(to right, var(--sand-200), transparent)',
           zIndex: 2
         }} />
         <div style={{
@@ -103,7 +103,7 @@ export default function FeaturesSlider() {
           top: 0,
           bottom: 0,
           width: '120px',
-          background: 'linear-gradient(to left, #E2D3A6, transparent)',
+          background: 'linear-gradient(to left, var(--sand-200), transparent)',
           zIndex: 2
         }} />
 
@@ -145,7 +145,7 @@ export default function FeaturesSlider() {
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.transform = 'translateY(-10px) scale(1.05)';
-                  e.currentTarget.style.borderColor = feature.color;
+                  e.currentTarget.style.borderColor = `var(${feature.colorVar})`;
                   e.currentTarget.style.borderWidth = '3px';
                 }}
                 onMouseLeave={(e) => {
@@ -158,14 +158,14 @@ export default function FeaturesSlider() {
                   icon={feature.icon} 
                   style={{ 
                     fontSize: 'clamp(2rem, 4vw, 2.5rem)', 
-                    color: feature.color,
+                    color: `var(${feature.colorVar})`,
                     marginBottom: '0.5rem'
                   }} 
                 />
                 <div style={{
                   fontSize: 'clamp(0.75rem, 1.5vw, 0.9rem)',
                   fontWeight: '800',
-                  color: '#3D2817',
+                  color: 'var(--sand-900)',
                   textAlign: 'center',
                   letterSpacing: '0.5px'
                 }}>
@@ -177,7 +177,7 @@ export default function FeaturesSlider() {
               <div style={{
                 fontSize: 'clamp(0.8rem, 1.6vw, 0.95rem)',
                 fontWeight: '600',
-                color: '#6B5744',
+                color: 'var(--sand-700)',
                 textAlign: 'center',
                 padding: '6px 14px',
                 background: 'rgba(255, 255, 255, 0.6)',

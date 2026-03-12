@@ -7,6 +7,7 @@ import { GetActiveSales } from '../../redux/apis/SaleApi';
 import { logoutUser } from '../../redux/apis/AuthApi';
 import { toast } from 'react-toastify';
 import axios from 'axios';
+import { baseUrl } from '../../redux/apis/config';
 
 export default function Header({ onOpenAuth }) {
   const [scrolled, setScrolled] = useState(false);
@@ -24,7 +25,7 @@ export default function Header({ onOpenAuth }) {
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/member/site-settings');
+        const response = await axios.get(`${baseUrl}site-settings`);
         setSiteSettings(response.data.data);
       } catch (error) {
         console.error('Failed to load site settings:', error);
@@ -105,7 +106,7 @@ export default function Header({ onOpenAuth }) {
         {/* Logo */}
         <Link className="navbar-brand p-0 m-0" to="/">
           <img
-            src={siteSettings?.logo ? `http://localhost:5000${siteSettings.logo}` : '/logo3.png'}
+            src={siteSettings?.logo || '/logo3.png'}
             alt={siteSettings?.siteName || 'Vamana'}
             style={{
               height: scrolled ? '50px' : '65px',

@@ -381,7 +381,7 @@ export default function Invoice() {
                         <div className="d-flex align-items-center gap-2">
                           {item.productDetails?.mainImage && (
                             <img
-                              src={`http://localhost:5000/${item.productDetails.mainImage}`}
+                              src={item.productDetails.mainImage}
                               alt={item.productDetails?.name}
                               style={{
                                 width: 'clamp(40px, 10vw, 60px)',

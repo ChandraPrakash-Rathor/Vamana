@@ -2,6 +2,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPhone, faEnvelope, faMapMarkerAlt, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { baseUrl } from '../../redux/apis/config';
 
 export default function InvoiceTemplate({ orderData }) {
   const [siteSettings, setSiteSettings] = useState(null);
@@ -9,7 +10,7 @@ export default function InvoiceTemplate({ orderData }) {
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/member/site-settings');
+        const response = await axios.get(`${baseUrl}site-settings`);
         setSiteSettings(response.data.data);
       } catch (error) {
         console.error('Failed to load site settings:', error);

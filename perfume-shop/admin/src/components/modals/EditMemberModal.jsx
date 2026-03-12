@@ -4,6 +4,7 @@ import { faTimes, faEdit, faUser, faEnvelope, faPhone, faToggleOn, faToggleOff }
 import { toast } from 'react-toastify';
 import axios from 'axios';
 import Cookies from 'js-cookie';
+import { baseUrl } from '../../APIS/apis/config';
 
 export default function EditMemberModal({ show, onClose, member, onSuccess }) {
   const [formData, setFormData] = useState({
@@ -34,7 +35,7 @@ export default function EditMemberModal({ show, onClose, member, onSuccess }) {
       
       // Update member status
       await axios.put(
-        `http://localhost:5000/api/admin/members/${member.id}/status`,
+        `${baseUrl}members/${member.id}/status`,
         { status: formData.status },
         {
           headers: {

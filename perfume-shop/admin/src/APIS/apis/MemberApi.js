@@ -1,7 +1,6 @@
 import axios from 'axios';
 import Cookies from 'js-cookie';
-
-const API_URL = 'http://localhost:5000/api/admin/members';
+import { baseUrl } from './config';
 
 // Get auth token from Cookies (admin uses cookies, not localStorage)
 const getAuthToken = () => {
@@ -11,7 +10,7 @@ const getAuthToken = () => {
 // Get all members
 export const getAllMembers = async () => {
   const token = getAuthToken();
-  const response = await axios.get(API_URL, {
+  const response = await axios.get(`${baseUrl}members`, {
     headers: {
       Authorization: `Bearer ${token}`
     }
@@ -22,7 +21,7 @@ export const getAllMembers = async () => {
 // Get single member by ID
 export const getMemberById = async (id) => {
   const token = getAuthToken();
-  const response = await axios.get(`${API_URL}/${id}`, {
+  const response = await axios.get(`${baseUrl}members/${id}`, {
     headers: {
       Authorization: `Bearer ${token}`
     }
@@ -34,7 +33,7 @@ export const getMemberById = async (id) => {
 export const updateMemberStatus = async (id, status) => {
   const token = getAuthToken();
   const response = await axios.put(
-    `${API_URL}/${id}/status`,
+    `${baseUrl}members/${id}/status`,
     { status },
     {
       headers: {
@@ -48,7 +47,7 @@ export const updateMemberStatus = async (id, status) => {
 // Delete member
 export const deleteMember = async (id) => {
   const token = getAuthToken();
-  const response = await axios.delete(`${API_URL}/${id}`, {
+  const response = await axios.delete(`${baseUrl}members/${id}`, {
     headers: {
       Authorization: `Bearer ${token}`
     }

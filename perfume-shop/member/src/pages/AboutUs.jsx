@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
+import { baseUrl } from '../redux/apis/config';
 
 export default function AboutUs() {
   const [siteSettings, setSiteSettings] = useState(null);
@@ -11,7 +12,7 @@ export default function AboutUs() {
 
   const fetchSiteSettings = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/member/site-settings');
+      const response = await axios.get(`${baseUrl}site-settings`);
       setSiteSettings(response.data.data);
     } catch (error) {
       console.error('Failed to load site settings:', error);

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'react-toastify';
-import { baseUrl } from '../APIS/apis/config';
+import { baseUrl, imageBaseUrl } from '../APIS/apis/config';
 import { getSiteSettings } from '../APIS/apis/SiteSettingsApi';
 import Cookies from 'js-cookie';
 
@@ -222,7 +222,7 @@ export default function OrderInvoice() {
                       <div className="d-flex align-items-center gap-3">
                         {item.productDetails?.mainImage && (
                           <img
-                            src={`http://localhost:5000/${item.productDetails.mainImage.replace(/^\/+/, '')}`}
+                            src={item.productDetails.mainImage}
                             alt={item.productDetails?.name}
                             style={{
                               width: '60px',
