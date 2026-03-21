@@ -35,7 +35,7 @@ export default function AddCouponModal({ isOpen, onClose }) {
     }
   }, [isOpen, dispatch]);
 
-  // Convert product data to react-select options
+ 
   const productOptions = productData?.map(product => ({
     value: product._id,
     label: `${product.name} - ₹${product.finalPrice || product.actualPrice}`,
