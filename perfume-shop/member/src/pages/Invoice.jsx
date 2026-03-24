@@ -1,31 +1,31 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import { baseUrl } from '../redux/apis/config';
 
 export default function Invoice() {
   const { orderId } = useParams();
+  const location = useLocation();
+  const isNewOrder = new URLSearchParams(location.search).get('new') === 'true';
+
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [siteSettings, setSiteSettings] = useState(null);
-  const [showAnimation, setShowAnimation] = useState(true);
-  const [showInvoice, setShowInvoice] = useState(false);
+  const [showAnimation, setShowAnimation] = useState(isNewOrder);
+  const [showInvoice, setShowInvoice] = useState(!isNewOrder);
 
   useEffect(() => {
     fetchOrderDetails();
     fetchSiteSettings();
-    
-    // Hide animation after 4 seconds
-    const animationTimer = setTimeout(() => {
-      setShowAnimation(false);
-      // Show invoice with fade in after animation
-      setTimeout(() => {
-        setShowInvoice(true);
-      }, 500);
-    }, 4000);
 
-    return () => clearTimeout(animationTimer);
+    if (isNewOrder) {
+      const animationTimer = setTimeout(() => {
+        setShowAnimation(false);
+        setTimeout(() => setShowInvoice(true), 500);
+      }, 4000);
+      return () => clearTimeout(animationTimer);
+    }
   }, [orderId]);
 
   const fetchSiteSettings = async () => {
@@ -378,22 +378,8 @@ export default function Invoice() {
                   {order.products.map((item, index) => (
                     <tr key={index} style={{ borderBottom: '1px solid var(--sand-200)' }}>
                       <td style={{ padding: 'clamp(0.5rem, 2vw, 1rem)' }}>
-                        <div className="d-flex align-items-center gap-2">
-                          {item.productDetails?.mainImage && (
-                            <img
-                              src={item.productDetails.mainImage}
-                              alt={item.productDetails?.name}
-                              style={{
-                                width: 'clamp(40px, 10vw, 60px)',
-                                height: 'clamp(40px, 10vw, 60px)',
-                                objectFit: 'cover',
-                                borderRadius: '8px'
-                              }}
-                            />
-                          )}
-                          <div style={{ color: 'var(--sand-800)', fontWeight: '500', fontSize: 'clamp(0.85rem, 2vw, 1rem)' }}>
-                            {item.productDetails?.name || 'Product'}
-                          </div>
+                        <div style={{ color: 'var(--sand-800)', fontWeight: '500', fontSize: 'clamp(0.85rem, 2vw, 1rem)' }}>
+                          {item.productDetails?.name || 'Product'}
                         </div>
                       </td>
                       <td style={{ padding: 'clamp(0.5rem, 2vw, 1rem)', textAlign: 'center', color: 'var(--sand-700)', fontSize: 'clamp(0.85rem, 2vw, 1rem)' }}>

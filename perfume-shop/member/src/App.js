@@ -22,6 +22,8 @@ import ReturnsPage from './pages/Returns';
 import ShippingInfo from './pages/ShippingInfo';
 import AboutUs from './pages/AboutUs';
 import ContactUs from './pages/ContactUs';
+import MyOrders from './pages/MyOrders';
+import Profile from './pages/Profile';
 import { getCurrentUser } from './redux/apis/AuthApi';
 import { getCart } from './redux/apis/CartApi';
 
@@ -92,6 +94,8 @@ function App() {
               <Route path="/shipping-info" element={<ShippingInfo />} />
               <Route path="/about-us" element={<AboutUs />} />
               <Route path="/contact-us" element={<ContactUs />} />
+              <Route path="/my-orders" element={<MyOrders />} />
+              <Route path="/profile" element={<Profile />} />
             </Routes>
           </main>
           <Footer />

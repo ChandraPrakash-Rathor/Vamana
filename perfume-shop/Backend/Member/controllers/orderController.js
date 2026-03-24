@@ -99,7 +99,7 @@ exports.verifyPayment = async (req, res) => {
 // Get user orders
 exports.getUserOrders = async (req, res) => {
   try {
-    const userId = req.user?.id || req.query.userId;
+    const userId = req.member?._id?.toString() || req.query.userId;
     
     if (!userId) {
       return res.status(400).json({ success: false, message: 'User ID required' });

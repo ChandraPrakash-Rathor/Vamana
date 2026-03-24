@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faShoppingCart, faUser, faSearch, faSignOutAlt } from '@fortawesome/free-solid-svg-icons';
+import { faShoppingCart, faUser, faSearch, faSignOutAlt, faBox } from '@fortawesome/free-solid-svg-icons';
 import { GetActiveSales } from '../../redux/apis/SaleApi';
 import { logoutUser } from '../../redux/apis/AuthApi';
 import { toast } from 'react-toastify';
@@ -14,6 +14,9 @@ export default function Header({ onOpenAuth }) {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [siteSettings, setSiteSettings] = useState(null);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownBtnRef = useRef(null);
+  const [dropdownPos, setDropdownPos] = useState({ top: 0, right: 0 });
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -63,10 +66,22 @@ export default function Header({ onOpenAuth }) {
   };
 
   const handleLogout = async () => {
+    setDropdownOpen(false);
     await dispatch(logoutUser());
     toast.success('Logged out successfully');
     navigate('/');
   };
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (!e.target.closest('#user-dropdown-wrapper')) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleSearchToggle = () => {
     setSearchOpen(!searchOpen);
@@ -132,7 +147,7 @@ export default function Header({ onOpenAuth }) {
           <span className="navbar-toggler-icon"></span>
         </button>
 
-        <div className="collapse navbar-collapse" id="navbarNav">
+        <div className="collapse navbar-collapse" id="navbarNav" style={{ overflow: 'visible' }}>
           <ul className="navbar-nav ms-auto align-items-center gap-1">
             <li className="nav-item">
               <Link 
@@ -263,78 +278,84 @@ export default function Header({ onOpenAuth }) {
               </Link>
             </li>
             
+            {/* User Account */}
             <li className="nav-item">
               {user ? (
-                <div className="dropdown">
-                  <a
-                    href="#"
-                    className="nav-link px-4 py-2 position-relative d-inline-flex align-items-center gap-2 dropdown-toggle"
-                    data-bs-toggle="dropdown"
-                    style={{ 
-                      color: 'var(--sand-900)',
-                      fontWeight: '600',
-                      fontSize: '0.95rem',
-                      letterSpacing: '0.3px',
-                      transition: 'all 0.3s ease',
-                      fontFamily: "'Roboto', sans-serif",
-                      cursor: 'pointer'
+                <div id="user-dropdown-wrapper" style={{ position: 'relative' }}>
+                  <button
+                    ref={dropdownBtnRef}
+                    onClick={() => {
+                      if (!dropdownOpen && dropdownBtnRef.current) {
+                        const rect = dropdownBtnRef.current.getBoundingClientRect();
+                        setDropdownPos({ top: rect.bottom + 8, right: window.innerWidth - rect.right });
+                      }
+                      setDropdownOpen(prev => !prev);
                     }}
+                    style={{
+                      background: 'none', border: 'none', cursor: 'pointer',
+                      color: 'var(--sand-900)', fontWeight: '600', fontSize: '0.95rem',
+                      display: 'flex', alignItems: 'center', gap: '0.5rem',
+                      padding: '0.5rem 1rem', borderRadius: '8px',
+                      transition: 'all 0.3s ease'
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.color = 'var(--sand-600)'}
+                    onMouseLeave={e => e.currentTarget.style.color = 'var(--sand-900)'}
                   >
                     <FontAwesomeIcon icon={faUser} />
                     {user.name?.split(' ')[0] || 'Account'}
-                  </a>
-                  <ul className="dropdown-menu dropdown-menu-end" style={{
-                    backgroundColor: 'var(--sand-100)',
-                    border: '1px solid var(--sand-300)',
-                    borderRadius: '10px',
-                    padding: '0.5rem'
-                  }}>
-                    <li>
-                      <button
-                        onClick={handleLogout}
-                        className="dropdown-item"
-                        style={{
-                          color: 'var(--sand-900)',
-                          padding: '0.5rem 1rem',
-                          borderRadius: '8px',
-                          fontSize: '0.9rem',
-                          fontWeight: '600',
-                          border: 'none',
-                          backgroundColor: 'transparent',
-                          cursor: 'pointer',
-                          transition: 'all 0.3s ease'
-                        }}
-                        onMouseEnter={(e) => e.target.style.backgroundColor = 'var(--sand-300)'}
-                        onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                    <span style={{ fontSize: '0.7rem', display: 'inline-block', transform: dropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>▼</span>
+                  </button>
+
+                  {dropdownOpen && (
+                    <div style={{
+                      position: 'fixed', top: dropdownPos.top, right: dropdownPos.right,
+                      backgroundColor: 'white', border: '1px solid var(--sand-200)',
+                      borderRadius: '12px', padding: '0.5rem',
+                      minWidth: '190px', zIndex: 99999,
+                      boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+                      animation: 'fadeInDown 0.15s ease'
+                    }}>
+                      <div style={{ padding: '0.5rem 1rem 0.75rem', borderBottom: '1px solid var(--sand-100)', marginBottom: '0.25rem' }}>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--sand-500)' }}>Signed in as</div>
+                        <div style={{ fontWeight: '700', color: 'var(--sand-900)', fontSize: '0.9rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {user.name}
+                        </div>
+                      </div>
+                      <Link to="/my-orders" onClick={() => setDropdownOpen(false)}
+                        style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.6rem 1rem', borderRadius: '8px', color: 'var(--sand-900)', textDecoration: 'none', fontWeight: '600', fontSize: '0.9rem' }}
+                        onMouseEnter={e => e.currentTarget.style.backgroundColor = 'var(--sand-50)'}
+                        onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
                       >
-                        <FontAwesomeIcon icon={faSignOutAlt} style={{ marginRight: '0.5rem' }} />
-                        Logout
-                      </button>
-                    </li>
-                  </ul>
+                        <FontAwesomeIcon icon={faBox} style={{ color: 'var(--sand-600)', width: '16px' }} />
+                        My Orders
+                      </Link>
+                      <Link to="/profile" onClick={() => setDropdownOpen(false)}
+                        style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.6rem 1rem', borderRadius: '8px', color: 'var(--sand-900)', textDecoration: 'none', fontWeight: '600', fontSize: '0.9rem' }}
+                        onMouseEnter={e => e.currentTarget.style.backgroundColor = 'var(--sand-50)'}
+                        onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                      >
+                        <FontAwesomeIcon icon={faUser} style={{ color: 'var(--sand-600)', width: '16px' }} />
+                        Profile
+                      </Link>
+                      <div style={{ borderTop: '1px solid var(--sand-100)', marginTop: '0.25rem', paddingTop: '0.25rem' }}>
+                        <button onClick={handleLogout}
+                          style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', width: '100%', padding: '0.6rem 1rem', borderRadius: '8px', color: '#dc3545', fontWeight: '600', fontSize: '0.9rem', border: 'none', backgroundColor: 'transparent', cursor: 'pointer' }}
+                          onMouseEnter={e => e.currentTarget.style.backgroundColor = '#fff5f5'}
+                          onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                        >
+                          <FontAwesomeIcon icon={faSignOutAlt} style={{ width: '16px' }} />
+                          Logout
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
-                <a
-                  href="#"
-                  className="nav-link px-4 py-2 position-relative d-inline-flex align-items-center gap-2" 
-                  onClick={handleAccountClick}
-                  style={{ 
-                    color: 'var(--sand-900)',
-                    fontWeight: '600',
-                    fontSize: '0.95rem',
-                    letterSpacing: '0.3px',
-                    transition: 'all 0.3s ease',
-                    fontFamily: "'Roboto', sans-serif",
-                    cursor: 'pointer'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.target.style.color = 'var(--sand-600)';
-                    e.target.style.transform = 'translateY(-2px)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.target.style.color = 'var(--sand-900)';
-                    e.target.style.transform = 'translateY(0)';
-                  }}
+                <a href="#" onClick={handleAccountClick}
+                  className="nav-link px-4 py-2 d-inline-flex align-items-center gap-2"
+                  style={{ color: 'var(--sand-900)', fontWeight: '600', fontSize: '0.95rem', transition: 'all 0.3s ease', cursor: 'pointer' }}
+                  onMouseEnter={e => e.currentTarget.style.color = 'var(--sand-600)'}
+                  onMouseLeave={e => e.currentTarget.style.color = 'var(--sand-900)'}
                 >
                   <FontAwesomeIcon icon={faUser} />
                   Login
@@ -449,6 +470,12 @@ export default function Header({ onOpenAuth }) {
 
       {/* Animation Styles */}
       <style>{`
+        #navbarNav {
+          overflow: visible !important;
+        }
+        #user-dropdown-wrapper {
+          position: relative;
+        }
         @keyframes fadeIn {
           from {
             opacity: 0;
@@ -457,6 +484,17 @@ export default function Header({ onOpenAuth }) {
           to {
             opacity: 1;
             transform: scale(1);
+          }
+        }
+
+        @keyframes fadeInDown {
+          from {
+            opacity: 0;
+            transform: translateY(-8px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
           }
         }
       `}</style>

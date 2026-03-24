@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const { protectMember } = require('../../middleware/memberAuthMiddleware');
 
 // Import controllers
 const productController = require('../controllers/productController');
@@ -180,8 +181,8 @@ router.post("/create-order", orderController.createOrder);
 // PAYMENT VERIFY
 router.post("/verify-payment", paymentController.verifyPayment);
 
-// GET USER ORDERS
-router.get("/orders", orderController.getUserOrders);
+// GET USER ORDERS (protected - reads userId from token)
+router.get("/orders", protectMember, orderController.getUserOrders);
 
 // GET SINGLE ORDER/INVOICE
 router.get("/orders/:id", orderController.getOrderById);
