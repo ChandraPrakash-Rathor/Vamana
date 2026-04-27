@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import Select from 'react-select';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -17,6 +17,7 @@ export default function EditProductModal({ isOpen, onClose, product }) {
   const [subImagePreviews, setSubImagePreviews] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [finalPrice, setFinalPrice] = useState(0);
+  const originalCategory = useRef(null); // store product's original category
   const dispatch = useDispatch();
 
   const {
@@ -61,23 +62,32 @@ export default function EditProductModal({ isOpen, onClose, product }) {
   // Prefill form when product changes
   useEffect(() => {
     if (product && isOpen) {
-      // Set form values
+      originalCategory.current = product.category; // remember original category
       setValue('name', product.name);
       setValue('sku', `PRF-${String(product.id).padStart(4, '0')}`);
       setValue('category', categoryOptions.find(opt => opt.value === product.category));
       setValue('actualPrice', product.actualPrice);
       setValue('discount', product.discount || 0);
       setValue('stock', product.stock);
-      setValue('volume', '50ml'); // Default, adjust if you have this in product
+      setValue('volume', product.volume || '');
       setValue('description', product.description || '');
+      setValue('subLine', product.subLine || '');
       setValue('status', statusOptions.find(opt => opt.value === product.status));
 
-      // Set images
       setMainImagePreview(product.image);
       setSubImagePreviews(product.subImages || []);
       setFinalPrice(product.price);
     }
   }, [product, isOpen, setValue]);
+
+  // Reset volume only when admin manually changes to a DIFFERENT category
+  const watchCategory = watch('category');
+  useEffect(() => {
+    if (!watchCategory?.value) return;
+    // If it matches the original product category, it's just the prefill — don't reset
+    if (watchCategory.value === originalCategory.current) return;
+    setValue('volume', '');
+  }, [watchCategory?.value]);
 
   const customSelectStyles = {
     control: (base, state) => ({
@@ -170,6 +180,7 @@ export default function EditProductModal({ isOpen, onClose, product }) {
           stock: data.stock,
           volume: data.volume,
           description: data.description,
+          subLine: data.subLine || '',
           status: data.status.value
         };
 
@@ -198,6 +209,7 @@ export default function EditProductModal({ isOpen, onClose, product }) {
           stock: data.stock,
           volume: data.volume,
           description: data.description,
+          subLine: data.subLine || '',
           status: data.status.value
         };
       }
@@ -528,23 +540,66 @@ export default function EditProductModal({ isOpen, onClose, product }) {
               />
             </div>
 
-            {/* Volume */}
+            {/* Volume — options depend on category */}
             <div className="col-12 col-md-6">
               <label className="form-label fw-semibold" style={{ color: 'var(--sand-900)' }}>
                 Volume
               </label>
-              <input
-                type="text"
-                className="form-control"
-                {...register('volume')}
-                placeholder="50ml"
-                style={{
-                  padding: '0.75rem',
-                  borderRadius: '10px',
-                  border: '2px solid var(--sand-300)',
-                  fontSize: '0.95rem'
-                }}
-              />
+              {(() => {
+                const isAttar = watch('category')?.value === 'attar';
+                const volumes = isAttar
+                  ? [
+                      { value: '6ml',        label: '6ml' },
+                      { value: '12ml',       label: '12ml' },
+                      { value: '6ml & 12ml', label: 'Both (6ml & 12ml)' }
+                    ]
+                  : [
+                      { value: '50ml',         label: '50ml' },
+                      { value: '100ml',        label: '100ml' },
+                      { value: '50ml & 100ml', label: 'Both (50ml & 100ml)' }
+                    ];
+                return (
+                  <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
+                    {volumes.map(({ value, label }) => (
+                      <label
+                        key={value}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.5rem',
+                          padding: '0.6rem 1.2rem',
+                          borderRadius: '10px',
+                          border: '2px solid var(--sand-300)',
+                          cursor: 'pointer',
+                          transition: 'all 0.3s ease',
+                          backgroundColor: 'white',
+                          fontSize: '0.9rem'
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!e.currentTarget.querySelector('input').checked) {
+                            e.currentTarget.style.borderColor = 'var(--sand-600)';
+                            e.currentTarget.style.backgroundColor = 'var(--sand-100)';
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!e.currentTarget.querySelector('input').checked) {
+                            e.currentTarget.style.borderColor = 'var(--sand-300)';
+                            e.currentTarget.style.backgroundColor = 'white';
+                          }
+                        }}
+                      >
+                        <input
+                          type="radio"
+                          value={value}
+                          {...register('volume')}
+                          style={{ width: '16px', height: '16px', cursor: 'pointer', accentColor: 'var(--sand-600)' }}
+                        />
+                        <span style={{ color: 'var(--sand-900)' }}>{label}</span>
+                      </label>
+                    ))}
+                  </div>
+                );
+              })()}
             </div>
 
             {/* Description */}
@@ -570,6 +625,25 @@ export default function EditProductModal({ isOpen, onClose, product }) {
                   {errors.description.message}
                 </small>
               )}
+            </div>
+
+            {/* Sub Line (e.g. Perfume for Men / Women / Unisex) */}
+            <div className="col-12">
+              <label className="form-label fw-semibold" style={{ color: 'var(--sand-900)' }}>
+                Sub Line <span style={{ color: 'var(--sand-600)', fontWeight: '400', fontSize: '0.85rem' }}>(e.g. Perfume for Men, For Women, Unisex)</span>
+              </label>
+              <input
+                type="text"
+                className="form-control"
+                {...register('subLine')}
+                placeholder="e.g. Perfume for Men / For Women / Unisex"
+                style={{
+                  padding: '0.75rem',
+                  borderRadius: '10px',
+                  border: '2px solid var(--sand-300)',
+                  fontSize: '0.95rem'
+                }}
+              />
             </div>
 
             {/* Main Image */}

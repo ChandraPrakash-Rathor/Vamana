@@ -375,7 +375,7 @@ export default function Invoice() {
                   </tr>
                 </thead>
                 <tbody>
-                  {order.products.map((item, index) => (
+                  {(order.products || []).map((item, index) => (
                     <tr key={index} style={{ borderBottom: '1px solid var(--sand-200)' }}>
                       <td style={{ padding: 'clamp(0.5rem, 2vw, 1rem)' }}>
                         <div style={{ color: 'var(--sand-800)', fontWeight: '500', fontSize: 'clamp(0.85rem, 2vw, 1rem)' }}>

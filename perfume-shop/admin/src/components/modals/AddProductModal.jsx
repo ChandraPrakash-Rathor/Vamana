@@ -39,7 +39,8 @@ export default function AddProductModal({ isOpen, onClose }) {
     formState: { errors },
     reset,
     control,
-    watch
+    watch,
+    setValue
   } = useForm();
 
 
@@ -69,6 +70,12 @@ export default function AddProductModal({ isOpen, onClose }) {
       setFinalPrice(price);
     }
   }, [watchActualPrice, watchDiscount]);
+
+  // Reset volume when category changes so wrong options don't carry over
+  const watchCategory = watch('category');
+  useEffect(() => {
+    setValue('volume', '');
+  }, [watchCategory?.value]);
 
   // Custom styles for react-select
   const customSelectStyles = {
@@ -277,6 +284,7 @@ export default function AddProductModal({ isOpen, onClose }) {
       formData.append('stock', data.stock);
       formData.append('volume', data.volume);
       formData.append('description', data.description);
+      formData.append('subLine', data.subLine || '');
       
       // Add main image
       formData.append('mainImage', mainImage);
@@ -287,33 +295,20 @@ export default function AddProductModal({ isOpen, onClose }) {
       });
 
       const res = await dispatch(insertProduct(formData));
-     if(res?.payload?.status == "success"){
-      toast.success("Product added successfully!");
-      // Refresh product list immediately
-      dispatch(GetProduct());
-      setIsSubmitting(false);
-      handleClose();
-     }else{
-      toast.error("Something went wrong!");
-      setIsSubmitting(false);
-      handleClose();
-    }
-
-     
-      // TODO: Replace with actual API call
-      // const response = await fetch('/api/products', {
-      //   method: 'POST',
-      //   body: formData
-      // });
-      // const result = await response.json();
-      // if (result.success) {
-      //   alert('Product added successfully!');
-      //   handleClose();
-      // }
-
+      if (res?.payload?.status === 'success') {
+        toast.success('Product added successfully!');
+        dispatch(GetProduct());
+        setIsSubmitting(false);
+        handleClose();
+      } else {
+        // Don't close modal on error — let user fix and retry
+        const errMsg = res?.payload?.message || res?.error?.message || 'Something went wrong. Please try again.';
+        toast.error(errMsg);
+        setIsSubmitting(false);
+      }
     } catch (error) {
       console.error('Error submitting form:', error);
-      alert('Failed to add product. Please try again.');
+      toast.error('Failed to add product. Please try again.');
       setIsSubmitting(false);
     }
   };
@@ -342,6 +337,7 @@ export default function AddProductModal({ isOpen, onClose }) {
 
   return (
     <>
+      {isSubmitting && <SprayLoader />}
       {/* Backdrop */}
       <div 
         style={{
@@ -757,144 +753,78 @@ export default function AddProductModal({ isOpen, onClose }) {
               )}
             </div>
 
-            {/* Volume Selection */}
+            {/* Volume Selection — options depend on category */}
             <div className="col-12">
               <label className="form-label fw-semibold" style={{ color: 'var(--sand-900)' }}>
                 Available Volumes <span style={{ color: '#dc3545' }}>*</span>
               </label>
-              <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-                <label style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  padding: '0.75rem 1.5rem',
-                  borderRadius: '10px',
-                  border: `2px solid ${errors.volume ? '#dc3545' : 'var(--sand-300)'}`,
-                  cursor: 'pointer',
-                  transition: 'all 0.3s ease',
-                  backgroundColor: 'white'
-                }}
-                onMouseEnter={(e) => {
-                  if (!e.currentTarget.querySelector('input').checked) {
-                    e.currentTarget.style.borderColor = 'var(--sand-600)';
-                    e.currentTarget.style.backgroundColor = 'var(--sand-100)';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!e.currentTarget.querySelector('input').checked) {
-                    e.currentTarget.style.borderColor = 'var(--sand-300)';
-                    e.currentTarget.style.backgroundColor = 'white';
-                  }
-                }}>
-                  <input
-                    type="radio"
-                    value="50ml"
-                    {...register('volume', { required: 'Please select at least one volume' })}
-                    style={{
-                      width: '18px',
-                      height: '18px',
-                      cursor: 'pointer',
-                      accentColor: 'var(--sand-600)'
-                    }}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        e.target.parentElement.style.borderColor = 'var(--sand-600)';
-                        e.target.parentElement.style.backgroundColor = 'var(--sand-100)';
-                        e.target.parentElement.style.fontWeight = '700';
-                      }
-                    }}
-                  />
-                  <span style={{ fontSize: '0.95rem', color: 'var(--sand-900)' }}>50ml</span>
-                </label>
-
-                <label style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  padding: '0.75rem 1.5rem',
-                  borderRadius: '10px',
-                  border: `2px solid ${errors.volume ? '#dc3545' : 'var(--sand-300)'}`,
-                  cursor: 'pointer',
-                  transition: 'all 0.3s ease',
-                  backgroundColor: 'white'
-                }}
-                onMouseEnter={(e) => {
-                  if (!e.currentTarget.querySelector('input').checked) {
-                    e.currentTarget.style.borderColor = 'var(--sand-600)';
-                    e.currentTarget.style.backgroundColor = 'var(--sand-100)';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!e.currentTarget.querySelector('input').checked) {
-                    e.currentTarget.style.borderColor = 'var(--sand-300)';
-                    e.currentTarget.style.backgroundColor = 'white';
-                  }
-                }}>
-                  <input
-                    type="radio"
-                    value="100ml"
-                    {...register('volume', { required: 'Please select at least one volume' })}
-                    style={{
-                      width: '18px',
-                      height: '18px',
-                      cursor: 'pointer',
-                      accentColor: 'var(--sand-600)'
-                    }}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        e.target.parentElement.style.borderColor = 'var(--sand-600)';
-                        e.target.parentElement.style.backgroundColor = 'var(--sand-100)';
-                        e.target.parentElement.style.fontWeight = '700';
-                      }
-                    }}
-                  />
-                  <span style={{ fontSize: '0.95rem', color: 'var(--sand-900)' }}>100ml</span>
-                </label>
-
-                <label style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  padding: '0.75rem 1.5rem',
-                  borderRadius: '10px',
-                  border: `2px solid ${errors.volume ? '#dc3545' : 'var(--sand-300)'}`,
-                  cursor: 'pointer',
-                  transition: 'all 0.3s ease',
-                  backgroundColor: 'white'
-                }}
-                onMouseEnter={(e) => {
-                  if (!e.currentTarget.querySelector('input').checked) {
-                    e.currentTarget.style.borderColor = 'var(--sand-600)';
-                    e.currentTarget.style.backgroundColor = 'var(--sand-100)';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!e.currentTarget.querySelector('input').checked) {
-                    e.currentTarget.style.borderColor = 'var(--sand-300)';
-                    e.currentTarget.style.backgroundColor = 'white';
-                  }
-                }}>
-                  <input
-                    type="radio"
-                    value="both"
-                    {...register('volume', { required: 'Please select at least one volume' })}
-                    style={{
-                      width: '18px',
-                      height: '18px',
-                      cursor: 'pointer',
-                      accentColor: 'var(--sand-600)'
-                    }}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        e.target.parentElement.style.borderColor = 'var(--sand-600)';
-                        e.target.parentElement.style.backgroundColor = 'var(--sand-100)';
-                        e.target.parentElement.style.fontWeight = '700';
-                      }
-                    }}
-                  />
-                  <span style={{ fontSize: '0.95rem', color: 'var(--sand-900)' }}>Both (50ml & 100ml)</span>
-                </label>
-              </div>
+              {(() => {
+                const selectedCategory = watchActualPrice !== undefined && watch('category')?.value;
+                const isAttar = watch('category')?.value === 'attar';
+                const volumes = isAttar
+                  ? [
+                      { value: '6ml',        label: '6ml' },
+                      { value: '12ml',       label: '12ml' },
+                      { value: '6ml & 12ml', label: 'Both (6ml & 12ml)' }
+                    ]
+                  : [
+                      { value: '50ml',         label: '50ml' },
+                      { value: '100ml',        label: '100ml' },
+                      { value: '50ml & 100ml', label: 'Both (50ml & 100ml)' }
+                    ];
+                return (
+                  <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                    {volumes.map(({ value, label }) => (
+                      <label
+                        key={value}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.5rem',
+                          padding: '0.75rem 1.5rem',
+                          borderRadius: '10px',
+                          border: `2px solid ${errors.volume ? '#dc3545' : 'var(--sand-300)'}`,
+                          cursor: 'pointer',
+                          transition: 'all 0.3s ease',
+                          backgroundColor: 'white'
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!e.currentTarget.querySelector('input').checked) {
+                            e.currentTarget.style.borderColor = 'var(--sand-600)';
+                            e.currentTarget.style.backgroundColor = 'var(--sand-100)';
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!e.currentTarget.querySelector('input').checked) {
+                            e.currentTarget.style.borderColor = 'var(--sand-300)';
+                            e.currentTarget.style.backgroundColor = 'white';
+                          }
+                        }}
+                      >
+                        <input
+                          type="radio"
+                          value={value}
+                          {...register('volume', { required: 'Please select a volume' })}
+                          style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: 'var(--sand-600)' }}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              e.target.parentElement.style.borderColor = 'var(--sand-600)';
+                              e.target.parentElement.style.backgroundColor = 'var(--sand-100)';
+                              e.target.parentElement.style.fontWeight = '700';
+                            }
+                          }}
+                        />
+                        <span style={{ fontSize: '0.95rem', color: 'var(--sand-900)' }}>{label}</span>
+                      </label>
+                    ))}
+                  </div>
+                );
+              })()}
+              {!watch('category') && (
+                <small style={{ color: 'var(--sand-600)', fontSize: '0.85rem', marginTop: '0.4rem', display: 'block' }}>
+                  Select a category first to see volume options
+                </small>
+              )}
               {errors.volume && (
                 <small style={{ color: '#dc3545', fontSize: '0.85rem', marginTop: '0.5rem', display: 'block' }}>
                   {errors.volume.message}
@@ -928,6 +858,25 @@ export default function AddProductModal({ isOpen, onClose }) {
                   {errors.description.message}
                 </small>
               )}
+            </div>
+
+            {/* Sub Line (e.g. Perfume for Men / Women / Unisex) */}
+            <div className="col-12">
+              <label className="form-label fw-semibold" style={{ color: 'var(--sand-900)' }}>
+                Sub Line <span style={{ color: 'var(--sand-600)', fontWeight: '400', fontSize: '0.85rem' }}>(e.g. Perfume for Men, For Women, Unisex)</span>
+              </label>
+              <input
+                type="text"
+                className="form-control"
+                placeholder="e.g. Perfume for Men / For Women / Unisex"
+                {...register('subLine')}
+                style={{
+                  padding: '0.75rem',
+                  borderRadius: '10px',
+                  border: '2px solid var(--sand-300)',
+                  fontSize: '0.95rem'
+                }}
+              />
             </div>
 
             {/* Main Image Upload */}

@@ -21,7 +21,11 @@ const orderSlice = createSlice({
       })
       .addCase(fetchOrders.fulfilled, (state, action) => {
         state.loading = false;
-        state.orders = action.payload;
+        // API returns {success, message, data:[]} — safely extract array
+        const payload = action.payload;
+        state.orders = Array.isArray(payload) ? payload
+          : Array.isArray(payload?.data) ? payload.data
+          : [];
       })
       .addCase(fetchOrders.rejected, (state, action) => {
         state.loading = false;
@@ -29,7 +33,9 @@ const orderSlice = createSlice({
       })
       // Fetch Stats
       .addCase(fetchOrderStats.fulfilled, (state, action) => {
-        state.stats = action.payload;
+        // API returns {success, message, data:{...}} — extract data
+        const payload = action.payload;
+        state.stats = payload?.data || payload || null;
       })
       // Update Order Status
       .addCase(updateOrderStatus.fulfilled, (state, action) => {

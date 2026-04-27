@@ -33,7 +33,12 @@ const couponSlice = createSlice({
       })
       .addCase(getActiveCoupons.fulfilled, (state, action) => {
         state.loading = false;
-        state.coupons = action.payload.data || [];
+        // Handle both {data:[]} and {data:{coupons:[]}} shapes
+        const payload = action.payload;
+        const raw = payload?.data;
+        state.coupons = Array.isArray(raw) ? raw
+          : Array.isArray(raw?.coupons) ? raw.coupons
+          : [];
       })
       .addCase(getActiveCoupons.rejected, (state, action) => {
         state.loading = false;

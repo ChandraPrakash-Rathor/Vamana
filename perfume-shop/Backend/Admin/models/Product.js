@@ -12,6 +12,17 @@ const productSchema = new mongoose.Schema({
     required: [true, 'Product description is required'],
     maxlength: [2000, 'Description cannot exceed 2000 characters']
   },
+  subLine: {
+    type: String,
+    trim: true,
+    maxlength: [100, 'Sub line cannot exceed 100 characters'],
+    default: ''
+  },
+  volume: {
+    type: String,
+    trim: true,
+    default: ''
+  },
   category: {
     type: String,
     required: [true, 'Category is required'],

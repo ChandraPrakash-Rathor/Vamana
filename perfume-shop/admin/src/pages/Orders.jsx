@@ -54,7 +54,7 @@ export default function Orders() {
     }
   };
 
-  const filteredOrders = orders.filter(order => {
+  const filteredOrders = (Array.isArray(orders) ? orders : []).filter(order => {
     if (filter === 'all') return true;
     return order.paymentStatus === filter;
   });
@@ -263,12 +263,12 @@ export default function Orders() {
                     </div>
                   </td>
                   <td style={{ padding: '1rem' }}>
-                    {order.products.slice(0, 2).map((item, idx) => (
+                    {(order.products || []).slice(0, 2).map((item, idx) => (
                       <div key={idx} style={{ fontSize: '0.85rem', color: 'var(--sand-700)', marginBottom: '0.25rem' }}>
                         {item.productDetails?.name || 'Product'} × {item.quantity}
                       </div>
                     ))}
-                    {order.products.length > 2 && (
+                    {(order.products || []).length > 2 && (
                       <div style={{ fontSize: '0.8rem', color: 'var(--sand-500)' }}>
                         +{order.products.length - 2} more
                       </div>

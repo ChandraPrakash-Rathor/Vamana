@@ -1,43 +1,37 @@
 const Product = require('../../Admin/models/Product');
 const { addRatingsToProducts, addRatingToProduct } = require('../../utils/reviewHelper');
 
+// Helper — only prepend host if it's a bare filename (not already a full URL)
+const buildImageUrl = (req, filename) => {
+  if (!filename) return null;
+  if (filename.startsWith('http://') || filename.startsWith('https://')) return filename;
+  return `${req.protocol}://${req.get('host')}/uploads/${filename}`;
+};
+
+const mapProduct = (req, product) => ({
+  ...product._doc,
+  volume: product.volume || '',
+  subLine: product.subLine || '',
+  mainImage: buildImageUrl(req, product.mainImage),
+  subImages: (product.subImages || []).filter(Boolean).map(img => buildImageUrl(req, img))
+});
+
 // @desc    Get all active products for customers
 // @route   GET /api/member/products
 // @access  Public
 exports.getAllProducts = async (req, res) => {
   try {
-  
-    const products = await Product.find({ 
-      status: { $in: ['active', 'out-of-stock'] } 
-    })
-      .sort({ createdAt: -1 })
-      .select('-__v');
+    const products = await Product.find({
+      status: { $in: ['active', 'out-of-stock'] }
+    }).sort({ createdAt: -1 }).select('-__v');
 
-    const updatedProducts = products.map(product => ({
-      ...product._doc,
-      mainImage: product.mainImage
-        ? `${req.protocol}://${req.get("host")}/uploads/${product.mainImage}`
-        : null,
-      subImages: product.subImages?.map(img =>
-        `${req.protocol}://${req.get("host")}/uploads/${img}`
-      )
-    }));
-
-    // Add actual ratings from Review collection
+    const updatedProducts = products.map(p => mapProduct(req, p));
     const productsWithRatings = await addRatingsToProducts(updatedProducts);
 
-    res.status(200).json({
-      success: true,
-      count: productsWithRatings.length,
-      data: productsWithRatings
-    });
+    res.status(200).json({ success: true, count: productsWithRatings.length, data: productsWithRatings });
   } catch (error) {
-    console.error("Error fetching products:", error);
-    res.status(500).json({
-      success: false,
-      message: "Server Error",
-      error: error.message
-    });
+    console.error('Error fetching products:', error);
+    res.status(500).json({ success: false, message: 'Server Error', error: error.message });
   }
 };
 
@@ -46,39 +40,18 @@ exports.getAllProducts = async (req, res) => {
 // @access  Public
 exports.getFeaturedProducts = async (req, res) => {
   try {
-    const products = await Product.find({ 
+    const products = await Product.find({
       status: { $in: ['active', 'out-of-stock'] },
-      featured: true 
-    })
-      .limit(8)
-      .sort({ createdAt: -1 })
-      .select('-__v');
+      featured: true
+    }).limit(8).sort({ createdAt: -1 }).select('-__v');
 
-    const updatedProducts = products.map(product => ({
-      ...product._doc,
-      mainImage: product.mainImage
-        ? `${req.protocol}://${req.get("host")}/uploads/${product.mainImage}`
-        : null,
-      subImages: product.subImages?.map(img =>
-        `${req.protocol}://${req.get("host")}/uploads/${img}`
-      )
-    }));
-
-    // Add actual ratings from Review collection
+    const updatedProducts = products.map(p => mapProduct(req, p));
     const productsWithRatings = await addRatingsToProducts(updatedProducts);
 
-    res.status(200).json({
-      success: true,
-      count: productsWithRatings.length,
-      data: productsWithRatings
-    });
+    res.status(200).json({ success: true, count: productsWithRatings.length, data: productsWithRatings });
   } catch (error) {
-    console.error("Error fetching featured products:", error);
-    res.status(500).json({
-      success: false,
-      message: "Server Error",
-      error: error.message
-    });
+    console.error('Error fetching featured products:', error);
+    res.status(500).json({ success: false, message: 'Server Error', error: error.message });
   }
 };
 
@@ -87,39 +60,18 @@ exports.getFeaturedProducts = async (req, res) => {
 // @access  Public
 exports.getBestsellerProducts = async (req, res) => {
   try {
-    const products = await Product.find({ 
+    const products = await Product.find({
       status: { $in: ['active', 'out-of-stock'] },
-      bestseller: true 
-    })
-      .limit(8)
-      .sort({ sales: -1 })
-      .select('-__v');
+      bestseller: true
+    }).limit(8).sort({ sales: -1 }).select('-__v');
 
-    const updatedProducts = products.map(product => ({
-      ...product._doc,
-      mainImage: product.mainImage
-        ? `${req.protocol}://${req.get("host")}/uploads/${product.mainImage}`
-        : null,
-      subImages: product.subImages?.map(img =>
-        `${req.protocol}://${req.get("host")}/uploads/${img}`
-      )
-    }));
-
-    // Add actual ratings from Review collection
+    const updatedProducts = products.map(p => mapProduct(req, p));
     const productsWithRatings = await addRatingsToProducts(updatedProducts);
 
-    res.status(200).json({
-      success: true,
-      count: productsWithRatings.length,
-      data: productsWithRatings
-    });
+    res.status(200).json({ success: true, count: productsWithRatings.length, data: productsWithRatings });
   } catch (error) {
-    console.error("Error fetching bestseller products:", error);
-    res.status(500).json({
-      success: false,
-      message: "Server Error",
-      error: error.message
-    });
+    console.error('Error fetching bestseller products:', error);
+    res.status(500).json({ success: false, message: 'Server Error', error: error.message });
   }
 };
 
@@ -129,47 +81,23 @@ exports.getBestsellerProducts = async (req, res) => {
 exports.getTopRatedProducts = async (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 8;
-    
-    // Get all active products first
-    const products = await Product.find({ 
+
+    const products = await Product.find({
       status: { $in: ['active', 'out-of-stock'] }
-    })
-      .select('-__v');
+    }).select('-__v');
 
-    const updatedProducts = products.map(product => ({
-      ...product._doc,
-      mainImage: product.mainImage
-        ? `${req.protocol}://${req.get("host")}/uploads/${product.mainImage}`
-        : null,
-      subImages: product.subImages?.map(img =>
-        `${req.protocol}://${req.get("host")}/uploads/${img}`
-      )
-    }));
-
-    // Add actual ratings from Review collection
+    const updatedProducts = products.map(p => mapProduct(req, p));
     const productsWithRatings = await addRatingsToProducts(updatedProducts);
-    
-    // Filter products with 3+ reviews and 3.5+ rating, then sort
+
     const topRated = productsWithRatings
       .filter(p => p.reviews >= 3 && p.rating >= 3.5)
-      .sort((a, b) => {
-        if (b.rating !== a.rating) return b.rating - a.rating;
-        return b.reviews - a.reviews;
-      })
+      .sort((a, b) => b.rating !== a.rating ? b.rating - a.rating : b.reviews - a.reviews)
       .slice(0, limit);
 
-    res.status(200).json({
-      success: true,
-      count: topRated.length,
-      data: topRated
-    });
+    res.status(200).json({ success: true, count: topRated.length, data: topRated });
   } catch (error) {
-    console.error("Error fetching top rated products:", error);
-    res.status(500).json({
-      success: false,
-      message: "Server Error",
-      error: error.message
-    });
+    console.error('Error fetching top rated products:', error);
+    res.status(500).json({ success: false, message: 'Server Error', error: error.message });
   }
 };
 
@@ -181,44 +109,19 @@ exports.getProductById = async (req, res) => {
     const product = await Product.findById(req.params.id).select('-__v');
 
     if (!product) {
-      return res.status(404).json({
-        success: false,
-        message: 'Product not found'
-      });
+      return res.status(404).json({ success: false, message: 'Product not found' });
     }
 
-    const updatedProduct = {
-      ...product._doc,
-      mainImage: product.mainImage
-        ? `${req.protocol}://${req.get("host")}/uploads/${product.mainImage}`
-        : null,
-      subImages: product.subImages?.map(img =>
-        `${req.protocol}://${req.get("host")}/uploads/${img}`
-      )
-    };
-
-    // Add actual rating from Review collection
+    const updatedProduct = mapProduct(req, product);
     const productWithRating = await addRatingToProduct(updatedProduct);
 
-    res.status(200).json({
-      success: true,
-      data: productWithRating
-    });
+    res.status(200).json({ success: true, data: productWithRating });
   } catch (error) {
     console.error('Error in getProductById:', error);
-    
     if (error.kind === 'ObjectId') {
-      return res.status(404).json({
-        success: false,
-        message: 'Product not found'
-      });
+      return res.status(404).json({ success: false, message: 'Product not found' });
     }
-
-    res.status(500).json({
-      success: false,
-      message: 'Server Error',
-      error: error.message
-    });
+    res.status(500).json({ success: false, message: 'Server Error', error: error.message });
   }
 };
 
@@ -228,38 +131,18 @@ exports.getProductById = async (req, res) => {
 exports.getProductsByCategory = async (req, res) => {
   try {
     const category = req.params.category.toLowerCase();
-    
-    const products = await Product.find({ 
+
+    const products = await Product.find({
       status: { $in: ['active', 'out-of-stock'] },
-      category: category
-    })
-      .sort({ createdAt: -1 })
-      .select('-__v');
+      category
+    }).sort({ createdAt: -1 }).select('-__v');
 
-    const updatedProducts = products.map(product => ({
-      ...product._doc,
-      mainImage: product.mainImage
-        ? `${req.protocol}://${req.get("host")}/uploads/${product.mainImage}`
-        : null,
-      subImages: product.subImages?.map(img =>
-        `${req.protocol}://${req.get("host")}/uploads/${img}`
-      )
-    }));
-
-    // Add actual ratings from Review collection
+    const updatedProducts = products.map(p => mapProduct(req, p));
     const productsWithRatings = await addRatingsToProducts(updatedProducts);
 
-    res.status(200).json({
-      success: true,
-      count: productsWithRatings.length,
-      data: productsWithRatings
-    });
+    res.status(200).json({ success: true, count: productsWithRatings.length, data: productsWithRatings });
   } catch (error) {
     console.error('Error in getProductsByCategory:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Server Error',
-      error: error.message
-    });
+    res.status(500).json({ success: false, message: 'Server Error', error: error.message });
   }
 };

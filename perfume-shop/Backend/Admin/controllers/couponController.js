@@ -1,423 +1,245 @@
 const Coupon = require('../models/Coupon');
+const { success, created, error, validationError, notFound, isInvalidObjectId, getValidationMessages } = require('../../utils/apiResponse');
 
-// @desc    Get all coupons
-// @route   GET /api/admin/coupons
-// @access  Private (Admin)
+const VALID_DISCOUNT_TYPES = ['percentage', 'fixed'];
+
+// GET /api/admin/GetCoupons
 exports.getAllCoupons = async (req, res) => {
   try {
     const coupons = await Coupon.find()
       .populate('applicableProducts', 'name')
       .sort({ createdAt: -1 });
 
-    res.status(200).json({
-      status: 'success',
-      success: true,
-      count: coupons.length,
-      data: coupons
-    });
-  } catch (error) {
-    console.error('Error fetching coupons:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Server Error',
-      error: error.message
-    });
+    return success(res, { coupons, count: coupons.length }, 'Coupons fetched successfully');
+  } catch (err) {
+    return error(res, 'Failed to fetch coupons', 500, err);
   }
 };
 
-// @desc    Get single coupon by ID
-// @route   GET /api/admin/coupons/:id
-// @access  Private (Admin)
+// GET /api/admin/coupons/:id
 exports.getCouponById = async (req, res) => {
   try {
     const coupon = await Coupon.findById(req.params.id)
       .populate('applicableProducts', 'name category');
 
-    if (!coupon) {
-      return res.status(404).json({
-        success: false,
-        message: 'Coupon not found'
-      });
-    }
+    if (!coupon) return notFound(res, 'Coupon not found');
 
-    res.status(200).json({
-      status: 'success',
-      success: true,
-      data: coupon
-    });
-  } catch (error) {
-    console.error('Error in getCouponById:', error);
-    
-    if (error.kind === 'ObjectId') {
-      return res.status(404).json({
-        success: false,
-        message: 'Coupon not found'
-      });
-    }
-
-    res.status(500).json({
-      success: false,
-      message: 'Server Error',
-      error: error.message
-    });
+    return success(res, coupon, 'Coupon fetched successfully');
+  } catch (err) {
+    if (isInvalidObjectId(err)) return notFound(res, 'Coupon not found');
+    return error(res, 'Failed to fetch coupon', 500, err);
   }
 };
 
-// @desc    Get coupon by code
-// @route   GET /api/admin/coupons/code/:code
-// @access  Private (Admin)
+// GET /api/admin/coupons/code/:code
 exports.getCouponByCode = async (req, res) => {
   try {
-    const coupon = await Coupon.findOne({ 
-      code: req.params.code.toUpperCase() 
+    const coupon = await Coupon.findOne({
+      code: req.params.code.toUpperCase().trim()
     }).populate('applicableProducts', 'name category');
 
-    if (!coupon) {
-      return res.status(404).json({
-        success: false,
-        message: 'Coupon not found'
-      });
-    }
+    if (!coupon) return notFound(res, 'Coupon not found');
 
-    res.status(200).json({
-      status: 'success',
-      success: true,
-      data: coupon
-    });
-  } catch (error) {
-    console.error('Error in getCouponByCode:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Server Error',
-      error: error.message
-    });
+    return success(res, coupon, 'Coupon fetched successfully');
+  } catch (err) {
+    return error(res, 'Failed to fetch coupon', 500, err);
   }
 };
 
-// @desc    Create new coupon
-// @route   POST /api/admin/coupons
-// @access  Private (Admin)
+// POST /api/admin/insertCoupon
 exports.createCoupon = async (req, res) => {
   try {
     const {
-      code,
-      description,
-      discountType,
-      discountValue,
-      minPurchase,
-      maxDiscount,
-      usageLimit,
-      startDate,
-      endDate,
-      applicableProducts,
-      applicableCategories
+      code, description, discountType, discountValue,
+      minPurchase, maxDiscount, usageLimit,
+      startDate, endDate, applicableProducts, applicableCategories
     } = req.body;
 
-    // Validation
-    if (!code || !description || !discountType || !discountValue || !startDate || !endDate) {
-      return res.status(400).json({
-        success: false,
-        message: 'Required fields missing'
-      });
+    // Required field validation
+    if (!code?.trim() || !description?.trim() || !discountType || discountValue === undefined || !startDate || !endDate) {
+      return validationError(res, 'Required fields missing: code, description, discountType, discountValue, startDate, endDate');
     }
 
-    // Check if coupon code already exists
-    const existingCoupon = await Coupon.findOne({ code: code.toUpperCase() });
+    // Bug fix: "flat" was accepted but model only allows "fixed"
+    if (!VALID_DISCOUNT_TYPES.includes(discountType.toLowerCase())) {
+      return validationError(res, `Invalid discountType. Must be one of: ${VALID_DISCOUNT_TYPES.join(', ')}`);
+    }
+
+    const parsedValue = Number(discountValue);
+    if (isNaN(parsedValue) || parsedValue <= 0) {
+      return validationError(res, 'discountValue must be a positive number');
+    }
+
+    // Bug fix: percentage > 100 was not validated
+    if (discountType.toLowerCase() === 'percentage' && parsedValue > 100) {
+      return validationError(res, 'Percentage discount cannot exceed 100');
+    }
+
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+      return validationError(res, 'Invalid date format for startDate or endDate');
+    }
+
+    if (end <= start) {
+      return validationError(res, 'endDate must be after startDate');
+    }
+
+    const existingCoupon = await Coupon.findOne({ code: code.toUpperCase().trim() });
     if (existingCoupon) {
-      return res.status(400).json({
-        success: false,
-        message: 'Coupon code already exists'
-      });
+      return error(res, 'Coupon code already exists', 400);
     }
 
-    // Create coupon
     const coupon = await Coupon.create({
-      code: code.toUpperCase(),
-      description,
+      code: code.toUpperCase().trim(),
+      description: description.trim(),
       discountType: discountType.toLowerCase(),
-      discountValue: Number(discountValue),
+      discountValue: parsedValue,
       minPurchase: Number(minPurchase) || 0,
       maxDiscount: maxDiscount ? Number(maxDiscount) : null,
       usageLimit: usageLimit ? Number(usageLimit) : null,
-      startDate: new Date(startDate),
-      endDate: new Date(endDate),
+      startDate: start,
+      endDate: end,
       applicableProducts: applicableProducts || [],
       applicableCategories: applicableCategories || ['all']
     });
 
-    res.status(201).json({
-      status: 'success',
-      success: true,
-      message: 'Coupon created successfully',
-      data: coupon
-    });
-  } catch (error) {
-    console.error('Error creating coupon:', error);
-
-    if (error.name === 'ValidationError') {
-      const messages = Object.values(error.errors).map(err => err.message);
-      return res.status(400).json({
-        success: false,
-        message: 'Validation Error',
-        errors: messages
-      });
-    }
-
-    res.status(500).json({
-      success: false,
-      message: 'Server Error',
-      error: error.message
-    });
+    return created(res, coupon, 'Coupon created successfully');
+  } catch (err) {
+    if (err.name === 'ValidationError') return validationError(res, 'Validation failed', getValidationMessages(err));
+    return error(res, 'Failed to create coupon', 500, err);
   }
 };
 
-// @desc    Update coupon
-// @route   PUT /api/admin/coupons/:id
-// @access  Private (Admin)
+// PUT /api/admin/coupons/:id
 exports.updateCoupon = async (req, res) => {
   try {
     let coupon = await Coupon.findById(req.params.id);
+    if (!coupon) return notFound(res, 'Coupon not found');
 
-    if (!coupon) {
-      return res.status(404).json({
-        success: false,
-        message: 'Coupon not found'
-      });
-    }
-
-    // If updating code, check if new code already exists
-    if (req.body.code && req.body.code.toUpperCase() !== coupon.code) {
-      const existingCoupon = await Coupon.findOne({ 
-        code: req.body.code.toUpperCase() 
-      });
-      if (existingCoupon) {
-        return res.status(400).json({
-          success: false,
-          message: 'Coupon code already exists'
-        });
-      }
-    }
-
-    // Update fields
     const updateData = { ...req.body };
-    if (updateData.code) {
-      updateData.code = updateData.code.toUpperCase();
-    }
+
+    // Validate discountType if being updated
     if (updateData.discountType) {
+      if (!VALID_DISCOUNT_TYPES.includes(updateData.discountType.toLowerCase())) {
+        return validationError(res, `Invalid discountType. Must be one of: ${VALID_DISCOUNT_TYPES.join(', ')}`);
+      }
       updateData.discountType = updateData.discountType.toLowerCase();
     }
 
-    // Manual date validation for updates
-    if (updateData.startDate && updateData.endDate) {
-      const startDate = new Date(updateData.startDate);
-      const endDate = new Date(updateData.endDate);
-      if (endDate <= startDate) {
-        return res.status(400).json({
-          success: false,
-          message: 'End date must be after start date'
-        });
+    // Validate discountValue
+    if (updateData.discountValue !== undefined) {
+      const val = Number(updateData.discountValue);
+      if (isNaN(val) || val <= 0) {
+        return validationError(res, 'discountValue must be a positive number');
       }
-    } else if (updateData.startDate && !updateData.endDate) {
-      const startDate = new Date(updateData.startDate);
-      if (coupon.endDate <= startDate) {
-        return res.status(400).json({
-          success: false,
-          message: 'End date must be after start date'
-        });
-      }
-    } else if (!updateData.startDate && updateData.endDate) {
-      const endDate = new Date(updateData.endDate);
-      if (endDate <= coupon.startDate) {
-        return res.status(400).json({
-          success: false,
-          message: 'End date must be after start date'
-        });
+      const type = updateData.discountType || coupon.discountType;
+      if (type === 'percentage' && val > 100) {
+        return validationError(res, 'Percentage discount cannot exceed 100');
       }
     }
 
-    coupon = await Coupon.findByIdAndUpdate(
-      req.params.id,
-      updateData,
-      {
-        returnDocument: 'after',
-        runValidators: false // Disable built-in validators since we're doing manual validation
+    // Normalize code
+    if (updateData.code) {
+      updateData.code = updateData.code.toUpperCase().trim();
+      if (updateData.code !== coupon.code) {
+        const existing = await Coupon.findOne({ code: updateData.code });
+        if (existing) return error(res, 'Coupon code already exists', 400);
       }
-    );
+    }
 
-    res.status(200).json({
-      status: 'success',
-      success: true,
-      message: 'Coupon updated successfully',
-      data: coupon
+    // Date validation
+    const newStart = updateData.startDate ? new Date(updateData.startDate) : coupon.startDate;
+    const newEnd = updateData.endDate ? new Date(updateData.endDate) : coupon.endDate;
+
+    if (updateData.startDate && isNaN(newStart.getTime())) {
+      return validationError(res, 'Invalid startDate format');
+    }
+    if (updateData.endDate && isNaN(newEnd.getTime())) {
+      return validationError(res, 'Invalid endDate format');
+    }
+    if (newEnd <= newStart) {
+      return validationError(res, 'endDate must be after startDate');
+    }
+
+    coupon = await Coupon.findByIdAndUpdate(req.params.id, updateData, {
+      new: true,
+      runValidators: true // Issue 7 fix: must run validators to enforce schema constraints
     });
-  } catch (error) {
-    console.error('Error in updateCoupon:', error);
 
-    if (error.name === 'ValidationError') {
-      const messages = Object.values(error.errors).map(err => err.message);
-      return res.status(400).json({
-        success: false,
-        message: 'Validation Error',
-        errors: messages
-      });
-    }
-
-    if (error.kind === 'ObjectId') {
-      return res.status(404).json({
-        success: false,
-        message: 'Coupon not found'
-      });
-    }
-
-    res.status(500).json({
-      success: false,
-      message: 'Server Error',
-      error: error.message
-    });
+    return success(res, coupon, 'Coupon updated successfully');
+  } catch (err) {
+    if (isInvalidObjectId(err)) return notFound(res, 'Coupon not found');
+    if (err.name === 'ValidationError') return validationError(res, 'Validation failed', getValidationMessages(err));
+    return error(res, 'Failed to update coupon', 500, err);
   }
 };
 
-// @desc    Delete coupon
-// @route   DELETE /api/admin/coupons/:id
-// @access  Private (Admin)
+// DELETE /api/admin/coupons/:id
 exports.deleteCoupon = async (req, res) => {
   try {
     const coupon = await Coupon.findById(req.params.id);
-
-    if (!coupon) {
-      return res.status(404).json({
-        success: false,
-        message: 'Coupon not found'
-      });
-    }
+    if (!coupon) return notFound(res, 'Coupon not found');
 
     await coupon.deleteOne();
 
-    res.status(200).json({
-      status: 'success',
-      success: true,
-      message: 'Coupon deleted successfully',
-      data: {}
-    });
-  } catch (error) {
-    console.error('Error in deleteCoupon:', error);
-
-    if (error.kind === 'ObjectId') {
-      return res.status(404).json({
-        success: false,
-        message: 'Coupon not found'
-      });
-    }
-
-    res.status(500).json({
-      success: false,
-      message: 'Server Error',
-      error: error.message
-    });
+    return success(res, null, 'Coupon deleted successfully');
+  } catch (err) {
+    if (isInvalidObjectId(err)) return notFound(res, 'Coupon not found');
+    return error(res, 'Failed to delete coupon', 500, err);
   }
 };
 
-// @desc    Validate coupon
-// @route   POST /api/admin/coupons/validate
-// @access  Private (Admin)
+// POST /api/admin/coupons/validate
 exports.validateCoupon = async (req, res) => {
   try {
     const { code, purchaseAmount, productIds, categories } = req.body;
 
-    if (!code || !purchaseAmount) {
-      return res.status(400).json({
-        success: false,
-        message: 'Coupon code and purchase amount are required'
-      });
+    if (!code?.trim() || !purchaseAmount) {
+      return validationError(res, 'code and purchaseAmount are required');
     }
 
-    const coupon = await Coupon.findOne({ code: code.toUpperCase() });
-
-    if (!coupon) {
-      return res.status(404).json({
-        success: false,
-        message: 'Invalid coupon code'
-      });
+    const amount = Number(purchaseAmount);
+    if (isNaN(amount) || amount <= 0) {
+      return validationError(res, 'purchaseAmount must be a positive number');
     }
 
-    // Check if coupon can be used
-    const validation = coupon.canUse(purchaseAmount, productIds, categories);
+    const coupon = await Coupon.findOne({ code: code.toUpperCase().trim() });
+    if (!coupon) return notFound(res, 'Invalid coupon code');
 
+    const validation = coupon.canUse(amount, productIds || [], categories || []);
     if (!validation.valid) {
-      return res.status(400).json({
-        success: false,
-        message: validation.message
-      });
+      return error(res, validation.message, 400);
     }
 
-    // Calculate discount
-    const discount = coupon.calculateDiscount(purchaseAmount);
-    const finalAmount = purchaseAmount - discount;
+    const discount = coupon.calculateDiscount(amount);
 
-    res.status(200).json({
-      status: 'success',
-      success: true,
-      message: 'Coupon is valid',
-      data: {
-        coupon: {
-          code: coupon.code,
-          description: coupon.description,
-          discountType: coupon.discountType,
-          discountValue: coupon.discountValue
-        },
-        discount,
-        finalAmount
-      }
-    });
-  } catch (error) {
-    console.error('Error in validateCoupon:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Server Error',
-      error: error.message
-    });
+    return success(res, {
+      coupon: { code: coupon.code, description: coupon.description, discountType: coupon.discountType, discountValue: coupon.discountValue },
+      discount,
+      finalAmount: amount - discount
+    }, 'Coupon is valid');
+  } catch (err) {
+    return error(res, 'Failed to validate coupon', 500, err);
   }
 };
 
-// @desc    Get coupon statistics
-// @route   GET /api/admin/coupons/stats
-// @access  Private (Admin)
+// GET /api/admin/coupons/stats
 exports.getCouponStats = async (req, res) => {
   try {
     const now = new Date();
 
-    const totalCoupons = await Coupon.countDocuments();
-    const activeCoupons = await Coupon.countDocuments({
-      status: 'active',
-      startDate: { $lte: now },
-      endDate: { $gte: now }
-    });
-    const expiredCoupons = await Coupon.countDocuments({ status: 'expired' });
-    const inactiveCoupons = await Coupon.countDocuments({ status: 'inactive' });
+    const [totalCoupons, activeCoupons, expiredCoupons, inactiveCoupons, mostUsed] = await Promise.all([
+      Coupon.countDocuments(),
+      Coupon.countDocuments({ status: 'active', startDate: { $lte: now }, endDate: { $gte: now } }),
+      Coupon.countDocuments({ status: 'expired' }),
+      Coupon.countDocuments({ status: 'inactive' }),
+      Coupon.find().sort({ usedCount: -1 }).limit(5).select('code description usedCount usageLimit')
+    ]);
 
-    // Most used coupons
-    const mostUsed = await Coupon.find()
-      .sort({ usedCount: -1 })
-      .limit(5)
-      .select('code description usedCount usageLimit');
-
-    res.status(200).json({
-      status: 'success',
-      success: true,
-      data: {
-        totalCoupons,
-        activeCoupons,
-        expiredCoupons,
-        inactiveCoupons,
-        mostUsed
-      }
-    });
-  } catch (error) {
-    console.error('Error in getCouponStats:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Server Error',
-      error: error.message
-    });
+    return success(res, { totalCoupons, activeCoupons, expiredCoupons, inactiveCoupons, mostUsed }, 'Coupon stats fetched');
+  } catch (err) {
+    return error(res, 'Failed to fetch coupon stats', 500, err);
   }
 };

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { GetActiveLimitedOffers } from '../../redux/apis/LimitedOfferApi';
@@ -8,13 +8,31 @@ export default function DiscountSection() {
   const { offers, loading } = useSelector((state) => state.LimitedOfferSlice);
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
 
+  // Stable random values — computed once, never on re-render
+  const sparkles = useMemo(() => Array.from({ length: 15 }, (_, i) => ({
+    id: i,
+    top: `${(i * 7 + 3) % 100}%`,
+    left: `${(i * 13 + 5) % 100}%`,
+    duration: 2 + (i % 3),
+    delay: (i % 2) * 0.5
+  })), []);
+
+  const confetti = useMemo(() => Array.from({ length: 20 }, (_, i) => ({
+    id: i,
+    left: `${(i * 5 + 2) % 100}%`,
+    color: ['#FFD700', '#FF6B6B', '#4ECDC4', '#95E1D3', '#F38181'][i % 5],
+    isCircle: i % 2 === 0,
+    duration: 3 + (i % 2),
+    delay: (i % 3) * 0.5
+  })), []);
+
   useEffect(() => {
     dispatch(GetActiveLimitedOffers());
   }, [dispatch]);
 
   // Calculate countdown timer based on first offer's end date
   useEffect(() => {
-    if (offers.length === 0) return;
+    if (!Array.isArray(offers) || offers.length === 0) return;
 
     const calculateTimeLeft = () => {
       const endDate = new Date(offers[0].endDate);
@@ -38,17 +56,18 @@ export default function DiscountSection() {
   }, [offers]);
 
   // Don't show section if no active offers
-  if (!loading && offers.length === 0) {
+  const safeOffers = Array.isArray(offers) ? offers : [];
+  if (!loading && safeOffers.length === 0) {
     return null;
   }
 
   // Calculate highest discount from all offers
-  const maxDiscount = offers.length > 0 
-    ? Math.max(...offers.map(offer => offer.discount || 0))
+  const maxDiscount = safeOffers.length > 0
+    ? Math.max(...safeOffers.map(offer => offer.discount || 0))
     : 0;
 
   // Show first 2 offers only
-  const displayOffers = offers.slice(0, 2);
+  const displayOffers = safeOffers.slice(0, 2);
 
   return (
     <section 
@@ -60,36 +79,36 @@ export default function DiscountSection() {
     >
       {/* Animated Confetti/Celebration Elements */}
       <div className="position-absolute w-100 h-100 top-0 start-0" style={{ pointerEvents: 'none', zIndex: 1 }}>
-        {/* Sparkles */}
-        {[...Array(15)].map((_, i) => (
+        {/* Sparkles — stable positions, no Math.random() in render */}
+        {sparkles.map(s => (
           <div
-            key={i}
+            key={s.id}
             className="position-absolute"
             style={{
-              top: `${Math.random() * 100}%`,
-              left: `${Math.random() * 100}%`,
-              animation: `sparkle ${2 + Math.random() * 3}s ease-in-out infinite`,
-              animationDelay: `${Math.random() * 2}s`
+              top: s.top,
+              left: s.left,
+              animation: `sparkle ${s.duration}s ease-in-out infinite`,
+              animationDelay: `${s.delay}s`
             }}
           >
             ✨
           </div>
         ))}
-        
-        {/* Confetti */}
-        {[...Array(20)].map((_, i) => (
+
+        {/* Confetti — stable positions */}
+        {confetti.map(c => (
           <div
-            key={`confetti-${i}`}
+            key={`confetti-${c.id}`}
             className="position-absolute"
             style={{
               top: '-10%',
-              left: `${Math.random() * 100}%`,
+              left: c.left,
               width: '10px',
               height: '10px',
-              backgroundColor: ['#FFD700', '#FF6B6B', '#4ECDC4', '#95E1D3', '#F38181'][Math.floor(Math.random() * 5)],
-              borderRadius: Math.random() > 0.5 ? '50%' : '0',
-              animation: `fall ${3 + Math.random() * 2}s linear infinite`,
-              animationDelay: `${Math.random() * 3}s`,
+              backgroundColor: c.color,
+              borderRadius: c.isCircle ? '50%' : '0',
+              animation: `fall ${c.duration}s linear infinite`,
+              animationDelay: `${c.delay}s`,
               opacity: 0.7
             }}
           />

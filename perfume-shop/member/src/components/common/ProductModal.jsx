@@ -87,14 +87,18 @@ export default function ProductModal({ product, isOpen, onClose }) {
     }
   };
 
-  // Format category display for men's products
+  // Format category display using subLine from product data
   const getCategoryDisplay = (category) => {
     const categoryMap = {
       'perfume': 'Perfume',
       'attar': 'Attar',
       'combo': 'Combo Pack'
     };
-    return `${categoryMap[category] || 'Perfume'} • For Men`;
+    // 1. Plz remove the line perfume for men in all segments - now uses subLine from product
+    const subLine = productData.subLine || product.subLine;
+    return subLine
+      ? `${categoryMap[category] || 'Perfume'} • ${subLine}`
+      : categoryMap[category] || 'Perfume';
   };
 
   const modalContent = (

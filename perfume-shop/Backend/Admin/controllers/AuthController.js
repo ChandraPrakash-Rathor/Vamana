@@ -1,327 +1,201 @@
-const AuthModal = require("../models/AuthModal");
+const AuthModal = require('../models/AuthModal');
 const bcrypt = require('bcryptjs');
 const { generateToken } = require('../../utils/jwtHelper');
+const { success, created, error, validationError, notFound, isInvalidObjectId } = require('../../utils/apiResponse');
 
-// @desc    Login admin
-// @route   POST /api/admin/auth/login
-// @access  Public
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+// POST /api/admin/login
 exports.loginAdmin = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Validate input
     if (!email || !password) {
-      return res.status(400).json({ 
-        success: false,
-        message: "Please provide email and password" 
-      });
+      return validationError(res, 'Please provide email and password');
     }
 
-    // Find admin by email
-    const admin = await AuthModal.findOne({ email });
+    if (!EMAIL_REGEX.test(email)) {
+      return validationError(res, 'Invalid email format');
+    }
 
+    const admin = await AuthModal.findOne({ email: email.toLowerCase().trim() });
+
+    // Use same message for wrong email or wrong password — prevents user enumeration
     if (!admin) {
-      return res.status(401).json({ 
-        success: false,
-        message: "Invalid email or password" 
-      });
+      return error(res, 'Invalid email or password', 401);
     }
 
-    // Check if admin is active
     if (!admin.status) {
-      return res.status(401).json({ 
-        success: false,
-        message: "Your account has been deactivated" 
-      });
+      return error(res, 'Your account has been deactivated', 401);
     }
 
-    // Compare password
     const isPasswordMatch = await bcrypt.compare(password, admin.password);
-
     if (!isPasswordMatch) {
-      return res.status(401).json({ 
-        success: false,
-        message: "Invalid email or password" 
-      });
+      return error(res, 'Invalid email or password', 401);
     }
 
-    // Generate JWT token
     const token = generateToken(admin);
 
-    // Send response
-    res.json({
-      success: true,
-      message: "Login successful",
+    return success(res, {
       token,
-      admin: {
-        id: admin._id,
-        name: admin.name,
-        email: admin.email,
-        role: admin.role
-      }
-    });
-
-  } catch (error) {
-    console.error('❌ Login error:', error);
-    res.status(500).json({ 
-      success: false,
-      message: "Server error",
-      error: error.message 
-    });
+      admin: { id: admin._id, name: admin.name, email: admin.email, role: admin.role }
+    }, 'Login successful');
+  } catch (err) {
+    return error(res, 'Login failed', 500, err);
   }
 };
 
-// @desc    Get current logged in admin
-// @route   GET /api/admin/auth/me
-// @access  Private
+// GET /api/admin/auth/me
 exports.getMe = async (req, res) => {
   try {
     const admin = await AuthModal.findById(req.admin.id).select('-password');
-    
-    res.json({
-      success: true,
-      admin
-    });
-  } catch (error) {
-    console.error('❌ Get me error:', error);
-    res.status(500).json({ 
-      success: false,
-      message: "Server error",
-      error: error.message 
-    });
+    if (!admin) return notFound(res, 'Admin not found');
+
+    return success(res, { admin }, 'Admin profile fetched');
+  } catch (err) {
+    return error(res, 'Failed to fetch profile', 500, err);
   }
 };
 
-// @desc    Create new admin (for initial setup)
-// @route   POST /api/admin/auth/create
-// @access  Public (should be protected in production)
+// POST /api/admin/auth/create
 exports.createAdmin = async (req, res) => {
   try {
     const { name, email, password } = req.body;
 
-    // Validate input
-    if (!name || !email || !password) {
-      return res.status(400).json({ 
-        success: false,
-        message: "Please provide name, email and password" 
-      });
+    if (!name?.trim() || !email || !password) {
+      return validationError(res, 'Please provide name, email and password');
     }
 
-    // Check if admin already exists
-    const existingAdmin = await AuthModal.findOne({ email });
+    if (!EMAIL_REGEX.test(email)) {
+      return validationError(res, 'Invalid email format');
+    }
+
+    if (password.length < 6) {
+      return validationError(res, 'Password must be at least 6 characters');
+    }
+
+    const existingAdmin = await AuthModal.findOne({ email: email.toLowerCase().trim() });
     if (existingAdmin) {
-      return res.status(400).json({ 
-        success: false,
-        message: "Admin with this email already exists" 
-      });
+      return error(res, 'Admin with this email already exists', 400);
     }
 
-    // Hash password
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    // Create admin
     const admin = await AuthModal.create({
-      name,
-      email,
+      name: name.trim(),
+      email: email.toLowerCase().trim(),
       password: hashedPassword,
       role: 'admin',
       status: true
     });
 
-    // Generate token
     const token = generateToken(admin);
 
-    res.status(201).json({
-      success: true,
-      message: "Admin created successfully",
+    return created(res, {
       token,
-      admin: {
-        id: admin._id,
-        name: admin.name,
-        email: admin.email,
-        role: admin.role
-      }
-    });
-
-  } catch (error) {
-    console.error('❌ Create admin error:', error);
-    res.status(500).json({ 
-      success: false,
-      message: "Server error",
-      error: error.message 
-    });
+      admin: { id: admin._id, name: admin.name, email: admin.email, role: admin.role }
+    }, 'Admin created successfully');
+  } catch (err) {
+    return error(res, 'Failed to create admin', 500, err);
   }
 };
 
-
-// @desc    Update admin profile (name, email)
-// @route   PUT /api/admin/auth/profile
-// @access  Private
+// PUT /api/admin/auth/profile
 exports.updateProfile = async (req, res) => {
   try {
     const { name, email } = req.body;
 
-    // Validate input
-    if (!name || !email) {
-      return res.status(400).json({ 
-        success: false,
-        message: "Please provide name and email" 
-      });
+    if (!name?.trim() || !email) {
+      return validationError(res, 'Please provide name and email');
     }
 
-    // Check if email is already taken by another admin
-    const existingAdmin = await AuthModal.findOne({ 
-      email, 
-      _id: { $ne: req.admin.id } 
+    if (!EMAIL_REGEX.test(email)) {
+      return validationError(res, 'Invalid email format');
+    }
+
+    const existingAdmin = await AuthModal.findOne({
+      email: email.toLowerCase().trim(),
+      _id: { $ne: req.admin.id }
     });
 
     if (existingAdmin) {
-      return res.status(400).json({ 
-        success: false,
-        message: "Email already in use by another admin" 
-      });
+      return error(res, 'Email already in use by another admin', 400);
     }
 
-    // Update admin
     const admin = await AuthModal.findByIdAndUpdate(
       req.admin.id,
-      { name, email },
+      { name: name.trim(), email: email.toLowerCase().trim() },
       { new: true, runValidators: true }
     ).select('-password');
 
-    res.json({
-      success: true,
-      message: "Profile updated successfully",
-      admin
-    });
-
-  } catch (error) {
-    console.error('❌ Update profile error:', error);
-    res.status(500).json({ 
-      success: false,
-      message: "Server error",
-      error: error.message 
-    });
+    return success(res, { admin }, 'Profile updated successfully');
+  } catch (err) {
+    return error(res, 'Failed to update profile', 500, err);
   }
 };
 
-// @desc    Change password
-// @route   PUT /api/admin/auth/change-password
-// @access  Private
+// PUT /api/admin/auth/change-password
 exports.changePassword = async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
 
-    // Validate input
     if (!currentPassword || !newPassword) {
-      return res.status(400).json({ 
-        success: false,
-        message: "Please provide current and new password" 
-      });
+      return validationError(res, 'Please provide current and new password');
     }
 
-    // Validate new password length
     if (newPassword.length < 6) {
-      return res.status(400).json({ 
-        success: false,
-        message: "New password must be at least 6 characters" 
-      });
+      return validationError(res, 'New password must be at least 6 characters');
     }
 
-    // Get admin with password
-    const admin = await AuthModal.findById(req.admin.id);
+    if (currentPassword === newPassword) {
+      return validationError(res, 'New password must be different from current password');
+    }
 
-    // Verify current password
+    const admin = await AuthModal.findById(req.admin.id);
     const isPasswordMatch = await bcrypt.compare(currentPassword, admin.password);
 
     if (!isPasswordMatch) {
-      return res.status(401).json({ 
-        success: false,
-        message: "Current password is incorrect" 
-      });
+      return error(res, 'Current password is incorrect', 401);
     }
 
-    // Hash new password
     const salt = await bcrypt.genSalt(10);
     admin.password = await bcrypt.hash(newPassword, salt);
-
     await admin.save();
 
-    res.json({
-      success: true,
-      message: "Password changed successfully"
-    });
-
-  } catch (error) {
-    console.error('❌ Change password error:', error);
-    res.status(500).json({ 
-      success: false,
-      message: "Server error",
-      error: error.message 
-    });
+    return success(res, null, 'Password changed successfully');
+  } catch (err) {
+    return error(res, 'Failed to change password', 500, err);
   }
 };
 
-// @desc    Get all admins
-// @route   GET /api/admin/auth/admins
-// @access  Private (Admin only)
+// GET /api/admin/auth/admins
 exports.getAllAdmins = async (req, res) => {
   try {
     const admins = await AuthModal.find().select('-password').sort({ createdAt: -1 });
-    
-    res.json({
-      success: true,
-      count: admins.length,
-      admins
-    });
-  } catch (error) {
-    console.error('❌ Get admins error:', error);
-    res.status(500).json({ 
-      success: false,
-      message: "Server error",
-      error: error.message 
-    });
+    return success(res, { admins, count: admins.length }, 'Admins fetched successfully');
+  } catch (err) {
+    return error(res, 'Failed to fetch admins', 500, err);
   }
 };
 
-// @desc    Delete admin
-// @route   DELETE /api/admin/auth/admins/:id
-// @access  Private (Admin only)
+// DELETE /api/admin/auth/admins/:id
 exports.deleteAdmin = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Prevent deleting self
     if (id === req.admin.id.toString()) {
-      return res.status(400).json({ 
-        success: false,
-        message: "You cannot delete your own account" 
-      });
+      return error(res, 'You cannot delete your own account', 400);
     }
 
     const admin = await AuthModal.findById(id);
-
-    if (!admin) {
-      return res.status(404).json({ 
-        success: false,
-        message: "Admin not found" 
-      });
-    }
+    if (!admin) return notFound(res, 'Admin not found');
 
     await admin.deleteOne();
 
-    res.json({
-      success: true,
-      message: "Admin deleted successfully"
-    });
-
-  } catch (error) {
-    console.error('❌ Delete admin error:', error);
-    res.status(500).json({ 
-      success: false,
-      message: "Server error",
-      error: error.message 
-    });
+    return success(res, null, 'Admin deleted successfully');
+  } catch (err) {
+    if (isInvalidObjectId(err)) return notFound(res, 'Admin not found');
+    return error(res, 'Failed to delete admin', 500, err);
   }
 };

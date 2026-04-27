@@ -91,7 +91,8 @@ export default function OfferModal({ offer, isOpen, onClose }) {
     'Limited time special offer',
     'Premium quality guaranteed',
     'Free delivery on orders above ₹999',
-    'Easy returns within 7 days'
+    // 1. Plz remove the line perfume for men in all segments
+    // 'Easy returns within 7 days'
   ];
 
   const modalContent = (

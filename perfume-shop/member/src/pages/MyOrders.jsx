@@ -46,7 +46,11 @@ export default function MyOrders() {
     try {
       const token = localStorage.getItem('memberToken');
       const res = await axios.get(`${baseUrl}orders`, { headers: { Authorization: `Bearer ${token}` } });
-      if (res.data.success) setOrders(res.data.orders);
+      if (res.data.success) {
+        // API returns {success, message, data:[]} — handle both shapes
+        const ordersData = res.data.data || res.data.orders || [];
+        setOrders(Array.isArray(ordersData) ? ordersData : []);
+      }
     } catch { toast.error('Failed to load orders'); }
     finally { setLoading(false); }
   };

@@ -42,8 +42,8 @@ export default function Users() {
     }
   }, [success, error, dispatch]);
 
-  // Map members to users format
-  const users = members.map(member => ({
+  // Map members to users format — guard against null/undefined
+  const users = (Array.isArray(members) ? members : []).map(member => ({
     id: member._id,
     name: member.name,
     email: member.email,

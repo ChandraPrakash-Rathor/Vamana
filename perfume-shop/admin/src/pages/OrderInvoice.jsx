@@ -216,7 +216,7 @@ export default function OrderInvoice() {
                 </tr>
               </thead>
               <tbody>
-                {order.products.map((item, index) => (
+                {(order.products || []).map((item, index) => (
                   <tr key={index} style={{ borderBottom: '1px solid var(--sand-200)' }}>
                     <td style={{ padding: '1rem' }}>
                       <div className="d-flex align-items-center gap-3">

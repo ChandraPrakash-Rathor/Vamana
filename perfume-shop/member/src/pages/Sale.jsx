@@ -343,9 +343,10 @@ export default function Sale() {
             <p style={{ fontSize: '0.75rem', color: 'var(--sand-600)', margin: 0 }}>Original products</p>
           </div>
           <div className="col-6 col-md-3 text-center">
-            <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🔄</div>
+            {/* 1. Plz remove the line perfume for men in all segments */}
+            {/* <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🔄</div>
             <h6 style={{ fontWeight: '700', color: 'var(--sand-900)', fontSize: '0.9rem' }}>Easy Returns</h6>
-            <p style={{ fontSize: '0.75rem', color: 'var(--sand-600)', margin: 0 }}>7 days policy</p>
+            <p style={{ fontSize: '0.75rem', color: 'var(--sand-600)', margin: 0 }}>7 days policy</p> */}
           </div>
           <div className="col-6 col-md-3 text-center">
             <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>💳</div>

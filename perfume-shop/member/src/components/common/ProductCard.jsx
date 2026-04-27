@@ -21,20 +21,25 @@ export default function ProductCard({ product, showAddToCart = false }) {
     discount: product.discount || 0,
     isNew: product.isNew || false,
     category: product.category || 'perfume',
+    subLine: product.subLine || '',
     rating: product.rating || 0,
     reviews: product.reviews || 0,
     price: product.finalPrice || product.price,
     originalPrice: product.actualPrice || product.originalPrice
   };
 
-  // Format category display for men's products
+  // Format category display using subLine from product data
   const getCategoryDisplay = (category) => {
     const categoryMap = {
       'perfume': 'Perfume',
       'attar': 'Attar',
       'combo': 'Combo Pack'
     };
-    return `${categoryMap[category] || 'Perfume'} • For Men`;
+    // 1. Plz remove the line perfume for men in all segments - now uses subLine from product
+    const subLine = product.subLine;
+    return subLine
+      ? `${categoryMap[category] || 'Perfume'} • ${subLine}`
+      : categoryMap[category] || 'Perfume';
   };
 
   const handleAddToCart = async (e) => {

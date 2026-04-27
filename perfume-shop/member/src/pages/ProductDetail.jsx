@@ -75,7 +75,7 @@ export default function ProductDetail() {
   const productImages = [product.mainImage, ...(product.subImages || [])].filter(Boolean);
 
   // Get related products (same category, exclude current product)
-  const relatedProducts = products
+  const relatedProducts = (Array.isArray(products) ? products : [])
     .filter(p => p._id !== product._id && p.category === product.category)
     .slice(0, 4);
 
@@ -537,10 +537,11 @@ export default function ProductDetail() {
                 </div>
                 <div className="col-4">
                   <div className="text-center">
-                    <FontAwesomeIcon icon={faUndo} style={{ color: 'var(--sand-600)', fontSize: '1.3rem', marginBottom: '0.3rem' }} />
+                    {/* 1. Plz remove the line perfume for men in all segments */}
+                    {/* <FontAwesomeIcon icon={faUndo} style={{ color: 'var(--sand-600)', fontSize: '1.3rem', marginBottom: '0.3rem' }} />
                     <div style={{ fontSize: '0.7rem', fontWeight: '600', color: 'var(--sand-900)' }}>
                       Easy Returns
-                    </div>
+                    </div> */}
                   </div>
                 </div>
               </div>

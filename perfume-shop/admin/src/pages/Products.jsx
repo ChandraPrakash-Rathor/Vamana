@@ -53,13 +53,16 @@ const {productData, loading} = useSelector((state)=>state?.ProductSlice)
     stock: product.stock || 0,
     image: product.mainImage || '/product1.jpg',
     subImages: product.subImages || [],
-    status: product.status === 'out-of-stock' ? 'Out of Stock' : (product.stock || 0) < 20 ? 'Low Stock' : 'Active',
+    status: product.status, // raw status for edit modal
+    displayStatus: product.status === 'out-of-stock' ? 'Out of Stock' : (product.stock || 0) < 20 ? 'Low Stock' : 'Active',
     sales: product.sales || 0,
     featured: product.featured,
     bestseller: product.bestseller,
     rating: product.rating || 0,
     reviews: product.reviews || 0,
-    description: product.description
+    description: product.description,
+    volume: product.volume || '',
+    subLine: product.subLine || ''
   })) || [];
   
   const totalProducts = products.length;
@@ -815,7 +818,7 @@ const {productData, loading} = useSelector((state)=>state?.ProductSlice)
                   />
                   {/* Status Badge */}
                   <span className="position-absolute top-0 end-0 m-2 badge rounded-pill px-3 py-2" style={{
-                    background: product.status === 'Active' 
+                    background: product.displayStatus === 'Active' 
                       ? 'linear-gradient(135deg, #28a745, #20c997)' 
                       : 'linear-gradient(135deg, #ffc107, #ff9800)',
                     color: 'white',
@@ -823,7 +826,7 @@ const {productData, loading} = useSelector((state)=>state?.ProductSlice)
                     fontWeight: '600',
                     boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)'
                   }}>
-                    {product.status}
+                    {product.displayStatus}
                   </span>
                   {/* Category Badge */}
                   <span className="position-absolute top-0 start-0 m-2 badge rounded-pill px-3 py-2 text-uppercase" style={{

@@ -39,10 +39,9 @@ export default function Catalog() {
   // Set filtered products based on active category
   useEffect(() => {
     if (activeCategory === 'all') {
-      setFilteredProducts(products);
+      setFilteredProducts(Array.isArray(products) ? products : []);
     } else {
-      // Use category products from Redux (includes combo category)
-      setFilteredProducts(categoryProducts);
+      setFilteredProducts(Array.isArray(categoryProducts) ? categoryProducts : []);
     }
   }, [activeCategory, products, categoryProducts]);
 

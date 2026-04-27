@@ -246,14 +246,15 @@ export default function ContactUs() {
                   </p>
                 </div>
 
-                <div className="col-md-6 mb-4">
+                {/* 1. Plz remove the line perfume for men in all segments */}
+                {/* <div className="col-md-6 mb-4">
                   <h4 style={{ color: 'var(--sand-800)', fontSize: 'clamp(1rem, 2.5vw, 1.15rem)', marginBottom: '0.6rem' }}>
                     🔄 What is your return policy?
                   </h4>
                   <p style={{ color: 'var(--sand-600)', fontSize: 'clamp(0.9rem, 2vw, 0.95rem)', lineHeight: '1.6' }}>
                     We offer easy returns within 7 days if the product is unused and in original packaging.
                   </p>
-                </div>
+                </div> */}
               </div>
             </div>
           </div>

@@ -1,74 +1,78 @@
 const { verifyToken } = require('../utils/jwtHelper');
 const AuthModal = require('../Admin/models/AuthModal');
 
-/**
- * Middleware to protect admin routes
- * Checks for valid JWT token in Authorization header
- */
 const protect = async (req, res, next) => {
   try {
     let token;
 
-    // Check if token exists in Authorization header
-    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+    if (req.headers.authorization?.startsWith('Bearer ')) {
       token = req.headers.authorization.split(' ')[1];
     }
 
     if (!token) {
       return res.status(401).json({
         success: false,
-        message: 'Not authorized, no token provided'
+        message: 'Not authorized, no token provided',
+        data: null,
+        error: null
       });
     }
 
-    // Verify token
-    const decoded = verifyToken(token);
+    let decoded;
+    try {
+      decoded = verifyToken(token);
+    } catch {
+      // Bug fix: don't expose internal token error details
+      return res.status(401).json({
+        success: false,
+        message: 'Not authorized, invalid or expired token',
+        data: null,
+        error: null
+      });
+    }
 
-    // Check if admin still exists and is active
     const admin = await AuthModal.findById(decoded.id).select('-password');
-    
+
     if (!admin) {
       return res.status(401).json({
         success: false,
-        message: 'Admin not found'
+        message: 'Not authorized, admin not found',
+        data: null,
+        error: null
       });
     }
 
     if (!admin.status) {
       return res.status(401).json({
         success: false,
-        message: 'Admin account is inactive'
+        message: 'Admin account is inactive',
+        data: null,
+        error: null
       });
     }
 
-    // Attach admin to request object
     req.admin = admin;
     next();
-
-  } catch (error) {
+  } catch (err) {
     return res.status(401).json({
       success: false,
-      message: 'Not authorized, token failed',
-      error: error.message
+      message: 'Not authorized',
+      data: null,
+      error: null
     });
   }
 };
 
-/**
- * Middleware to check if user is admin
- */
 const isAdmin = (req, res, next) => {
-  if (req.admin && req.admin.role === 'admin') {
-    next();
-  } else {
-    return res.status(403).json({
-      success: false,
-      message: 'Access denied. Admin only.'
-    });
+  if (req.admin?.role === 'admin') {
+    return next();
   }
+  return res.status(403).json({
+    success: false,
+    message: 'Access denied. Admin only.',
+    data: null,
+    error: null
+  });
 };
 
-module.exports = {
-  protect,
-  isAdmin
-};
+module.exports = { protect, isAdmin };

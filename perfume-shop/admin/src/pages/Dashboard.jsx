@@ -27,7 +27,7 @@ export default function Dashboard() {
       const data = await getDashboardStats();
       if (data.success) {
         setStats(data.stats);
-        setRecentOrders(data.recentOrders);
+        setRecentOrders(Array.isArray(data.recentOrders) ? data.recentOrders : []);
       }
     } catch (error) {
       toast.error('Failed to load dashboard data');
