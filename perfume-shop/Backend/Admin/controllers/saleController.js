@@ -113,7 +113,7 @@ exports.createSale = async (req, res) => {
     sale.updateStatus();
     await sale.save();
 
-    res.status(201).json({
+    res.status(200).json({
       status: 'success',
       success: true,
       message: 'Sale created successfully',

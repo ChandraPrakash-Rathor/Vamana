@@ -141,7 +141,7 @@ export default function EditSaleModal({ isOpen, onClose, sale }) {
 
       const res = await dispatch(UpdateSale({ id: sale.id, data: saleData }));
       
-      if (res?.payload?.status === "success") {
+      if (res?.payload?.success === true) {
         toast.success("Sale updated successfully!");
         dispatch(GetSales());
         handleClose();

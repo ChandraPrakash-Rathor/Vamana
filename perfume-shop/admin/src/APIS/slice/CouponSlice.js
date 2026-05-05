@@ -38,7 +38,9 @@ export const CouponSlice = createSlice({
     })
     builder.addCase(GetCoupons.fulfilled, (state, action) => {
       state.loading = false;
-      state.couponData = action.payload?.data;
+      // API: {success, message, data:{coupons:[], count:N}} or {data:[]}
+      const d = action.payload?.data;
+      state.couponData = Array.isArray(d) ? d : Array.isArray(d?.coupons) ? d.coupons : [];
     })
     builder.addCase(GetCoupons.rejected, (state) => {
       state.loading = false;

@@ -79,7 +79,10 @@ const memberSlice = createSlice({
       })
       .addCase(fetchMembers.fulfilled, (state, action) => {
         state.loading = false;
-        state.members = action.payload;
+        // API returns {success, message, data:[]} — extract array
+        const payload = action.payload;
+        state.members = Array.isArray(payload?.data) ? payload.data
+          : Array.isArray(payload) ? payload : [];
       })
       .addCase(fetchMembers.rejected, (state, action) => {
         state.loading = false;
@@ -94,7 +97,7 @@ const memberSlice = createSlice({
       })
       .addCase(fetchMemberById.fulfilled, (state, action) => {
         state.loading = false;
-        state.selectedMember = action.payload;
+        state.selectedMember = action.payload?.data || action.payload || null;
       })
       .addCase(fetchMemberById.rejected, (state, action) => {
         state.loading = false;

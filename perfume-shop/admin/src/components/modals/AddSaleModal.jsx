@@ -98,7 +98,7 @@ export default function AddSaleModal({ isOpen, onClose }) {
 
       const res = await dispatch(insertSale(saleData));
       
-      if (res?.payload?.status === "success") {
+      if (res?.payload?.success === true) {
         toast.success("Sale created successfully!");
         dispatch(GetSales());
         handleClose();

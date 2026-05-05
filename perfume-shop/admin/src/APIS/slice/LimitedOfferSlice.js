@@ -36,7 +36,9 @@ export const LimitedOfferSlice = createSlice({
     })
     builder.addCase(GetLimitedOffers.fulfilled, (state, action) => {
       state.loading = false;
-      state.limitedOfferData = action.payload?.data;
+      // API: {success, message, data:[]} — extract array safely
+      const d = action.payload?.data;
+      state.limitedOfferData = Array.isArray(d) ? d : Array.isArray(d?.offers) ? d.offers : [];
     })
     builder.addCase(GetLimitedOffers.rejected, (state) => {
       state.loading = false;

@@ -96,6 +96,31 @@ exports.verifyPayment = async (req, res) => {
   }
 };
 
+// Cancel/abandon a pending Razorpay order (called when user dismisses payment modal)
+exports.cancelOrder = async (req, res) => {
+  try {
+    const { orderId } = req.body;
+    if (!orderId) {
+      return res.status(400).json({ success: false, message: 'orderId required' });
+    }
+
+    const order = await Order.findById(orderId);
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Order not found' });
+    }
+
+    // Only cancel pending Razorpay orders — don't touch paid or COD
+    if (order.paymentStatus === 'pending' && order.paymentMethod === 'razorpay') {
+      order.paymentStatus = 'failed';
+      await order.save();
+    }
+
+    return res.json({ success: true, message: 'Order cancelled' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
 // Get user orders
 exports.getUserOrders = async (req, res) => {
   try {

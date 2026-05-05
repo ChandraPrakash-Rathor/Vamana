@@ -9,7 +9,16 @@ const VALID_TRACKING_STATUSES = ['pending', 'processing', 'shipped', 'delivered'
 // GET /api/admin/GetOrders
 exports.getAllOrders = async (req, res) => {
   try {
-    const orders = await Order.find().sort({ createdAt: -1 }).lean();
+    // Only show real orders — paid orders and COD orders
+    // Exclude abandoned pending Razorpay sessions (pending + razorpay method)
+    const orders = await Order.find({
+      $or: [
+        { paymentStatus: 'paid' },
+        { paymentStatus: 'failed' },
+        { paymentStatus: 'refunded' },
+        { paymentMethod: 'cod' }
+      ]
+    }).sort({ createdAt: -1 }).lean();
 
     if (orders.length === 0) {
       return success(res, [], 'Orders fetched successfully');

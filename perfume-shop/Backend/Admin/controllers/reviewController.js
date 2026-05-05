@@ -99,7 +99,7 @@ exports.addReview = async (req, res) => {
       image: getImageUrl(newReview.image)
     };
 
-    res.status(201).json({
+    res.status(200).json({
       success: true,
       message: 'Review added successfully',
       data: reviewWithUrl

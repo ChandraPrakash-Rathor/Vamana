@@ -43,20 +43,19 @@ const authSlice = createSlice({
       })
       .addCase(checkPhone.fulfilled, (state, action) => {
         state.loading = false;
-        if (action.payload.exists) {
-          // Phone exists - auto login
-          state.user = action.payload.user;
+        // API: {success, message, data:{exists, user?, token?, phone?}}
+        const d = action.payload?.data || action.payload;
+        if (d?.exists) {
+          state.user = d.user;
           state.isAuthenticated = true;
           state.success = action.payload.message;
-          if (action.payload.token) {
-            // Store token in localStorage (more reliable than cookies for SPAs)
-            localStorage.setItem('memberToken', action.payload.token);
+          if (d.token) {
+            localStorage.setItem('memberToken', d.token);
             localStorage.setItem('isAuthenticated', 'true');
           }
         } else {
-          // Phone doesn't exist - need registration
           state.phoneExists = false;
-          state.pendingPhone = action.payload.phone;
+          state.pendingPhone = d?.phone;
           state.success = null;
         }
       })
@@ -73,14 +72,14 @@ const authSlice = createSlice({
       })
       .addCase(registerUser.fulfilled, (state, action) => {
         state.loading = false;
-        state.user = action.payload.user;
+        const d = action.payload?.data || action.payload;
+        state.user = d?.user;
         state.isAuthenticated = true;
         state.success = action.payload.message;
         state.phoneExists = null;
         state.pendingPhone = null;
-        // Store token in localStorage
-        if (action.payload.token) {
-          localStorage.setItem('memberToken', action.payload.token);
+        if (d?.token) {
+          localStorage.setItem('memberToken', d.token);
           localStorage.setItem('isAuthenticated', 'true');
         }
       })
@@ -97,12 +96,14 @@ const authSlice = createSlice({
       })
       .addCase(loginUser.fulfilled, (state, action) => {
         state.loading = false;
-        state.user = action.payload.user;
+        const d = action.payload?.data || action.payload;
+        state.user = d?.user;
         state.isAuthenticated = true;
         state.success = action.payload.message;
-        // Store token in localStorage
-        localStorage.setItem('memberToken', action.payload.token);
-        localStorage.setItem('isAuthenticated', 'true');
+        if (d?.token) {
+          localStorage.setItem('memberToken', d.token);
+          localStorage.setItem('isAuthenticated', 'true');
+        }
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.loading = false;
@@ -116,7 +117,7 @@ const authSlice = createSlice({
       })
       .addCase(getCurrentUser.fulfilled, (state, action) => {
         state.loading = false;
-        state.user = action.payload.user;
+        state.user = action.payload?.data?.user || action.payload?.user || null;
         state.isAuthenticated = true;
       })
       .addCase(getCurrentUser.rejected, (state) => {
@@ -133,7 +134,7 @@ const authSlice = createSlice({
       })
       .addCase(updateProfile.fulfilled, (state, action) => {
         state.loading = false;
-        state.user = action.payload.user;
+        state.user = action.payload?.data?.user || action.payload?.user || state.user;
         state.success = action.payload.message;
       })
       .addCase(updateProfile.rejected, (state, action) => {

@@ -101,7 +101,7 @@ exports.createBanner = async (req, res) => {
 
     const banner = await Banner.create(bannerData);
 
-    res.status(201).json({
+    res.status(200).json({
       success: true,
       message: 'Banner created successfully',
       data: banner

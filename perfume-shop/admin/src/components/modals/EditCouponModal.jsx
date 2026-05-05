@@ -175,7 +175,7 @@ export default function EditCouponModal({ isOpen, onClose, coupon }) {
 
       const res = await dispatch(UpdateCoupon({ id: coupon.id, data: couponData }));
       
-      if (res?.payload?.status === "success") {
+      if (res?.payload?.success === true) {
         toast.success("Coupon updated successfully!");
         dispatch(GetCoupons());
         setIsSubmitting(false);

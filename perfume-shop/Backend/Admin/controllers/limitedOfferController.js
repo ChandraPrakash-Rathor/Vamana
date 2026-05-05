@@ -118,7 +118,7 @@ exports.createOffer = async (req, res) => {
     // Populate product details
     await offer.populate('product', 'name mainImage category');
 
-    res.status(201).json({
+    res.status(200).json({
       status: 'success',
       success: true,
       message: 'Limited offer created successfully',

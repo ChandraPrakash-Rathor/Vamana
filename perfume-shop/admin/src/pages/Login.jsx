@@ -27,25 +27,29 @@ export default function Login({ onLogin }) {
   const onSubmit = async(data) => {
     setIsLoading(true);
     
-    const formData = new FormData();
-    formData.append('email', data.username);
-    formData.append('password', data.password);
-    
     try {
-      const res = await dispatch(loginUser(formData));
+      // Send plain JSON — backend reads req.body.email and req.body.password
+      const res = await dispatch(loginUser({ email: data.username, password: data.password }));
 
       if(res?.payload?.success){
         toast.success("Login Successful!");
-        // Store token in cookie
-        Cookies.set("authToken", res?.payload?.token, { expires: 7 });
+        // Token is in res.payload.data.token (standardized API format)
+        const token = res?.payload?.data?.token || res?.payload?.token;
+
+        if (!token) {
+          toast.error("Login failed: no token received");
+          setIsLoading(false);
+          return;
+        }
+
+        Cookies.set("authToken", token, { expires: 7 });
         Cookies.set("isAuthenticate", true, { expires: 7 });
         
-        // Use window.location for clean page reload (fixes stuck overlay issue)
         setTimeout(() => {
           window.location.href = '/dashboard';
         }, 500);
       } else {
-        toast.error(res?.payload?.message || "Invalid credentials");
+        toast.error(res?.payload?.message || res?.payload?.data?.message || "Invalid credentials");
         setIsLoading(false);
       }
     } catch (error) {

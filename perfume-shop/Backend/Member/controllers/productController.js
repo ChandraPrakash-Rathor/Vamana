@@ -43,7 +43,7 @@ exports.getFeaturedProducts = async (req, res) => {
     const products = await Product.find({
       status: { $in: ['active', 'out-of-stock'] },
       featured: true
-    }).limit(8).sort({ createdAt: -1 }).select('-__v');
+    }).limit(8).sort({ createdAt: -1 }).select('-__v'); 
 
     const updatedProducts = products.map(p => mapProduct(req, p));
     const productsWithRatings = await addRatingsToProducts(updatedProducts);

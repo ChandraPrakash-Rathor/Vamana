@@ -1,116 +1,29 @@
 import { createAsyncThunk } from '@reduxjs/toolkit'
-import { api } from './Authapi'; // Import authenticated api instance
+import { api } from './Authapi';
 
-// Insert/Create Limited Offer
-export const insertLimitedOffer = createAsyncThunk(
-  'insertLimitedOffer',
-  async (data) => {
-    try {
-      const response = await api.post('insertLimitedOffer', data);
-      if (response.data.status === "success") {
-        return Promise.resolve(response.data)
-      } else if (response.data.status === "error") {
-        return Promise.resolve(response.data)
-      } else {
-        return Promise.reject(response.data)
-      }
-    } catch (err) {
-      return Promise.reject(err)
-    }
-  },
-);
+const resolve = (response) => Promise.resolve(response.data);
+const reject = (err) => Promise.reject(err.response?.data || err.message);
 
-// Get All Limited Offers
-export const GetLimitedOffers = createAsyncThunk(
-  'GetLimitedOffers',
-  async () => {
-    try {
-      const response = await api.get('GetLimitedOffers');
-      if (response.data.status === "success") {
-        return Promise.resolve(response.data)
-      } else if (response.data.status === "error") {
-        return Promise.resolve(response.data)
-      } else {
-        return Promise.reject(response.data)
-      }
-    } catch (err) {
-      return Promise.reject(err)
-    }
-  },
-);
+export const insertLimitedOffer = createAsyncThunk('insertLimitedOffer', async (data) => {
+  try { return resolve(await api.post('insertLimitedOffer', data)); } catch (err) { return reject(err); }
+});
 
-// Get Limited Offer by ID
-export const GetLimitedOfferById = createAsyncThunk(
-  'GetLimitedOfferById',
-  async (id) => {
-    try {
-      const response = await api.get(`limited-offers/${id}`);
-      if (response.data.status === "success") {
-        return Promise.resolve(response.data)
-      } else if (response.data.status === "error") {
-        return Promise.resolve(response.data)
-      } else {
-        return Promise.reject(response.data)
-      }
-    } catch (err) {
-      return Promise.reject(err)
-    }
-  },
-);
+export const GetLimitedOffers = createAsyncThunk('GetLimitedOffers', async () => {
+  try { return resolve(await api.get('GetLimitedOffers')); } catch (err) { return reject(err); }
+});
 
-// Update Limited Offer
-export const UpdateLimitedOffer = createAsyncThunk(
-  'UpdateLimitedOffer',
-  async ({ id, data }) => {
-    try {
-      const response = await api.put(`limited-offers/${id}`, data);
-      if (response.data.status === "success") {
-        return Promise.resolve(response.data)
-      } else if (response.data.status === "error") {
-        return Promise.resolve(response.data)
-      } else {
-        return Promise.reject(response.data)
-      }
-    } catch (err) {
-      return Promise.reject(err)
-    }
-  },
-);
+export const GetLimitedOfferById = createAsyncThunk('GetLimitedOfferById', async (id) => {
+  try { return resolve(await api.get(`limited-offers/${id}`)); } catch (err) { return reject(err); }
+});
 
-// Delete Limited Offer
-export const DeleteLimitedOffer = createAsyncThunk(
-  'DeleteLimitedOffer',
-  async (id) => {
-    try {
-      const response = await api.delete(`limited-offers/${id}`);
-      if (response.data.status === "success") {
-        return Promise.resolve(response.data)
-      } else if (response.data.status === "error") {
-        return Promise.resolve(response.data)
-      } else {
-        return Promise.reject(response.data)
-      }
-    } catch (err) {
-      return Promise.reject(err)
-    }
-  },
-);
+export const UpdateLimitedOffer = createAsyncThunk('UpdateLimitedOffer', async ({ id, data }) => {
+  try { return resolve(await api.put(`limited-offers/${id}`, data)); } catch (err) { return reject(err); }
+});
 
-// Get Limited Offer Statistics
-export const GetLimitedOfferStats = createAsyncThunk(
-  'GetLimitedOfferStats',
-  async () => {
-    try {
-      const response = await api.get('limited-offers/stats');
-      if (response.data.status === "success") {
-        return Promise.resolve(response.data)
-      } else if (response.data.status === "error") {
-        return Promise.resolve(response.data)
-      } else {
-        return Promise.reject(response.data)
-      }
-    } catch (err) {
-      return Promise.reject(err)
-    }
-  },
-);
+export const DeleteLimitedOffer = createAsyncThunk('DeleteLimitedOffer', async (id) => {
+  try { return resolve(await api.delete(`limited-offers/${id}`)); } catch (err) { return reject(err); }
+});
+
+export const GetLimitedOfferStats = createAsyncThunk('GetLimitedOfferStats', async () => {
+  try { return resolve(await api.get('limited-offers/stats')); } catch (err) { return reject(err); }
+});

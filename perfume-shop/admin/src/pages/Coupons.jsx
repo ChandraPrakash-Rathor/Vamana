@@ -69,7 +69,7 @@ export default function Coupons() {
     setIsDeleting(true);
     try {
       const res = await dispatch(DeleteCoupon(deleteModal.coupon.id));
-      if (res?.payload?.status === 'success' || res?.payload?.success === true) {
+      if (res?.payload?.success === true) {
         toast.success('Coupon deleted successfully!');
         dispatch(GetCoupons());
       } else {

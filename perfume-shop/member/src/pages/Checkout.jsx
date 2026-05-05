@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { useForm } from 'react-hook-form';
+import axios from 'axios';
+import { baseUrl } from '../redux/apis/config';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faMapMarkerAlt, faLock, faCreditCard,
@@ -191,7 +193,16 @@ export default function Checkout() {
         },
         prefill: { name: `${orderData.firstName} ${orderData.lastName}`, email: orderData.email, contact: orderData.phone },
         theme: { color: primaryColor || '#B3873F' },
-        modal: { ondismiss: () => { setProcessing(false); toast.info('Payment cancelled'); } }
+        modal: {
+          ondismiss: async () => {
+            setProcessing(false);
+            toast.info('Payment cancelled');
+            // Mark the pending order as failed so it doesn't show in admin
+            try {
+              await axios.post(`${baseUrl}cancel-order`, { orderId: orderResponse.orderId });
+            } catch { /* silent — not critical */ }
+          }
+        }
       };
       new window.Razorpay(options).open();
       setProcessing(false);

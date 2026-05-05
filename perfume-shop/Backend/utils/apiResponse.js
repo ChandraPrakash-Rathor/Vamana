@@ -13,7 +13,7 @@ const success = (res, data = null, message = 'Success', statusCode = 200) => {
 };
 
 const created = (res, data = null, message = 'Created successfully') => {
-  return success(res, data, message, 201);
+  return success(res, data, message, 200);
 };
 
 const error = (res, message = 'Something went wrong', statusCode = 500, err = null) => {

@@ -178,7 +178,7 @@ export default function EditLimitedOfferModal({ isOpen, onClose, offer }) {
 
       const res = await dispatch(UpdateLimitedOffer({ id: offer._id, data: offerData }));
       
-      if (res?.payload?.status === "success") {
+      if (res?.payload?.success === true) {
         toast.success("Limited offer updated successfully!");
         dispatch(GetLimitedOffers());
         handleClose();

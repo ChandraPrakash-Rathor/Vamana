@@ -97,7 +97,7 @@ exports.createTheme = async (req, res) => {
       isActive: false
     });
     
-    res.status(201).json({
+    res.status(200).json({
       success: true,
       message: 'Theme created successfully',
       data: theme

@@ -72,7 +72,7 @@ export default function LimitedOffers() {
     setIsDeleting(true);
     try {
       const res = await dispatch(DeleteLimitedOffer(deleteModal.offer.id));
-      if (res?.payload?.status === 'success' || res?.payload?.success === true) {
+      if (res?.payload?.success === true) {
         toast.success('Limited offer deleted successfully!');
         dispatch(GetLimitedOffers());
       } else {

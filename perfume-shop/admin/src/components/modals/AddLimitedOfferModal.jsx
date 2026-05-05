@@ -125,7 +125,7 @@ export default function AddLimitedOfferModal({ isOpen, onClose }) {
 
       const res = await dispatch(insertLimitedOffer(offerData));
       
-      if (res?.payload?.status === "success") {
+      if (res?.payload?.success === true) {
         toast.success("Limited offer created successfully!");
         dispatch(GetLimitedOffers());
         handleClose();

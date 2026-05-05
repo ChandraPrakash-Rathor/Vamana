@@ -27,10 +27,12 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Token expired or invalid
-      Cookies.remove('authToken');
-      Cookies.remove('isAuthenticate');
-      window.location.href = '/login';
+      // Don't redirect if already on login page — prevents redirect loops
+      if (window.location.pathname !== '/login') {
+        Cookies.remove('authToken');
+        Cookies.remove('isAuthenticate');
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }
@@ -40,7 +42,10 @@ export const loginUser = createAsyncThunk(
   'auth/loginUser',
   async (data) => {
     try {
-      const response = await axios.post(baseUrl + 'login', data);
+      // Send JSON — backend reads req.body.email and req.body.password
+      const response = await axios.post(baseUrl + 'login', data, {
+        headers: { 'Content-Type': 'application/json' }
+      });
       return Promise.resolve(response.data);
     } catch (err) {
       return Promise.reject(err.response?.data || err.message);

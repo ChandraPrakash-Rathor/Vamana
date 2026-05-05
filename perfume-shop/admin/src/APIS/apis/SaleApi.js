@@ -1,135 +1,33 @@
 import { createAsyncThunk } from '@reduxjs/toolkit'
-import { api } from './Authapi'; // Import authenticated api instance
+import { api } from './Authapi';
 
-// Insert/Create Sale
-export const insertSale = createAsyncThunk(
-  'insertSale',
-  async (data) => {
-    try {
-      const response = await api.post('insertSale', data);
-      if (response.data.status === "success") {
-        return Promise.resolve(response.data)
-      } else if (response.data.status === "error") {
-        return Promise.resolve(response.data)
-      } else {
-        return Promise.reject(response.data)
-      }
-    } catch (err) {
-      return Promise.reject(err)
-    }
-  },
-);
+const resolve = (response) => Promise.resolve(response.data);
+const reject = (err) => Promise.reject(err.response?.data || err.message);
 
-// Get All Sales
-export const GetSales = createAsyncThunk(
-  'GetSales',
-  async () => {
-    try {
-      const response = await api.get('GetSales');
-      if (response.data.status === "success") {
-        return Promise.resolve(response.data)
-      } else if (response.data.status === "error") {
-        return Promise.resolve(response.data)
-      } else {
-        return Promise.reject(response.data)
-      }
-    } catch (err) {
-      return Promise.reject(err)
-    }
-  },
-);
+export const insertSale = createAsyncThunk('insertSale', async (data) => {
+  try { return resolve(await api.post('insertSale', data)); } catch (err) { return reject(err); }
+});
 
-// Get Sale by ID
-export const GetSaleById = createAsyncThunk(
-  'GetSaleById',
-  async (id) => {
-    try {
-      const response = await api.get(`sales/${id}`);
-      if (response.data.status === "success") {
-        return Promise.resolve(response.data)
-      } else if (response.data.status === "error") {
-        return Promise.resolve(response.data)
-      } else {
-        return Promise.reject(response.data)
-      }
-    } catch (err) {
-      return Promise.reject(err)
-    }
-  },
-);
+export const GetSales = createAsyncThunk('GetSales', async () => {
+  try { return resolve(await api.get('GetSales')); } catch (err) { return reject(err); }
+});
 
-// Update Sale
-export const UpdateSale = createAsyncThunk(
-  'UpdateSale',
-  async ({ id, data }) => {
-    try {
-      const response = await api.put(`sales/${id}`, data);
-      if (response.data.status === "success") {
-        return Promise.resolve(response.data)
-      } else if (response.data.status === "error") {
-        return Promise.resolve(response.data)
-      } else {
-        return Promise.reject(response.data)
-      }
-    } catch (err) {
-      return Promise.reject(err)
-    }
-  },
-);
+export const GetSaleById = createAsyncThunk('GetSaleById', async (id) => {
+  try { return resolve(await api.get(`sales/${id}`)); } catch (err) { return reject(err); }
+});
 
-// Delete Sale
-export const DeleteSale = createAsyncThunk(
-  'DeleteSale',
-  async (id) => {
-    try {
-      const response = await api.delete(`sales/${id}`);
-      if (response.data.status === "success") {
-        return Promise.resolve(response.data)
-      } else if (response.data.status === "error") {
-        return Promise.resolve(response.data)
-      } else {
-        return Promise.reject(response.data)
-      }
-    } catch (err) {
-      return Promise.reject(err)
-    }
-  },
-);
+export const UpdateSale = createAsyncThunk('UpdateSale', async ({ id, data }) => {
+  try { return resolve(await api.put(`sales/${id}`, data)); } catch (err) { return reject(err); }
+});
 
-// Get Sale Statistics
-export const GetSaleStats = createAsyncThunk(
-  'GetSaleStats',
-  async () => {
-    try {
-      const response = await api.get('sales/stats');
-      if (response.data.status === "success") {
-        return Promise.resolve(response.data)
-      } else if (response.data.status === "error") {
-        return Promise.resolve(response.data)
-      } else {
-        return Promise.reject(response.data)
-      }
-    } catch (err) {
-      return Promise.reject(err)
-    }
-  },
-);
+export const DeleteSale = createAsyncThunk('DeleteSale', async (id) => {
+  try { return resolve(await api.delete(`sales/${id}`)); } catch (err) { return reject(err); }
+});
 
-// Update All Sale Statuses
-export const UpdateAllSaleStatuses = createAsyncThunk(
-  'UpdateAllSaleStatuses',
-  async () => {
-    try {
-      const response = await api.post('sales/update-statuses');
-      if (response.data.status === "success") {
-        return Promise.resolve(response.data)
-      } else if (response.data.status === "error") {
-        return Promise.resolve(response.data)
-      } else {
-        return Promise.reject(response.data)
-      }
-    } catch (err) {
-      return Promise.reject(err)
-    }
-  },
-);
+export const GetSaleStats = createAsyncThunk('GetSaleStats', async () => {
+  try { return resolve(await api.get('sales/stats')); } catch (err) { return reject(err); }
+});
+
+export const UpdateAllSaleStatuses = createAsyncThunk('UpdateAllSaleStatuses', async () => {
+  try { return resolve(await api.post('sales/update-statuses')); } catch (err) { return reject(err); }
+});

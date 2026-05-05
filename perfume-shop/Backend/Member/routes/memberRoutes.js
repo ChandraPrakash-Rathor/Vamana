@@ -178,6 +178,9 @@ router.get('/reviews/:id', reviewController.getReviewById);
  // ORDER CREATE
 router.post("/create-order", orderController.createOrder);
 
+// CANCEL abandoned Razorpay order
+router.post("/cancel-order", orderController.cancelOrder);
+
 // PAYMENT VERIFY
 router.post("/verify-payment", paymentController.verifyPayment);
 

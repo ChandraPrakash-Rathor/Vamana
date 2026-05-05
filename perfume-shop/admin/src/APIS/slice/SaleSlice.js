@@ -34,7 +34,9 @@ export const SaleSlice = createSlice({
     })
     builder.addCase(GetSales.fulfilled, (state, action) => {
       state.loading = false;
-      state.saleData = action.payload?.data;
+      // API: {success, message, data:[]} — extract array safely
+      const d = action.payload?.data;
+      state.saleData = Array.isArray(d) ? d : Array.isArray(d?.sales) ? d.sales : [];
     })
     builder.addCase(GetSales.rejected, (state) => {
       state.loading = false;

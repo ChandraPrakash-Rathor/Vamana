@@ -34,6 +34,7 @@ export const loginSlice = createSlice({
       state.loading = true;
     })
     builder.addCase(loginUser.fulfilled, (state, action) => {
+      // Handle both {token, admin} and {data:{token, admin}} shapes
       state.loginData = action.payload;
       state.loading = false;
     })
@@ -46,7 +47,8 @@ export const loginSlice = createSlice({
       state.loading = true;
     })
     builder.addCase(getMe.fulfilled, (state, action) => {
-      state.currentUser = action.payload.admin;
+      // Handle both {admin:{}} and {data:{admin:{}}} shapes
+      state.currentUser = action.payload?.data?.admin || action.payload?.admin || null;
       state.loading = false;
     })
     builder.addCase(getMe.rejected, (state) => {
@@ -58,7 +60,7 @@ export const loginSlice = createSlice({
       state.loading = true;
     })
     builder.addCase(updateProfile.fulfilled, (state, action) => {
-      state.currentUser = action.payload.admin;
+      state.currentUser = action.payload?.data?.admin || action.payload?.admin || null;
       state.loading = false;
     })
     builder.addCase(updateProfile.rejected, (state) => {
@@ -81,7 +83,8 @@ export const loginSlice = createSlice({
       state.adminsLoading = true;
     })
     builder.addCase(getAllAdmins.fulfilled, (state, action) => {
-      state.admins = action.payload.admins || [];
+      // API returns {success, message, data:{admins:[], count:N}}
+      state.admins = action.payload?.data?.admins || action.payload?.admins || [];
       state.adminsLoading = false;
     })
     builder.addCase(getAllAdmins.rejected, (state) => {

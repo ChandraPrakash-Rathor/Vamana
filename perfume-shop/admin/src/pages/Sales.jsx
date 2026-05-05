@@ -72,7 +72,7 @@ export default function Sales() {
     setIsDeleting(true);
     try {
       const res = await dispatch(DeleteSale(deleteModal.sale.id));
-      if (res?.payload?.status === 'success' || res?.payload?.success === true) {
+      if (res?.payload?.success === true) {
         toast.success('Sale deleted successfully!');
         dispatch(GetSales());
       } else {

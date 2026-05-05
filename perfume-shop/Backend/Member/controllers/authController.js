@@ -54,7 +54,7 @@ exports.register = async (req, res) => {
     }
     const member = await Member.create({ name, email, phone });
     const token = generateToken(member);
-    res.status(201).json({
+    res.status(200).json({
       success: true,
       message: 'Registration successful',
       token,

@@ -164,44 +164,62 @@ const expireCoupons = async () => {
   }
 };
 
+const Order = require('../Member/models/order');
+
+// Mark abandoned pending Razorpay orders as failed (older than 30 minutes)
+const cleanAbandonedOrders = async () => {
+  try {
+    const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
+    const result = await Order.updateMany(
+      {
+        paymentStatus: 'pending',
+        paymentMethod: 'razorpay',
+        createdAt: { $lt: thirtyMinutesAgo }
+      },
+      { $set: { paymentStatus: 'failed' } }
+    );
+    if (result.modifiedCount > 0) {
+      console.log(`✅ Marked ${result.modifiedCount} abandoned Razorpay orders as failed`);
+    }
+  } catch (error) {
+    console.error('❌ Error cleaning abandoned orders:', error);
+  }
+};
+
 // Initialize cron jobs
 const initCronJobs = () => {
   // Run every minute to update sale and limited offer statuses
-  // Timezone: Asia/Kolkata (India) - UTC+5:30
   cron.schedule('* * * * *', () => {
     updateSaleStatuses();
     updateLimitedOfferStatuses();
-  }, {
-    timezone: "Asia/Kolkata"
-  });
+  }, { timezone: "Asia/Kolkata" });
 
-  // Run every hour to delete expired sales (1 hour after end time)
-  // Timezone: Asia/Kolkata (India) - UTC+5:30
+  // Run every hour to delete expired sales
   cron.schedule('0 * * * *', () => {
     deleteExpiredSales();
-  }, {
-    timezone: "Asia/Kolkata"
-  });
+  }, { timezone: "Asia/Kolkata" });
 
-  // Run at midnight (12:00 AM) every day to expire coupons
-  // Timezone: Asia/Kolkata (India) - UTC+5:30
+  // Run at midnight every day to expire coupons
   cron.schedule('0 0 * * *', () => {
     expireCoupons();
-  }, {
-    timezone: "Asia/Kolkata"
-  });
+  }, { timezone: "Asia/Kolkata" });
+
+  // Run every 30 minutes to clean abandoned Razorpay orders
+  cron.schedule('*/30 * * * *', () => {
+    cleanAbandonedOrders();
+  }, { timezone: "Asia/Kolkata" });
 
   console.log('⏰ Cron jobs initialized (Timezone: Asia/Kolkata - IST):');
-  console.log('   - Sale status updater: Every minute');
-  console.log('   - Limited offer status updater: Every minute');
+  console.log('   - Sale/offer status updater: Every minute');
   console.log('   - Expired sale cleanup: Every hour');
-  console.log('   - Coupon expiry check: Daily at 12:00 AM IST');
-  console.log(`   - Current server time: ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}`);
-  
+  console.log('   - Coupon expiry check: Daily at midnight');
+  console.log('   - Abandoned order cleanup: Every 30 minutes');
+
   // Run immediately on startup
   updateSaleStatuses();
   updateLimitedOfferStatuses();
   expireCoupons();
+  cleanAbandonedOrders();
 };
 
-module.exports = { initCronJobs, deleteExpiredSales, updateSaleStatuses, updateLimitedOfferStatuses, expireCoupons };
+module.exports = { initCronJobs, deleteExpiredSales, updateSaleStatuses, updateLimitedOfferStatuses, expireCoupons, cleanAbandonedOrders };

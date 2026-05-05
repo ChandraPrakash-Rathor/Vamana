@@ -30,7 +30,8 @@ export const ProductSlice = createSlice({
       })
       builder.addCase(GetProduct.fulfilled, (state, action) => {
         state.loading = false;
-        state.productData = action.payload?.data;
+        const d = action.payload?.data;
+        state.productData = Array.isArray(d) ? d : [];
       })
       builder.addCase(GetProduct.rejected, (state, action) => {
         state.loading = false;

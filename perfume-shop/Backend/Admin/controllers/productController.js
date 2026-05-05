@@ -10,6 +10,15 @@ const buildImageUrl = (req, filename) => {
   return `${req.protocol}://${req.get('host')}/uploads/${filename}`;
 };
 
+// Strip full URL back to bare filename for storage — prevents double-URL on re-fetch
+const stripToFilename = (urlOrFilename) => {
+  if (!urlOrFilename) return urlOrFilename;
+  if (urlOrFilename.startsWith('http://') || urlOrFilename.startsWith('https://')) {
+    return urlOrFilename.split('/uploads/').pop();
+  }
+  return urlOrFilename;
+};
+
 // Safe file deletion — only delete bare filenames, not full URLs
 const safeDeleteFile = (filename) => {
   if (!filename || filename.startsWith('http')) return;
@@ -192,6 +201,14 @@ exports.updateProduct = async (req, res) => {
       if (isNaN(p) || p <= 0) {
         return validationError(res, 'actualPrice must be a positive number');
       }
+    }
+
+    // Strip full URLs to bare filenames before saving — prevents double-URL on re-fetch
+    if (updateData.mainImage) {
+      updateData.mainImage = stripToFilename(updateData.mainImage);
+    }
+    if (Array.isArray(updateData.subImages)) {
+      updateData.subImages = updateData.subImages.map(stripToFilename).filter(Boolean);
     }
 
     // Handle main image replacement

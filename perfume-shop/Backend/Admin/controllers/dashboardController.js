@@ -11,8 +11,13 @@ exports.getDashboardStats = async (req, res) => {
     // Get total users count
     const totalUsers = await Member.countDocuments();
 
-    // Get total orders count
-    const totalOrders = await Order.countDocuments();
+    // Count only real orders (paid + COD) — not abandoned pending Razorpay sessions
+    const totalOrders = await Order.countDocuments({
+      $or: [
+        { paymentStatus: 'paid' },
+        { paymentMethod: 'cod' }
+      ]
+    });
 
     // Calculate total revenue from paid orders
     const revenueData = await Order.aggregate([
@@ -60,8 +65,13 @@ exports.getDashboardStats = async (req, res) => {
       ? (((totalUsers - lastMonthUsers) / lastMonthUsers) * 100).toFixed(1)
       : 0;
 
-    // Get recent orders (last 5)
-    const recentOrders = await Order.find()
+    // Get recent orders — only show paid orders and COD orders (not abandoned pending Razorpay)
+    const recentOrders = await Order.find({
+      $or: [
+        { paymentStatus: 'paid' },
+        { paymentMethod: 'cod' }
+      ]
+    })
       .sort({ createdAt: -1 })
       .limit(5)
       .lean();

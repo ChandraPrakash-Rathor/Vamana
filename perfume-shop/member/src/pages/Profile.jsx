@@ -10,7 +10,7 @@ import { getCurrentUser } from '../redux/apis/AuthApi';
 export default function Profile() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { user, isAuthenticated } = useSelector(state => state.AuthSlice);
+  const { user, isAuthenticated } = useSelector(state => state.AuthSlice);t
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const { register, handleSubmit, formState: { errors } } = useForm({

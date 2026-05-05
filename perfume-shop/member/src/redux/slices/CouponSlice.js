@@ -53,7 +53,8 @@ const couponSlice = createSlice({
       })
       .addCase(validateCoupon.fulfilled, (state, action) => {
         state.loading = false;
-        state.appliedCoupon = action.payload.coupon;
+        // API: {success, message, data:{coupon, discount, finalAmount}}
+        state.appliedCoupon = action.payload?.data || action.payload?.coupon || action.payload;
         state.success = action.payload.message;
       })
       .addCase(validateCoupon.rejected, (state, action) => {

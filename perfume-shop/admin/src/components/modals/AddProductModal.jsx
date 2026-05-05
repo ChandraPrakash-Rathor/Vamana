@@ -295,7 +295,7 @@ export default function AddProductModal({ isOpen, onClose }) {
       });
 
       const res = await dispatch(insertProduct(formData));
-      if (res?.payload?.status === 'success') {
+      if (res?.payload?.success === true) {
         toast.success('Product added successfully!');
         dispatch(GetProduct());
         setIsSubmitting(false);

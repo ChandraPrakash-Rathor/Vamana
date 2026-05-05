@@ -41,7 +41,8 @@ export default function Invoice() {
     try {
       const response = await axios.get(`${baseUrl}orders/${orderId}`);
       if (response.data.success) {
-        setOrder(response.data.order);
+        // API returns {success, message, data:{...order}} or {success, ...order}
+        setOrder(response.data.data || response.data.order || response.data);
       }
     } catch (error) {
       toast.error('Failed to load invoice');

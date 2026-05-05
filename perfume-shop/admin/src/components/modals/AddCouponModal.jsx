@@ -126,7 +126,7 @@ export default function AddCouponModal({ isOpen, onClose }) {
 
       const res = await dispatch(insertCoupon(couponData));
       
-      if (res?.payload?.status === "success") {
+      if (res?.payload?.success === true) {
         toast.success("Coupon created successfully!");
         // Refresh coupon list
         dispatch(GetCoupons());
