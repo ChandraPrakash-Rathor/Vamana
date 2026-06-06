@@ -408,10 +408,6 @@ export default function Invoice() {
                       <span style={{ color: 'var(--sand-700)' }}>Subtotal:</span>
                       <span style={{ color: 'var(--sand-700)' }}>₹{order.totalAmount.toLocaleString()}</span>
                     </div>
-                    <div className="d-flex justify-content-between mb-2">
-                      <span style={{ color: 'var(--sand-700)' }}>Shipping:</span>
-                      <span style={{ color: 'var(--sand-700)' }}>Free</span>
-                    </div>
                     <div className="d-flex justify-content-between pt-3" style={{ borderTop: '2px solid var(--sand-600)' }}>
                       <span style={{ color: 'var(--sand-800)', fontSize: 'clamp(1.1rem, 3vw, 1.3rem)', fontWeight: '700' }}>Total:</span>
                       <span style={{ color: 'var(--sand-800)', fontSize: 'clamp(1.1rem, 3vw, 1.3rem)', fontWeight: '700' }}>₹{order.totalAmount.toLocaleString()}</span>

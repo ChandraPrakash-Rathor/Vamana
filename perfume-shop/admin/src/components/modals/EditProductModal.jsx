@@ -59,10 +59,15 @@ export default function EditProductModal({ isOpen, onClose, product }) {
     }
   }, [watchActualPrice, watchDiscount]);
 
-  // Prefill form when product changes
+  // Prefill form ONCE per product open — track which product ID was last prefilled
+  const lastPrefilledId = useRef(null);
+
   useEffect(() => {
-    if (product && isOpen) {
-      originalCategory.current = product.category; // remember original category
+    const currentId = product?.id || product?._id;
+
+    if (product && isOpen && lastPrefilledId.current !== currentId) {
+      lastPrefilledId.current = currentId;
+      originalCategory.current = product.category;
       setValue('name', product.name);
       setValue('sku', `PRF-${String(product.id).padStart(4, '0')}`);
       setValue('category', categoryOptions.find(opt => opt.value === product.category));
@@ -78,7 +83,12 @@ export default function EditProductModal({ isOpen, onClose, product }) {
       setSubImagePreviews(product.subImages || []);
       setFinalPrice(product.price);
     }
-  }, [product, isOpen, setValue]);
+
+    // Reset when modal closes
+    if (!isOpen) {
+      lastPrefilledId.current = null;
+    }
+  }, [product?.id, product?._id, isOpen, setValue]);
 
   // Reset volume only when admin manually changes to a DIFFERENT category
   const watchCategory = watch('category');

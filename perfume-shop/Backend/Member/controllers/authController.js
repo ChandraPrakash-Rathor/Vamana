@@ -1,5 +1,6 @@
 ﻿const Member = require('../models/Member');
 const { generateToken } = require('../../utils/jwtHelper');
+const { sendRegistrationSMS, sendLoginSMS } = require('../../utils/smsHelper');
 
 exports.checkPhone = async (req, res) => {
   try {
@@ -16,6 +17,8 @@ exports.checkPhone = async (req, res) => {
         return res.status(401).json({ success: false, message: 'Your account has been deactivated' });
       }
       const token = generateToken(member);
+      // Send login SMS (non-blocking — don't await so it doesn't slow login)
+      sendLoginSMS(member.phone, member.name).catch(() => {});
       return res.json({
         success: true,
         exists: true,
@@ -54,6 +57,8 @@ exports.register = async (req, res) => {
     }
     const member = await Member.create({ name, email, phone });
     const token = generateToken(member);
+    // Send welcome SMS (non-blocking)
+    sendRegistrationSMS(phone, name).catch(() => {});
     res.status(200).json({
       success: true,
       message: 'Registration successful',

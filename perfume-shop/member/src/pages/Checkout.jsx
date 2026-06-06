@@ -7,7 +7,7 @@ import { baseUrl } from '../redux/apis/config';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faMapMarkerAlt, faLock, faCreditCard,
-  faShieldAlt, faTruck, faBox, faChevronDown
+  faShieldAlt, faBox, faChevronDown
 } from '@fortawesome/free-solid-svg-icons';
 import { faCcVisa, faCcMastercard, faCcAmex } from '@fortawesome/free-brands-svg-icons';
 import { getCart, clearCart } from '../redux/apis/CartApi';
@@ -96,11 +96,10 @@ export default function Checkout() {
   const [paymentMethod, setPaymentMethod] = useState('razorpay');
   const [processing, setProcessing] = useState(false);
 
-  // State & City combobox state
+  // City — simple text input instead of unreliable external API
+  // External API (countriesnow.space) is slow/blocked on mobile networks
   const [selectedState, setSelectedState] = useState('');
   const [selectedCity, setSelectedCity] = useState('');
-  const [cities, setCities] = useState([]);
-  const [citiesLoading, setCitiesLoading] = useState(false);
 
   // Address char count
   const [addressVal, setAddressVal] = useState('');
@@ -129,30 +128,14 @@ export default function Checkout() {
     return () => document.body.removeChild(script);
   }, []);
 
-  // Fetch cities when state changes
-  useEffect(() => {
-    if (!selectedState) { setCities([]); setSelectedCity(''); return; }
-    setCitiesLoading(true);
-    setSelectedCity('');
-    fetch('https://countriesnow.space/api/v0.1/countries/state/cities', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ country: 'India', state: selectedState })
-    })
-      .then(r => r.json())
-      .then(data => { setCities(data.data || []); })
-      .catch(() => setCities([]))
-      .finally(() => setCitiesLoading(false));
-  }, [selectedState]);
-
-  // Sync combobox values into react-hook-form
+  // Sync state/city into react-hook-form
   useEffect(() => { setValue('state', selectedState); }, [selectedState]);
   useEffect(() => { setValue('city', selectedCity); }, [selectedCity]);
 
   const subtotal = items?.reduce((sum, item) => sum + (item.price * item.quantity), 0) || 0;
-  const couponDiscount = appliedCoupon ? appliedCoupon.discount : 0;
-  const shipping = subtotal >= 2000 ? 0 : 99;
-  const total = subtotal - couponDiscount + shipping;
+  const couponDiscount = appliedCoupon?.discount || 0;
+  const subtotalAfterCoupon = Math.max(0, subtotal - couponDiscount);
+  const total = subtotalAfterCoupon;
 
   const buildAddress = (data) => ({
     firstName: data.firstName, lastName: data.lastName,
@@ -270,7 +253,7 @@ export default function Checkout() {
 
                 <div className="row g-3">
                   {/* First Name */}
-                  <div className="col-md-6">
+                  <div className="col-12 col-md-6">
                     <label style={{ fontWeight: '600', color: 'var(--sand-800)', marginBottom: '0.4rem', display: 'block' }}>First Name *</label>
                     <input {...register('firstName', { required: 'First name is required' })}
                       defaultValue={user?.name?.split(' ')[0] || ''}
@@ -281,7 +264,7 @@ export default function Checkout() {
                   </div>
 
                   {/* Last Name */}
-                  <div className="col-md-6">
+                  <div className="col-12 col-md-6">
                     <label style={{ fontWeight: '600', color: 'var(--sand-800)', marginBottom: '0.4rem', display: 'block' }}>Last Name *</label>
                     <input {...register('lastName', { required: 'Last name is required' })}
                       defaultValue={user?.name?.split(' ')[1] || ''}
@@ -292,7 +275,7 @@ export default function Checkout() {
                   </div>
 
                   {/* Email */}
-                  <div className="col-md-6">
+                  <div className="col-12 col-md-6">
                     <label style={{ fontWeight: '600', color: 'var(--sand-800)', marginBottom: '0.4rem', display: 'block' }}>Email *</label>
                     <input {...register('email', { required: 'Email is required' })}
                       defaultValue={user?.email || ''} type="email"
@@ -303,10 +286,16 @@ export default function Checkout() {
                   </div>
 
                   {/* Phone */}
-                  <div className="col-md-6">
+                  <div className="col-12 col-md-6">
                     <label style={{ fontWeight: '600', color: 'var(--sand-800)', marginBottom: '0.4rem', display: 'block' }}>Phone *</label>
-                    <input {...register('phone', { required: 'Phone is required' })}
+                    <input {...register('phone', {
+                        required: 'Phone is required',
+                        pattern: { value: /^[6-9]\d{9}$/, message: 'Enter a valid 10-digit mobile number' }
+                      })}
                       defaultValue={user?.phone || ''} type="tel"
+                      inputMode="numeric" maxLength={10}
+                      placeholder="10-digit mobile number"
+                      onKeyDown={e => { if (!/[0-9]|Backspace|Delete|ArrowLeft|ArrowRight|Tab/.test(e.key)) e.preventDefault(); }}
                       style={inputStyle(errors.phone)}
                       onFocus={e => e.target.style.borderColor = 'var(--sand-600)'}
                       onBlur={e => e.target.style.borderColor = errors.phone ? '#dc3545' : 'var(--sand-300)'} />
@@ -336,7 +325,7 @@ export default function Checkout() {
                   <input type="hidden" {...register('city', { required: 'City is required' })} />
 
                   {/* State Combobox */}
-                  <div className="col-md-4">
+                  <div className="col-6 col-md-4">
                     <ComboField
                       label="State"
                       options={INDIA_STATES}
@@ -347,21 +336,22 @@ export default function Checkout() {
                     />
                   </div>
 
-                  {/* City Combobox */}
-                  <div className="col-md-4">
-                    <ComboField
-                      label="City"
-                      options={cities}
+                  {/* City — plain text input, works on all devices/networks */}
+                  <div className="col-6 col-md-4">
+                    <label style={{ fontWeight: '600', color: 'var(--sand-800)', marginBottom: '0.4rem', display: 'block' }}>City *</label>
+                    <input
                       value={selectedCity}
-                      onChange={setSelectedCity}
-                      error={errors.city?.message}
-                      loading={citiesLoading}
-                      placeholder={selectedState ? 'Select city' : 'Select state first'}
+                      onChange={e => setSelectedCity(e.target.value)}
+                      placeholder="Enter your city"
+                      style={inputStyle(errors.city)}
+                      onFocus={e => e.target.style.borderColor = 'var(--sand-600)'}
+                      onBlur={e => e.target.style.borderColor = errors.city ? '#dc3545' : 'var(--sand-300)'}
                     />
+                    {errors.city && <small style={{ color: '#dc3545' }}>{errors.city.message}</small>}
                   </div>
 
                   {/* Pincode */}
-                  <div className="col-md-4">
+                  <div className="col-12 col-md-4">
                     <label style={{ fontWeight: '600', color: 'var(--sand-800)', marginBottom: '0.4rem', display: 'block' }}>Pincode *</label>
                     <input {...register('pincode', { required: 'Pincode is required', pattern: { value: /^[1-9][0-9]{5}$/, message: 'Invalid pincode' } })}
                       type="tel" inputMode="numeric" maxLength={6} placeholder="6-digit pincode"
@@ -463,17 +453,6 @@ export default function Checkout() {
                     <div className="d-flex justify-content-between mb-2">
                       <span style={{ color: '#10b981' }}>Coupon Discount</span>
                       <span style={{ color: '#10b981', fontWeight: '600' }}>-₹{couponDiscount.toLocaleString()}</span>
-                    </div>
-                  )}
-                  <div className="d-flex justify-content-between mb-2">
-                    <span style={{ color: 'var(--sand-700)' }}>Shipping</span>
-                    <span style={{ color: shipping === 0 ? '#10b981' : 'var(--sand-800)', fontWeight: '600' }}>
-                      {shipping === 0 ? 'FREE' : `₹${shipping}`}
-                    </span>
-                  </div>
-                  {shipping === 0 && (
-                    <div style={{ fontSize: '0.8rem', color: '#10b981', backgroundColor: '#f0fdf4', padding: '0.5rem 0.75rem', borderRadius: '8px', marginBottom: '0.75rem' }}>
-                      🎉 You qualify for free shipping!
                     </div>
                   )}
                   <div className="d-flex justify-content-between pt-3" style={{ borderTop: '2px solid var(--sand-600)' }}>

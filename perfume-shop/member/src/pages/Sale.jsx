@@ -335,7 +335,7 @@ export default function Sale() {
           <div className="col-6 col-md-3 text-center">
             <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🚚</div>
             <h6 style={{ fontWeight: '700', color: 'var(--sand-900)', fontSize: '0.9rem' }}>Free Delivery</h6>
-            <p style={{ fontSize: '0.75rem', color: 'var(--sand-600)', margin: 0 }}>On orders above ₹999</p>
+            <p style={{ fontSize: '0.75rem', color: 'var(--sand-600)', margin: 0 }}>On every order</p>
           </div>
           <div className="col-6 col-md-3 text-center">
             <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>✅</div>

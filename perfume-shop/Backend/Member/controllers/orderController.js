@@ -1,6 +1,8 @@
 const Order = require("../models/order");
 const crypto = require("crypto");
 const {createRazorpayOrder} = require("../services/payment.service");
+const { sendOrderPlacedSMS } = require("../../utils/smsHelper");
+const Member = require("../models/Member");
 
 exports.createOrder = async(req,res)=>{
 
@@ -10,7 +12,6 @@ exports.createOrder = async(req,res)=>{
 
    // Check if payment method is COD
    if (paymentMethod === 'cod') {
-     // Create order directly without Razorpay
      const order = await Order.create({
        userId,
        products,
@@ -19,6 +20,12 @@ exports.createOrder = async(req,res)=>{
        paymentMethod: 'cod',
        paymentStatus: 'pending'
      });
+
+     // Send order confirmation SMS (non-blocking)
+     const member = await Member.findById(userId).select('name phone').lean();
+     if (member?.phone) {
+       sendOrderPlacedSMS(member.phone, member.name, order._id, totalAmount).catch(() => {});
+     }
 
      return res.json({
        success: true,
@@ -79,6 +86,12 @@ exports.verifyPayment = async (req, res) => {
         order.razorpayPaymentId = razorpay_payment_id;
         order.razorpaySignature = razorpay_signature;
         await order.save();
+
+        // Send order confirmation SMS after successful payment (non-blocking)
+        const member = await Member.findById(order.userId).select('name phone').lean();
+        if (member?.phone) {
+          sendOrderPlacedSMS(member.phone, member.name, order._id, order.totalAmount).catch(() => {});
+        }
 
         return res.json({
           success: true,

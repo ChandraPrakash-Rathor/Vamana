@@ -17,7 +17,7 @@ export default function ShippingInfo() {
       icon: faTruck,
       title: 'Standard Shipping',
       time: '5-7 Business Days',
-      cost: 'Free on orders above ₹999',
+      cost: 'Free',
       description: 'Reliable delivery across India'
     },
     {
@@ -316,7 +316,7 @@ export default function ShippingInfo() {
                 fontSize: '0.9rem',
                 marginBottom: 0
               }}>
-                Enjoy free standard shipping on orders above ₹999
+                Enjoy free standard shipping on every order
               </p>
             </div>
           </div>

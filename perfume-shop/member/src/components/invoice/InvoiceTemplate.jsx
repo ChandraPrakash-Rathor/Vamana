@@ -40,7 +40,6 @@ export default function InvoiceTemplate({ orderData }) {
     ],
     subtotal: 10497,
     discount: 0,
-    shipping: 0,
     tax: 1889,
     total: 12386
   };
@@ -274,19 +273,6 @@ export default function InvoiceTemplate({ orderData }) {
               <span>- ₹{data.discount.toLocaleString()}</span>
             </div>
           )}
-
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            padding: '10px 0',
-            fontSize: '14px',
-            color: '#666'
-          }}>
-            <span>Shipping:</span>
-            <span style={{ color: data.shipping === 0 ? '#28a745' : '#666' }}>
-              {data.shipping === 0 ? 'FREE' : `₹${data.shipping}`}
-            </span>
-          </div>
 
           <div style={{
             display: 'flex',

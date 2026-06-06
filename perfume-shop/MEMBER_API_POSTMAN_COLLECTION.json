@@ -1,0 +1,517 @@
+{
+  "info": {
+    "_postman_id": "8e0f6a18-6bb6-4d58-a7c6-5f640ea71f4b",
+    "name": "Vamana Perfumes - Member API",
+    "description": "Complete Postman collection for the member/customer API.\n\nDefault base URL: https://vamana.store/api/member\n\nFlow:\n1. Run Auth > Check Phone. If the phone exists, memberToken and memberId are saved automatically.\n2. If the phone is new, run Auth > Register New User. Token and memberId are saved automatically.\n3. Run Products > Get All Products to auto-save productId.\n4. Use cart, coupon, order, payment and content APIs.\n\nProtected requests use Bearer {{memberToken}}.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "https://vamana.store/api/member" },
+    { "key": "memberToken", "value": "" },
+    { "key": "memberId", "value": "" },
+    { "key": "phone", "value": "9876543210" },
+    { "key": "email", "value": "testuser@example.com" },
+    { "key": "productId", "value": "" },
+    { "key": "couponCode", "value": "WELCOME10" },
+    { "key": "orderId", "value": "" },
+    { "key": "razorpayOrderId", "value": "" },
+    { "key": "limitedOfferId", "value": "" },
+    { "key": "saleId", "value": "" },
+    { "key": "bannerId", "value": "" },
+    { "key": "reviewId", "value": "" },
+    { "key": "category", "value": "perfume" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Check Phone",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.success && json.token) {",
+                  "  pm.collectionVariables.set('memberToken', json.token);",
+                  "  if (json.user && json.user.id) pm.collectionVariables.set('memberId', json.user.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"{{phone}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/auth/check-phone",
+            "description": "Checks whether a member phone exists. Existing active users receive a token."
+          }
+        },
+        {
+          "name": "Register New User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.success && json.token) {",
+                  "  pm.collectionVariables.set('memberToken', json.token);",
+                  "  if (json.user && json.user.id) pm.collectionVariables.set('memberId', json.user.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test User\",\n  \"email\": \"{{email}}\",\n  \"phone\": \"{{phone}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/auth/register",
+            "description": "Registers a new member. Required: name, email, phone."
+          }
+        },
+        {
+          "name": "Get My Profile",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{memberToken}}", "type": "string" }] },
+            "method": "GET",
+            "url": "{{baseUrl}}/auth/me",
+            "description": "Protected. Returns the logged-in member profile."
+          }
+        },
+        {
+          "name": "Update Profile",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{memberToken}}", "type": "string" }] },
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Test User\",\n  \"email\": \"updated@example.com\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/auth/profile",
+            "description": "Protected. Updates member name and/or email."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Products",
+      "item": [
+        {
+          "name": "Get All Products",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.success && Array.isArray(json.data) && json.data.length) {",
+                  "  pm.collectionVariables.set('productId', json.data[0]._id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": { "method": "GET", "url": "{{baseUrl}}/products" }
+        },
+        {
+          "name": "Get Featured Products",
+          "request": { "method": "GET", "url": "{{baseUrl}}/products/featured" }
+        },
+        {
+          "name": "Get Bestseller Products",
+          "request": { "method": "GET", "url": "{{baseUrl}}/products/bestsellers" }
+        },
+        {
+          "name": "Get Top Rated Products",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/products/top-rated?limit=8",
+              "host": ["{{baseUrl}}"],
+              "path": ["products", "top-rated"],
+              "query": [{ "key": "limit", "value": "8" }]
+            }
+          }
+        },
+        {
+          "name": "Get Products By Category",
+          "request": { "method": "GET", "url": "{{baseUrl}}/products/category/{{category}}" }
+        },
+        {
+          "name": "Get Product By ID",
+          "request": { "method": "GET", "url": "{{baseUrl}}/products/{{productId}}" }
+        }
+      ]
+    },
+    {
+      "name": "Cart",
+      "item": [
+        {
+          "name": "Get Cart",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{memberToken}}", "type": "string" }] },
+            "method": "GET",
+            "url": "{{baseUrl}}/cart"
+          }
+        },
+        {
+          "name": "Add To Cart",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{memberToken}}", "type": "string" }] },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": \"{{productId}}\",\n  \"quantity\": 1\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/cart/add"
+          }
+        },
+        {
+          "name": "Update Cart Item",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{memberToken}}", "type": "string" }] },
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": \"{{productId}}\",\n  \"quantity\": 2\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/cart/update"
+          }
+        },
+        {
+          "name": "Remove Cart Item",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{memberToken}}", "type": "string" }] },
+            "method": "DELETE",
+            "url": "{{baseUrl}}/cart/remove/{{productId}}"
+          }
+        },
+        {
+          "name": "Clear Cart",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{memberToken}}", "type": "string" }] },
+            "method": "DELETE",
+            "url": "{{baseUrl}}/cart/clear"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Coupons",
+      "item": [
+        {
+          "name": "Get Active Coupons",
+          "request": { "method": "GET", "url": "{{baseUrl}}/coupons" }
+        },
+        {
+          "name": "Validate Coupon",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{memberToken}}", "type": "string" }] },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"couponCode\": \"{{couponCode}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/coupons/validate",
+            "description": "Protected. Add products to cart before validating a coupon."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Orders And Payment",
+      "item": [
+        {
+          "name": "Create COD Order",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.orderId) pm.collectionVariables.set('orderId', json.orderId);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{memberId}}\",\n  \"products\": [\n    {\n      \"productId\": \"{{productId}}\",\n      \"quantity\": 1,\n      \"price\": 999\n    }\n  ],\n  \"address\": {\n    \"fullName\": \"Test User\",\n    \"phone\": \"{{phone}}\",\n    \"street\": \"123 Test Street\",\n    \"city\": \"Mumbai\",\n    \"state\": \"Maharashtra\",\n    \"pincode\": \"400001\",\n    \"country\": \"India\"\n  },\n  \"totalAmount\": 999,\n  \"paymentMethod\": \"cod\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/create-order",
+            "description": "Creates a COD order directly. This route currently expects userId in the body."
+          }
+        },
+        {
+          "name": "Create Razorpay Order",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.orderId) pm.collectionVariables.set('orderId', json.orderId);",
+                  "if (json.razorpayOrderId) pm.collectionVariables.set('razorpayOrderId', json.razorpayOrderId);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{memberId}}\",\n  \"products\": [\n    {\n      \"productId\": \"{{productId}}\",\n      \"quantity\": 1,\n      \"price\": 999\n    }\n  ],\n  \"address\": {\n    \"fullName\": \"Test User\",\n    \"phone\": \"{{phone}}\",\n    \"street\": \"123 Test Street\",\n    \"city\": \"Mumbai\",\n    \"state\": \"Maharashtra\",\n    \"pincode\": \"400001\",\n    \"country\": \"India\"\n  },\n  \"totalAmount\": 999,\n  \"paymentMethod\": \"razorpay\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/create-order",
+            "description": "Creates a pending DB order and Razorpay order. Requires Razorpay env config on the backend."
+          }
+        },
+        {
+          "name": "Cancel Razorpay Order",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": \"{{orderId}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/cancel-order"
+          }
+        },
+        {
+          "name": "Verify Payment",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"razorpay_order_id\": \"{{razorpayOrderId}}\",\n  \"razorpay_payment_id\": \"pay_test_payment_id\",\n  \"razorpay_signature\": \"paste_valid_signature_here\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/verify-payment",
+            "description": "Verifies Razorpay signature and marks the matching order as paid."
+          }
+        },
+        {
+          "name": "Get My Orders",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{memberToken}}", "type": "string" }] },
+            "method": "GET",
+            "url": "{{baseUrl}}/orders"
+          }
+        },
+        {
+          "name": "Get Order By ID",
+          "request": { "method": "GET", "url": "{{baseUrl}}/orders/{{orderId}}" }
+        }
+      ]
+    },
+    {
+      "name": "Limited Offers",
+      "item": [
+        {
+          "name": "Get Active Limited Offers",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.success && Array.isArray(json.data) && json.data.length) {",
+                  "  pm.collectionVariables.set('limitedOfferId', json.data[0]._id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": { "method": "GET", "url": "{{baseUrl}}/limited-offers" }
+        },
+        {
+          "name": "Get Limited Offer By ID",
+          "request": { "method": "GET", "url": "{{baseUrl}}/limited-offers/{{limitedOfferId}}" }
+        },
+        {
+          "name": "Update Limited Offer Statuses",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/limited-offers/update-statuses",
+            "description": "Testing helper route from the backend. Manually refreshes scheduled/active/expired offer statuses."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Sales",
+      "item": [
+        {
+          "name": "Get Active Sales",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.success && Array.isArray(json.data) && json.data.length) {",
+                  "  pm.collectionVariables.set('saleId', json.data[0]._id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": { "method": "GET", "url": "{{baseUrl}}/sales" }
+        },
+        {
+          "name": "Get Sale By ID",
+          "request": { "method": "GET", "url": "{{baseUrl}}/sales/{{saleId}}" }
+        }
+      ]
+    },
+    {
+      "name": "Banners",
+      "item": [
+        {
+          "name": "Get Active Banners",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.success && Array.isArray(json.data) && json.data.length) {",
+                  "  pm.collectionVariables.set('bannerId', json.data[0]._id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": { "method": "GET", "url": "{{baseUrl}}/banners" }
+        },
+        {
+          "name": "Get Banner By ID",
+          "request": { "method": "GET", "url": "{{baseUrl}}/banners/{{bannerId}}" }
+        }
+      ]
+    },
+    {
+      "name": "Reviews",
+      "item": [
+        {
+          "name": "Get All Reviews",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.success && Array.isArray(json.data) && json.data.length) {",
+                  "  pm.collectionVariables.set('reviewId', json.data[0]._id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": { "method": "GET", "url": "{{baseUrl}}/reviews" }
+        },
+        {
+          "name": "Get Featured Reviews",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/reviews/featured?limit=6",
+              "host": ["{{baseUrl}}"],
+              "path": ["reviews", "featured"],
+              "query": [{ "key": "limit", "value": "6" }]
+            }
+          }
+        },
+        {
+          "name": "Get Best Review Products",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/reviews/best-products?limit=8&minReviews=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["reviews", "best-products"],
+              "query": [
+                { "key": "limit", "value": "8" },
+                { "key": "minReviews", "value": "1" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Reviews By Product",
+          "request": { "method": "GET", "url": "{{baseUrl}}/reviews/product/{{productId}}" }
+        },
+        {
+          "name": "Get Review By ID",
+          "request": { "method": "GET", "url": "{{baseUrl}}/reviews/{{reviewId}}" }
+        }
+      ]
+    },
+    {
+      "name": "Theme And Settings",
+      "item": [
+        {
+          "name": "Get Active Theme",
+          "request": { "method": "GET", "url": "{{baseUrl}}/theme/active" }
+        },
+        {
+          "name": "Get Site Settings",
+          "request": { "method": "GET", "url": "{{baseUrl}}/site-settings" }
+        }
+      ]
+    },
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Member API Health",
+          "request": { "method": "GET", "url": "{{baseUrl}}/health" }
+        }
+      ]
+    }
+  ]
+}

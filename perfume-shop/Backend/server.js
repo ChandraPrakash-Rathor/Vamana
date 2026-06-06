@@ -36,24 +36,11 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Issue 3 fix: global rate limiter — 100 requests per 15 minutes per IP
-const globalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: {
-    success: false,
-    message: 'Too many requests, please try again later.',
-    data: null,
-    error: null
-  }
-});
-
-// Stricter limiter for auth endpoints — 10 attempts per 15 minutes
+// Rate limiting — only on auth endpoints to prevent brute force
+// No global rate limit on GET requests — they fire 8-10 times per page load
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 10,
+  max: 20,
   standardHeaders: true,
   legacyHeaders: false,
   message: {
@@ -64,7 +51,6 @@ const authLimiter = rateLimit({
   }
 });
 
-app.use(globalLimiter);
 app.use('/api/admin/login', authLimiter);
 app.use('/api/admin/auth/change-password', authLimiter);
 

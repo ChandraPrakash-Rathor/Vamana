@@ -108,9 +108,20 @@ exports.addToCart = async (req, res) => {
       item => item.product.toString() === productId
     );
 
+    const existingQty = existingItemIndex > -1 ? cart.items[existingItemIndex].quantity : 0;
+    const newTotalQty = existingQty + quantity;
+
+    // Enforce stock limit — total cart qty cannot exceed available stock
+    if (newTotalQty > product.stock) {
+      return res.status(400).json({
+        success: false,
+        message: `Only ${product.stock} unit${product.stock === 1 ? '' : 's'} available. You already have ${existingQty} in your cart.`
+      });
+    }
+
     if (existingItemIndex > -1) {
       // Update quantity
-      cart.items[existingItemIndex].quantity += quantity;
+      cart.items[existingItemIndex].quantity = newTotalQty;
       // Update price to current price (in case offer changed)
       cart.items[existingItemIndex].price = priceToUse;
     } else {
@@ -191,6 +202,15 @@ exports.updateCartItem = async (req, res) => {
       return res.status(404).json({
         success: false,
         message: 'Product not found in cart'
+      });
+    }
+
+    // Enforce stock limit on update too
+    const product = await Product.findById(productId).select('stock');
+    if (product && quantity > product.stock) {
+      return res.status(400).json({
+        success: false,
+        message: `Only ${product.stock} unit${product.stock === 1 ? '' : 's'} available`
       });
     }
 

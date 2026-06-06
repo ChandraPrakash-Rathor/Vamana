@@ -148,15 +148,23 @@ export default function Profile() {
                     Phone
                   </label>
                   <input
-                    {...register('phone')}
+                    {...register('phone', {
+                      pattern: { value: /^[6-9]\d{9}$/, message: 'Enter a valid 10-digit mobile number' }
+                    })}
                     type="tel"
+                    inputMode="numeric"
+                    maxLength={10}
+                    placeholder="10-digit mobile number"
+                    onKeyDown={e => { if (!/[0-9]|Backspace|Delete|ArrowLeft|ArrowRight|Tab/.test(e.key)) e.preventDefault(); }}
+                    onChange={e => { e.target.value = e.target.value.replace(/\D/g, '').slice(0, 10); }}
                     style={{
                       width: '100%', padding: '0.75rem', borderRadius: '10px',
-                      border: '2px solid var(--sand-300)', fontSize: '0.95rem', outline: 'none'
+                      border: `2px solid ${errors?.phone ? '#dc3545' : 'var(--sand-300)'}`, fontSize: '0.95rem', outline: 'none'
                     }}
                     onFocus={e => e.target.style.borderColor = 'var(--sand-600)'}
-                    onBlur={e => e.target.style.borderColor = 'var(--sand-300)'}
+                    onBlur={e => e.target.style.borderColor = errors?.phone ? '#dc3545' : 'var(--sand-300)'}
                   />
+                  {errors?.phone && <small style={{ color: '#dc3545', fontSize: '0.8rem' }}>{errors.phone.message}</small>}
                 </div>
               </div>
 

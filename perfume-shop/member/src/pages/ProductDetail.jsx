@@ -387,7 +387,7 @@ export default function ProductDetail() {
                   )}
                 </div>
                 <p style={{ color: 'var(--sand-700)', fontSize: '0.75rem', marginBottom: 0 }}>
-                  Inclusive of all taxes • Free shipping on orders above ₹999
+                  Inclusive of all taxes • Free shipping on every order
                 </p>
               </div>
 

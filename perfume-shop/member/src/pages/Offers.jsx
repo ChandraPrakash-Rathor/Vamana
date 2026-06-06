@@ -587,7 +587,7 @@ export default function Offers() {
           <div className="col-6 col-md-3 text-center">
             <div style={{ fontSize: '1.8rem', marginBottom: '0.3rem' }}>🚚</div>
             <h6 style={{ fontWeight: '700', color: 'var(--sand-900)', fontSize: '0.9rem', marginBottom: '0.2rem' }}>Free Delivery</h6>
-            <p style={{ fontSize: '0.75rem', color: 'var(--sand-700)', margin: 0 }}>On orders above ₹999</p>
+            <p style={{ fontSize: '0.75rem', color: 'var(--sand-700)', margin: 0 }}>On every order</p>
           </div>
           <div className="col-6 col-md-3 text-center">
             <div style={{ fontSize: '1.8rem', marginBottom: '0.3rem' }}>✅</div>

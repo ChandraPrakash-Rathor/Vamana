@@ -38,17 +38,19 @@ export default function Cart() {
   // Calculate coupon discount
   const couponDiscount = appliedCoupon ? appliedCoupon.discount : 0;
   
-  const shipping = subtotal >= 2000 ? 0 : 99; // Free shipping above ₹2000
-  const total = subtotal - couponDiscount + shipping;
+  const total = subtotal - couponDiscount;
 
   const updateQuantity = async (productId, newQuantity) => {
     if (newQuantity < 1) return;
     try {
-      await dispatch(updateCartItem({ productId, quantity: newQuantity }));
-      toast.success('Cart updated');
-      // Re-validate coupon if applied
-      if (appliedCoupon) {
-        dispatch(validateCoupon(appliedCoupon.code));
+      const result = await dispatch(updateCartItem({ productId, quantity: newQuantity }));
+      if (result.payload?.success) {
+        toast.success('Cart updated');
+        if (appliedCoupon) {
+          dispatch(validateCoupon(appliedCoupon.code));
+        }
+      } else {
+        toast.warning(result.payload?.message || 'Cannot update quantity');
       }
     } catch (error) {
       toast.error('Failed to update cart');
@@ -277,20 +279,22 @@ export default function Cart() {
                       <div className="d-flex align-items-center gap-2">
                         <button
                           onClick={() => updateQuantity(product._id, item.quantity - 1)}
+                          disabled={item.quantity <= 1}
                           style={{
                             width: '32px',
                             height: '32px',
-                            border: '2px solid var(--sand-400)',
+                            border: `2px solid ${item.quantity <= 1 ? 'var(--sand-200)' : 'var(--sand-400)'}`,
                             borderRadius: '8px',
-                            backgroundColor: 'white',
-                            cursor: 'pointer',
+                            backgroundColor: item.quantity <= 1 ? 'var(--sand-100)' : 'white',
+                            cursor: item.quantity <= 1 ? 'not-allowed' : 'pointer',
                             fontSize: '1rem',
                             fontWeight: '600',
-                            color: 'var(--sand-900)',
-                            transition: 'all 0.3s ease'
+                            color: item.quantity <= 1 ? 'var(--sand-400)' : 'var(--sand-900)',
+                            transition: 'all 0.3s ease',
+                            opacity: item.quantity <= 1 ? 0.5 : 1
                           }}
-                          onMouseEnter={(e) => e.target.style.backgroundColor = 'var(--sand-300)'}
-                          onMouseLeave={(e) => e.target.style.backgroundColor = 'white'}
+                          onMouseEnter={(e) => { if (item.quantity > 1) e.target.style.backgroundColor = 'var(--sand-300)'; }}
+                          onMouseLeave={(e) => { if (item.quantity > 1) e.target.style.backgroundColor = 'white'; }}
                         >
                           <FontAwesomeIcon icon={faMinus} style={{ fontSize: '0.7rem' }} />
                         </button>
@@ -305,20 +309,22 @@ export default function Cart() {
                         </span>
                         <button
                           onClick={() => updateQuantity(product._id, item.quantity + 1)}
+                          disabled={item.quantity >= (product.stock || 0)}
                           style={{
                             width: '32px',
                             height: '32px',
-                            border: '2px solid var(--sand-400)',
+                            border: `2px solid ${item.quantity >= (product.stock || 0) ? 'var(--sand-200)' : 'var(--sand-400)'}`,
                             borderRadius: '8px',
-                            backgroundColor: 'white',
-                            cursor: 'pointer',
+                            backgroundColor: item.quantity >= (product.stock || 0) ? 'var(--sand-100)' : 'white',
+                            cursor: item.quantity >= (product.stock || 0) ? 'not-allowed' : 'pointer',
                             fontSize: '1rem',
                             fontWeight: '600',
-                            color: 'var(--sand-900)',
-                            transition: 'all 0.3s ease'
+                            color: item.quantity >= (product.stock || 0) ? 'var(--sand-400)' : 'var(--sand-900)',
+                            transition: 'all 0.3s ease',
+                            opacity: item.quantity >= (product.stock || 0) ? 0.5 : 1
                           }}
-                          onMouseEnter={(e) => e.target.style.backgroundColor = 'var(--sand-300)'}
-                          onMouseLeave={(e) => e.target.style.backgroundColor = 'white'}
+                          onMouseEnter={(e) => { if (item.quantity < (product.stock || 0)) e.target.style.backgroundColor = 'var(--sand-300)'; }}
+                          onMouseLeave={(e) => { if (item.quantity < (product.stock || 0)) e.target.style.backgroundColor = 'white'; }}
                         >
                           <FontAwesomeIcon icon={faPlus} style={{ fontSize: '0.7rem' }} />
                         </button>
@@ -576,12 +582,6 @@ export default function Cart() {
                     <span style={{ color: '#27ae60', fontSize: '0.95rem', fontWeight: '600' }}>-₹{Math.round(couponDiscount)}</span>
                   </div>
                 )}
-                <div className="d-flex justify-content-between mb-2">
-                  <span style={{ color: 'var(--sand-700)', fontSize: '0.95rem' }}>Shipping</span>
-                  <span style={{ color: shipping === 0 ? '#27ae60' : 'var(--sand-900)', fontSize: '0.95rem', fontWeight: '600' }}>
-                    {shipping === 0 ? 'FREE' : `₹${shipping}`}
-                  </span>
-                </div>
                 <hr style={{ borderColor: 'var(--sand-400)', margin: '1rem 0' }} />
                 <div className="d-flex justify-content-between">
                   <span style={{ color: 'var(--sand-900)', fontSize: '1.2rem', fontWeight: '700' }}>Total</span>
@@ -633,7 +633,7 @@ export default function Cart() {
                       Free Delivery
                     </div>
                     <div style={{ fontSize: '0.8rem', color: 'var(--sand-700)' }}>
-                      On orders above ₹2000
+                      On every order
                     </div>
                   </div>
                 </div>
@@ -650,19 +650,6 @@ export default function Cart() {
                 </div>
               </div>
 
-              {shipping > 0 && (
-                <div style={{
-                  marginTop: '1rem',
-                  padding: '0.8rem',
-                  backgroundColor: '#fff3cd',
-                  border: '1px solid #ffc107',
-                  borderRadius: '10px',
-                  fontSize: '0.85rem',
-                  color: '#856404'
-                }}>
-                  💡 Add ₹{Math.ceil(2000 - subtotal)} more to get FREE delivery!
-                </div>
-              )}
             </div>
           </div>
         </div>

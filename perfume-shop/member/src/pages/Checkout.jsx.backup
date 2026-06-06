@@ -55,9 +55,8 @@ export default function Checkout() {
 
   // Calculate totals from Redux cart items
   const subtotal = items?.reduce((sum, item) => sum + (item.price * item.quantity), 0) || 0;
-  const shipping = subtotal >= 2000 ? 0 : 99; // Free shipping above ₹2000
   const tax = Math.round(subtotal * 0.18); // 18% GST
-  const total = subtotal + shipping + tax;
+  const total = subtotal + tax;
 
   const onSubmit = (data) => {
     // Prepare order data
@@ -93,7 +92,6 @@ export default function Checkout() {
         image: item.product.mainImage
       })),
       subtotal,
-      shipping,
       tax,
       total,
       orderDate: new Date().toISOString()
@@ -689,18 +687,6 @@ export default function Checkout() {
                     color: 'var(--sand-800)',
                     fontSize: '0.95rem'
                   }}>
-                    <span>Shipping</span>
-                    <span style={{ color: shipping === 0 ? '#28a745' : 'var(--sand-800)' }}>
-                      {shipping === 0 ? 'FREE' : `₹${shipping}`}
-                    </span>
-                  </div>
-                  <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    marginBottom: '0.8rem',
-                    color: 'var(--sand-800)',
-                    fontSize: '0.95rem'
-                  }}>
                     <span>Tax (GST 18%)</span>
                     <span>₹{tax.toLocaleString()}</span>
                   </div>
@@ -802,7 +788,7 @@ export default function Checkout() {
                     fontSize: '0.85rem'
                   }}>
                     <FontAwesomeIcon icon={faCheckCircle} style={{ color: '#28a745' }} />
-                    <span>Free Shipping on ₹2000+</span>
+                    <span>Free Shipping on every order</span>
                   </div>
                 </div>
               </div>
