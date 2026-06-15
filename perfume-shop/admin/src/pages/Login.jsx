@@ -109,46 +109,47 @@ export default function Login({ onLogin }) {
         zIndex: 1,
         animation: 'slideUp 0.8s ease-out'
       }}>
-        {/* Logo and Title */}
+        {/* Brand Title — no logo, just styled text */}
         <div style={{ 
           textAlign: 'center', 
           marginBottom: '2.5rem',
           animation: 'fadeIn 1s ease-out'
         }}>
-          <div style={{
-            display: 'inline-block',
-            padding: '1.5rem',
-            backgroundColor: 'white',
-            borderRadius: '20px',
-            boxShadow: '0 10px 40px rgba(0, 0, 0, 0.15)',
-            marginBottom: '1.5rem',
-            animation: 'scaleIn 0.6s ease-out'
-          }}>
-            <img
-              src="/logo.png"
-              alt="Vamana"
-              style={{
-                height: '80px',
-                width: 'auto',
-                objectFit: 'contain',
-                display: 'block'
-              }}
-            />
+          <div style={{ marginBottom: '1rem' }}>
+            <h1 style={{
+              fontFamily: "'Playfair Display', serif",
+              fontSize: '3.2rem',
+              fontWeight: '700',
+              margin: 0,
+              lineHeight: 1.1,
+              background: 'linear-gradient(135deg, var(--sand-700) 0%, var(--sand-900) 60%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+              letterSpacing: '-0.5px'
+            }}>
+              Vamana
+            </h1>
+            <div style={{
+              display: 'inline-block',
+              marginTop: '0.4rem',
+              padding: '0.3rem 1.2rem',
+              backgroundColor: 'var(--sand-800)',
+              borderRadius: '20px',
+              fontSize: '0.75rem',
+              fontWeight: '700',
+              color: 'white',
+              letterSpacing: '2.5px',
+              textTransform: 'uppercase'
+            }}>
+              Admin Panel
+            </div>
           </div>
-          <h2 style={{
-            color: 'var(--sand-900)',
-            fontFamily: "'Playfair Display', serif",
-            fontSize: '2.5rem',
-            marginBottom: '0.5rem',
-            fontWeight: '700',
-            textShadow: '2px 2px 4px rgba(0, 0, 0, 0.1)'
-          }}>
-            Admin Panel
-          </h2>
           <p style={{
-            color: 'var(--sand-800)',
-            fontSize: '1rem',
-            fontWeight: '500'
+            color: 'var(--sand-700)',
+            fontSize: '0.95rem',
+            fontWeight: '500',
+            marginTop: '0.75rem'
           }}>
             Welcome back! Please sign in to continue
           </p>
