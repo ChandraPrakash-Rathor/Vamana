@@ -49,7 +49,7 @@ export default function Sidebar({ collapsed, mobileOpen, onLinkClick }) {
       {/* Logo */}
       <div className="text-center py-3 py-md-4 border-bottom border-secondary border-opacity-25">
         <img
-          src={siteSettings?.logo || '/logo1.png'}
+          src={siteSettings?.logo ? `${imageBaseUrl}${siteSettings.logo}` : '/logo1.png'}
           alt={siteSettings?.siteName || 'Vamana'}
           className="img-fluid"
           style={{

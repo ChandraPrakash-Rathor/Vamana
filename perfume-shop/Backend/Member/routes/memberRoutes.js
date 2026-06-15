@@ -11,6 +11,7 @@ const reviewController = require('../controllers/reviewController');
 const themeController = require('../../Admin/controllers/themeController');
 const orderController =require("../controllers/orderController");
 const paymentController =require("../controllers/paymentController");
+const newsletterController = require('../controllers/newsletterController');
 
 // Import routes
 const authRoutes = require('./authRoutes');
@@ -52,6 +53,9 @@ router.get('/products/bestsellers', productController.getBestsellerProducts);
 
 // Get top rated products (must be before /:id route)
 router.get('/products/top-rated', productController.getTopRatedProducts);
+
+// Search products (must be before /:id route)
+router.get('/products/search', productController.searchProducts);
 
 // Get products by category (must be before /:id route)
 router.get('/products/category/:category', productController.getProductsByCategory);
@@ -198,5 +202,8 @@ router.get('/health', (req, res) => {
     timestamp: new Date().toISOString()
   });
 });
+
+// ============ NEWSLETTER ============
+router.post('/newsletter/subscribe', newsletterController.subscribe);
 
 module.exports = router;

@@ -32,7 +32,7 @@ export default function OrderInvoice() {
       const response = await axios.get(`${baseUrl}orders/${orderId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setOrder(response.data);
+      setOrder(response.data.data);
     } catch (error) {
       toast.error('Failed to load invoice');
       console.error(error);

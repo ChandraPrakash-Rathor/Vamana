@@ -66,7 +66,7 @@ export default function InvoiceTemplate({ orderData }) {
       }}>
         <div>
           <img 
-            src="/logo1.png" 
+            src="/logo.png" 
             alt="Vamana" 
             style={{ height: '50px', marginBottom: '10px' }}
           />

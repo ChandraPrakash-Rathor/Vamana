@@ -3,6 +3,29 @@ const crypto = require("crypto");
 const {createRazorpayOrder} = require("../services/payment.service");
 const { sendOrderPlacedSMS } = require("../../utils/smsHelper");
 const Member = require("../models/Member");
+const Product = require("../../Admin/models/Product");
+
+/**
+ * Deduct stock for each product in an order.
+ * Also increments sales count and sets status to 'out-of-stock' if stock hits 0.
+ * Called only for confirmed orders (COD placed, or Razorpay payment verified).
+ */
+const deductStock = async (products) => {
+  for (const item of products) {
+    const product = await Product.findById(item.productId);
+    if (!product) continue;
+
+    const newStock = Math.max(0, product.stock - item.quantity);
+    product.stock = newStock;
+    product.sales = (product.sales || 0) + item.quantity;
+
+    if (newStock === 0) {
+      product.status = 'out-of-stock';
+    }
+
+    await product.save();
+  }
+};
 
 exports.createOrder = async(req,res)=>{
 
@@ -20,6 +43,9 @@ exports.createOrder = async(req,res)=>{
        paymentMethod: 'cod',
        paymentStatus: 'pending'
      });
+
+     // Deduct stock immediately for COD (payment is guaranteed on delivery)
+     await deductStock(products);
 
      // Send order confirmation SMS (non-blocking)
      const member = await Member.findById(userId).select('name phone').lean();
@@ -86,6 +112,9 @@ exports.verifyPayment = async (req, res) => {
         order.razorpayPaymentId = razorpay_payment_id;
         order.razorpaySignature = razorpay_signature;
         await order.save();
+
+        // Deduct stock only after payment is confirmed — failed payments don't count
+        await deductStock(order.products);
 
         // Send order confirmation SMS after successful payment (non-blocking)
         const member = await Member.findById(order.userId).select('name phone').lean();

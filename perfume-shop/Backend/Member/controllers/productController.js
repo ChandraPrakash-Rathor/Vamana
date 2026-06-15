@@ -125,9 +125,36 @@ exports.getProductById = async (req, res) => {
   }
 };
 
-// @desc    Get products by category
-// @route   GET /api/member/products/category/:category
+// @desc    Search products by name/description
+// @route   GET /api/member/products/search?q=keyword
 // @access  Public
+exports.searchProducts = async (req, res) => {
+  try {
+    const q = (req.query.q || '').trim();
+    if (!q) {
+      return res.status(200).json({ success: true, count: 0, data: [] });
+    }
+
+    const products = await Product.find({
+      status: { $in: ['active', 'out-of-stock'] },
+      $or: [
+        { name: { $regex: q, $options: 'i' } },
+        { description: { $regex: q, $options: 'i' } },
+        { category: { $regex: q, $options: 'i' } },
+        { subLine: { $regex: q, $options: 'i' } }
+      ]
+    }).limit(8).sort({ createdAt: -1 }).select('name mainImage category finalPrice actualPrice discount status');
+
+    const mapped = products.map(p => ({
+      ...p._doc,
+      mainImage: buildImageUrl(req, p.mainImage)
+    }));
+
+    res.status(200).json({ success: true, count: mapped.length, data: mapped });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server Error', error: error.message });
+  }
+};
 exports.getProductsByCategory = async (req, res) => {
   try {
     const category = req.params.category.toLowerCase();

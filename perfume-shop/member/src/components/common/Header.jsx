@@ -7,16 +7,21 @@ import { GetActiveSales } from '../../redux/apis/SaleApi';
 import { logoutUser } from '../../redux/apis/AuthApi';
 import { toast } from 'react-toastify';
 import axios from 'axios';
-import { baseUrl } from '../../redux/apis/config';
+import { baseUrl, imageBaseUrl } from '../../redux/apis/config';
 
 export default function Header({ onOpenAuth }) {
   const [scrolled, setScrolled] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [searchLoading, setSearchLoading] = useState(false);
   const [siteSettings, setSiteSettings] = useState(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownBtnRef = useRef(null);
   const [dropdownPos, setDropdownPos] = useState({ top: 0, right: 0 });
+  const inputRef = useRef(null);
+  const searchRef = useRef(null);
+  const searchDebounce = useRef(null);
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -78,6 +83,9 @@ export default function Header({ onOpenAuth }) {
       if (!e.target.closest('#user-dropdown-wrapper')) {
         setDropdownOpen(false);
       }
+      if (searchRef.current && !searchRef.current.contains(e.target)) {
+        setSearchResults([]);
+      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -87,7 +95,31 @@ export default function Header({ onOpenAuth }) {
     setSearchOpen(!searchOpen);
     if (searchOpen) {
       setSearchQuery('');
+      setSearchResults([]);
     }
+  };
+
+  const handleSearchChange = (e) => {
+    const val = e.target.value;
+    setSearchQuery(val);
+
+    // debounce — wait 300ms after user stops typing
+    clearTimeout(searchDebounce.current);
+    if (!val.trim()) {
+      setSearchResults([]);
+      return;
+    }
+    searchDebounce.current = setTimeout(async () => {
+      try {
+        setSearchLoading(true);
+        const res = await axios.get(`${baseUrl}products/search?q=${encodeURIComponent(val.trim())}`);
+        setSearchResults(res.data.data || []);
+      } catch {
+        setSearchResults([]);
+      } finally {
+        setSearchLoading(false);
+      }
+    }, 300);
   };
 
   const handleSearchSubmit = (e) => {
@@ -96,7 +128,15 @@ export default function Header({ onOpenAuth }) {
       navigate(`/catalog?search=${encodeURIComponent(searchQuery.trim())}`);
       setSearchOpen(false);
       setSearchQuery('');
+      setSearchResults([]);
     }
+  };
+
+  const handleResultClick = (productId) => {
+    navigate(`/product/${productId}`);
+    setSearchOpen(false);
+    setSearchQuery('');
+    setSearchResults([]);
   };
 
   // Calculate total cart items
@@ -121,7 +161,7 @@ export default function Header({ onOpenAuth }) {
         {/* Logo */}
         <Link className="navbar-brand p-0 m-0" to="/">
           <img
-            src={siteSettings?.logo || '/logo3.png'}
+            src={siteSettings?.logo ? `${imageBaseUrl}${siteSettings.logo}` : '/logo3.png'}
             alt={siteSettings?.siteName || 'Vamana'}
             style={{
               height: scrolled ? '50px' : '65px',
@@ -376,33 +416,116 @@ export default function Header({ onOpenAuth }) {
 
             {/* Animated Search Bar */}
             <li className="nav-item">
-              <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                {/* Search Input - Expands from left to right */}
+              <div ref={searchRef} style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                 <form onSubmit={handleSearchSubmit} style={{ display: 'flex', alignItems: 'center' }}>
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search products..."
-                    style={{
-                      width: searchOpen ? '250px' : '0px',
-                      padding: searchOpen ? '0.6rem 1rem' : '0',
-                      paddingRight: searchOpen ? '3rem' : '0',
-                      border: searchOpen ? '2px solid var(--sand-400)' : 'none',
-                      borderRadius: '25px',
-                      backgroundColor: 'var(--sand-100)',
-                      color: 'var(--sand-900)',
-                      fontSize: '0.95rem',
-                      outline: 'none',
-                      transition: 'all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55)',
-                      opacity: searchOpen ? 1 : 0,
-                      marginRight: searchOpen ? '0.5rem' : '0',
-                      fontFamily: "'Roboto', sans-serif"
-                    }}
-                    onFocus={(e) => e.target.style.borderColor = 'var(--sand-600)'}
-                    onBlur={(e) => e.target.style.borderColor = 'var(--sand-400)'}
-                  />
-                  
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      ref={inputRef}
+                      type="text"
+                      value={searchQuery}
+                      onChange={handleSearchChange}
+                      placeholder="Search products..."
+                      style={{
+                        width: searchOpen ? '250px' : '0px',
+                        padding: searchOpen ? '0.6rem 1rem' : '0',
+                        paddingRight: searchOpen ? '3rem' : '0',
+                        border: searchOpen ? '2px solid var(--sand-400)' : 'none',
+                        borderRadius: '25px',
+                        backgroundColor: 'var(--sand-100)',
+                        color: 'var(--sand-900)',
+                        fontSize: '0.95rem',
+                        outline: 'none',
+                        transition: 'all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55)',
+                        opacity: searchOpen ? 1 : 0,
+                        marginRight: searchOpen ? '0.5rem' : '0',
+                        fontFamily: "'Roboto', sans-serif"
+                      }}
+                      onFocus={(e) => e.target.style.borderColor = 'var(--sand-600)'}
+                      onBlur={(e) => e.target.style.borderColor = 'var(--sand-400)'}
+                    />
+
+                    {/* Live search dropdown — position:fixed so Bootstrap overflow:hidden can't clip it */}
+                    {searchOpen && searchQuery.trim() && (() => {
+                      const rect = inputRef.current?.getBoundingClientRect();
+                      const top = rect ? rect.bottom + 8 : 80;
+                      const left = rect ? rect.left : 0;
+                      const width = rect ? rect.width : 250;
+                      return (
+                        <div style={{
+                          position: 'fixed',
+                          top,
+                          left,
+                          width: Math.max(width, 280),
+                          backgroundColor: 'white',
+                          borderRadius: '12px',
+                          boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
+                          border: '1px solid var(--sand-200)',
+                          zIndex: 999999,
+                          overflow: 'hidden',
+                          maxHeight: '400px',
+                          overflowY: 'auto'
+                        }}>
+                          {searchLoading ? (
+                            <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--sand-600)', fontSize: '0.9rem' }}>
+                              Searching...
+                            </div>
+                          ) : searchResults.length === 0 ? (
+                            <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--sand-500)', fontSize: '0.9rem' }}>
+                              No products found for "{searchQuery}"
+                            </div>
+                          ) : (
+                            <>
+                              {searchResults.map((product) => (
+                                <div
+                                  key={product._id}
+                                  onClick={() => handleResultClick(product._id)}
+                                  style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '0.75rem',
+                                    padding: '0.75rem 1rem',
+                                    cursor: 'pointer',
+                                    borderBottom: '1px solid var(--sand-100)',
+                                    transition: 'background 0.2s',
+                                    backgroundColor: 'white'
+                                  }}
+                                  onMouseEnter={e => e.currentTarget.style.backgroundColor = 'var(--sand-50)'}
+                                  onMouseLeave={e => e.currentTarget.style.backgroundColor = 'white'}
+                                >
+                                  <img
+                                    src={product.mainImage}
+                                    alt={product.name}
+                                    style={{ width: '42px', height: '42px', objectFit: 'cover', borderRadius: '8px', flexShrink: 0, border: '1px solid var(--sand-200)' }}
+                                    onError={e => e.target.style.display = 'none'}
+                                  />
+                                  <div style={{ flex: 1, minWidth: 0 }}>
+                                    <div style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--sand-900)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                      {product.name}
+                                    </div>
+                                    <div style={{ fontSize: '0.75rem', color: 'var(--sand-500)', textTransform: 'capitalize', marginTop: '2px' }}>
+                                      {product.category} · ₹{product.finalPrice?.toLocaleString()}
+                                      {product.status === 'out-of-stock' && (
+                                        <span style={{ color: '#e74c3c', marginLeft: '0.4rem', fontWeight: '600' }}>· Out of stock</span>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                              <div
+                                onClick={handleSearchSubmit}
+                                style={{ padding: '0.65rem 1rem', textAlign: 'center', fontSize: '0.8rem', color: 'var(--sand-600)', fontWeight: '700', cursor: 'pointer', backgroundColor: 'var(--sand-50)', borderTop: '1px solid var(--sand-200)' }}
+                                onMouseEnter={e => e.currentTarget.style.backgroundColor = 'var(--sand-100)'}
+                                onMouseLeave={e => e.currentTarget.style.backgroundColor = 'var(--sand-50)'}
+                              >
+                                See all results for "{searchQuery}" →
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      );
+                    })()}
+                  </div>
+
                   {/* Search Icon Button */}
                   <button
                     type={searchOpen ? 'submit' : 'button'}

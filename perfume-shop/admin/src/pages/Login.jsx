@@ -125,7 +125,7 @@ export default function Login({ onLogin }) {
             animation: 'scaleIn 0.6s ease-out'
           }}>
             <img
-              src="/logo1.png"
+              src="/logo.png"
               alt="Vamana"
               style={{
                 height: '80px',

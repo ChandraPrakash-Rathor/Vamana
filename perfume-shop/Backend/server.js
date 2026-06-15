@@ -13,21 +13,25 @@ connectDB().then(() => {
 
 const app = express();
 
-// Issue 3 fix: tighten CORS — only allow known origins
+// Trust proxy — required so rate limiter uses real client IP (not proxy IP)
+app.set('trust proxy', 1);
+
 const allowedOrigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
   : ['http://localhost:3000', 'http://localhost:3001'];
 
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow requests with no origin (mobile apps, Postman, curl)
+    // Allow requests with no origin (Postman, curl, mobile apps)
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
-      callback(new Error('Not allowed by CORS'));
+      // Still call callback(null, false) so CORS headers ARE sent with the error
+      // This lets the browser read the error response properly
+      callback(null, false);
     }
   },
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
 }));
@@ -36,13 +40,19 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Rate limiting — only on auth endpoints to prevent brute force
-// No global rate limit on GET requests — they fire 8-10 times per page load
+// Rate limiting strategy:
+// - No global limiter on GET routes (a single page load fires 8-10 requests)
+// - Strict limiter only on auth & write endpoints to prevent abuse
+// - 200 concurrent users × ~10 requests per page = 2000 req/min peak
+//   so per-IP limits are generous — real abuse is detected by pattern, not volume
+
+// Auth brute-force limiter — 20 attempts per 15 min per IP (login/register only)
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 20,
   standardHeaders: true,
   legacyHeaders: false,
+  keyGenerator: (req) => req.ip,
   message: {
     success: false,
     message: 'Too many login attempts, please try again later.',
@@ -51,8 +61,33 @@ const authLimiter = rateLimit({
   }
 });
 
+// Token verification limiter — generous, just prevents abuse of /auth/me
+// Normal users hit this once on page load. 200 requests per 15 min = 13/min per IP
+const tokenVerifyLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 200,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => req.ip,
+  message: {
+    success: false,
+    message: 'Too many requests, please try again later.',
+    data: null,
+    error: null
+  }
+});
+
 app.use('/api/admin/login', authLimiter);
 app.use('/api/admin/auth/change-password', authLimiter);
+app.use('/api/member/auth/check-phone', authLimiter);
+app.use('/api/member/auth/register', authLimiter);
+app.use('/api/member/auth/me', tokenVerifyLimiter);
+
+// Write endpoint limiter
+app.use('/api/member/cart', tokenVerifyLimiter);
+app.use('/api/member/create-order', tokenVerifyLimiter);
+app.use('/api/member/verify-payment', tokenVerifyLimiter);
+app.use('/api/member/coupons/validate', tokenVerifyLimiter);
 
 app.use('/uploads', express.static('uploads'));
 
@@ -72,16 +107,6 @@ app.use((req, res) => {
 // Global error handler — catches anything that slips through
 app.use((err, req, res, next) => {
   console.error('Unhandled error:', err);
-
-  // CORS errors
-  if (err.message === 'Not allowed by CORS') {
-    return res.status(403).json({
-      success: false,
-      message: 'CORS policy violation',
-      data: null,
-      error: null
-    });
-  }
 
   // JSON parse errors
   if (err.type === 'entity.parse.failed') {

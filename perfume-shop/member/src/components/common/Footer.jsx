@@ -20,11 +20,14 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { baseUrl } from '../../redux/apis/config';
+import { toast } from 'react-toastify';
+import { baseUrl, imageBaseUrl } from '../../redux/apis/config';
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
   const [siteSettings, setSiteSettings] = useState(null);
+  const [newsletterEmail, setNewsletterEmail] = useState('');
+  const [newsletterLoading, setNewsletterLoading] = useState(false);
 
   // Fetch site settings
   useEffect(() => {
@@ -38,6 +41,33 @@ export default function Footer() {
     };
     fetchSettings();
   }, []);
+
+  const handleSubscribe = async (e) => {
+    e.preventDefault();
+    const email = newsletterEmail.trim();
+    if (!email) {
+      toast.error('Please enter your email address');
+      return;
+    }
+
+    if (!/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(email)) {
+      toast.error('Please enter a valid email address');
+      return;
+    }
+
+    try {
+      setNewsletterLoading(true);
+      const res = await axios.post(`${baseUrl}newsletter/subscribe`, { email });
+      if (res.data.success) {
+        toast.success('🎉 Successfully subscribed to our newsletter!');
+        setNewsletterEmail('');
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Something went wrong, please try again');
+    } finally {
+      setNewsletterLoading(false);
+    }
+  };
 
   return (
     <footer style={{ backgroundColor: 'var(--sand-900)', color: 'white' }}>
@@ -66,10 +96,13 @@ export default function Footer() {
               </p>
             </div>
             <div className="col-lg-6">
-              <div className="d-flex gap-2">
+              <form className="d-flex gap-2" onSubmit={handleSubscribe}>
                 <input
                   type="email"
+                  value={newsletterEmail}
+                  onChange={(e) => setNewsletterEmail(e.target.value)}
                   placeholder="Enter your email address"
+                  required
                   style={{
                     flex: 1,
                     padding: '0.9rem 1.2rem',
@@ -81,30 +114,26 @@ export default function Footer() {
                   }}
                 />
                 <button
+                  type="submit"
+                  disabled={newsletterLoading}
                   style={{
                     padding: '0.9rem 1.8rem',
                     border: 'none',
                     borderRadius: '10px',
-                    backgroundColor: 'var(--sand-600)',
+                    backgroundColor: newsletterLoading ? 'var(--sand-400)' : 'var(--sand-600)',
                     color: 'white',
                     fontSize: '0.95rem',
                     fontWeight: '600',
-                    cursor: 'pointer',
+                    cursor: newsletterLoading ? 'not-allowed' : 'pointer',
                     transition: 'all 0.3s ease',
                     whiteSpace: 'nowrap'
                   }}
-                  onMouseEnter={(e) => {
-                    e.target.style.backgroundColor = 'var(--sand-500)';
-                    e.target.style.transform = 'translateY(-2px)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.target.style.backgroundColor = 'var(--sand-600)';
-                    e.target.style.transform = 'translateY(0)';
-                  }}
+                  onMouseEnter={(e) => { if (!newsletterLoading) { e.target.style.backgroundColor = 'var(--sand-500)'; e.target.style.transform = 'translateY(-2px)'; }}}
+                  onMouseLeave={(e) => { if (!newsletterLoading) { e.target.style.backgroundColor = 'var(--sand-600)'; e.target.style.transform = 'translateY(0)'; }}}
                 >
-                  Subscribe <FontAwesomeIcon icon={faArrowRight} />
+                  {newsletterLoading ? 'Subscribing...' : <>{`Subscribe `}<FontAwesomeIcon icon={faArrowRight} /></>}
                 </button>
-              </div>
+              </form>
             </div>
           </div>
         </div>
@@ -118,7 +147,7 @@ export default function Footer() {
             <div className="col-lg-4 col-md-6">
               <div style={{ marginBottom: '1.5rem' }}>
                 <img
-                  src={siteSettings?.logo || '/logo3.png'}
+                  src={siteSettings?.logo ? `${imageBaseUrl}${siteSettings.logo}` : '/logo3.png'}
                   alt={siteSettings?.siteName || 'Vamana'}
                   style={{
                     height: '60px',

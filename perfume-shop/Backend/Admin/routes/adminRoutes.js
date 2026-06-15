@@ -20,6 +20,8 @@ const orderController = require("../controllers/orderController");
 const upload = require("../../config/multer");
 const { protect, isAdmin } = require("../../middleware/authMiddleware");
 
+const newsletterController = require('../controllers/newsletterController');
+
 // ============ AUTH ROUTES (Public) ============
 router.post("/login", upload.any(), authController.loginAdmin);
 
@@ -78,6 +80,10 @@ router.use('/site-settings', protect, isAdmin, siteSettingsRoutes);
 
 // Theme routes
 router.use('/themes', protect, isAdmin, themeRoutes);
+
+// ============ NEWSLETTER ROUTES (Protected) ============
+router.get('/newsletter', protect, isAdmin, newsletterController.getSubscribers);
+router.delete('/newsletter/:id', protect, isAdmin, newsletterController.deleteSubscriber);
 
 // Health check (public)
 router.get('/health', (req, res) => {

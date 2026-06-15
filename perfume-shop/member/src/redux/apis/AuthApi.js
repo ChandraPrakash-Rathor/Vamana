@@ -21,14 +21,14 @@ api.interceptors.request.use(
   }
 );
 
-// Handle 401 errors (unauthorized)
+// Handle 401 errors (unauthorized) — clear token and logout
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Don't automatically clear localStorage - let the app handle it
-      // This prevents race conditions where token is being set while a request is in flight
-      // window.dispatchEvent(new Event('unauthorized'));
+      // Token is invalid or expired — clear it so App.js doesn't retry on next mount
+      localStorage.removeItem('memberToken');
+      localStorage.removeItem('isAuthenticated');
     }
     return Promise.reject(error);
   }

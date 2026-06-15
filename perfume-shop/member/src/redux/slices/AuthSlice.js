@@ -124,6 +124,9 @@ const authSlice = createSlice({
         state.loading = false;
         state.isAuthenticated = false;
         state.user = null;
+        // Clear token so App.js doesn't retry on next mount with a dead token
+        localStorage.removeItem('memberToken');
+        localStorage.removeItem('isAuthenticated');
       });
 
     // Update Profile

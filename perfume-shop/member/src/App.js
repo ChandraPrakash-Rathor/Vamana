@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useDispatch } from 'react-redux';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -32,24 +32,29 @@ function App() {
   const [showSplash, setShowSplash] = useState(true);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authModalTab, setAuthModalTab] = useState('login');
+  const authCheckInProgress = useRef(false); // prevents duplicate auth/me calls
 
   const handleSplashComplete = () => {
     setShowSplash(false);
   };
 
-  // Check if user is logged in on app load
-  useEffect(() => {
+// Check if user is logged in on app load
+useEffect(() => {
     const token = localStorage.getItem('memberToken');
-    if (token) {
-      // localStorage is synchronous, no delay needed
-      dispatch(getCurrentUser()).then((result) => {
-        if (result.payload?.success) {
-          // Fetch cart after user is loaded
-          dispatch(getCart());
-        }
-      });
-    }
-  }, [dispatch]);
+    if (!token) return; // No token — don't call auth/me at all
+
+    if (authCheckInProgress.current) return; // Already in flight
+    authCheckInProgress.current = true;
+
+    dispatch(getCurrentUser()).then((result) => {
+      authCheckInProgress.current = false;
+      if (result.payload?.success) {
+        dispatch(getCart());
+      }
+    }).catch(() => {
+      authCheckInProgress.current = false;
+    });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Listen for unauthorized events
   useEffect(() => {
