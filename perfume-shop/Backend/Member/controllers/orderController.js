@@ -172,7 +172,15 @@ exports.getUserOrders = async (req, res) => {
       return res.status(400).json({ success: false, message: 'User ID required' });
     }
 
-    const orders = await Order.find({ userId })
+    // Only show meaningful orders — exclude abandoned/failed Razorpay sessions
+    const orders = await Order.find({
+      userId,
+      $or: [
+        { paymentStatus: 'paid' },
+        { paymentStatus: 'refunded' },
+        { paymentMethod: 'cod' }
+      ]
+    })
       .sort({ createdAt: -1 })
       .lean();
 

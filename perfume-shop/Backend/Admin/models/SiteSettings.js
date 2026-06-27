@@ -6,6 +6,16 @@ const SiteSettingsSchema = new mongoose.Schema({
     type: String,
     default: '/uploads/logo.png'
   },
+
+  // GST / Tax Info
+  gstin: {
+    type: String,
+    default: ''
+  },
+  pan: {
+    type: String,
+    default: ''
+  },
   
   // Site Info
   siteName: {

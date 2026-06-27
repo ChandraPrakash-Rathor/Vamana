@@ -27,6 +27,8 @@ exports.updateSettings = async (req, res) => {
       email,
       phone,
       address,
+      gstin,
+      pan,
       socialLinks,
       footerAbout,
       footerCopyright
@@ -44,6 +46,8 @@ exports.updateSettings = async (req, res) => {
     if (email) settings.email = email;
     if (phone) settings.phone = phone;
     if (address) settings.address = address;
+    if (gstin !== undefined) settings.gstin = gstin;
+    if (pan !== undefined) settings.pan = pan;
     if (socialLinks) settings.socialLinks = { ...settings.socialLinks, ...socialLinks };
     if (footerAbout) settings.footerAbout = footerAbout;
     if (footerCopyright) settings.footerCopyright = footerCopyright;

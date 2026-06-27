@@ -278,159 +278,123 @@ export default function Invoice() {
           <div style={{
             background: 'white',
             borderRadius: '12px',
-            padding: 'clamp(1.5rem, 4vw, 3rem)',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+            padding: 'clamp(1.5rem, 4vw, 2.5rem)',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+            fontFamily: 'sans-serif'
           }}>
-            {/* Header */}
-            <div style={{ borderBottom: '3px solid var(--sand-600)', paddingBottom: '2rem', marginBottom: '2rem' }}>
-              <div className="row align-items-center">
-                <div className="col-md-6 mb-3 mb-md-0">
-                  <h1 style={{
-                    fontFamily: "'Playfair Display', serif",
-                    color: 'var(--sand-800)',
-                    fontSize: 'clamp(1.8rem, 5vw, 2.5rem)',
-                    marginBottom: '0.5rem'
-                  }}>
-                    INVOICE
-                  </h1>
-                  <p style={{ color: 'var(--sand-600)', fontSize: 'clamp(0.8rem, 2vw, 0.9rem)', margin: 0 }}>
-                    Order #{order._id.slice(-8).toUpperCase()}
-                  </p>
-                </div>
-                <div className="col-md-6 text-md-end">
-                  <h3 style={{
-                    fontFamily: "'Playfair Display', serif",
-                    color: 'var(--sand-700)',
-                    fontSize: 'clamp(1.3rem, 4vw, 1.8rem)',
-                    marginBottom: '0.5rem'
-                  }}>
-                    {siteSettings?.siteName || 'Vamana Perfumes'}
-                  </h3>
-                  <p style={{ color: 'var(--sand-600)', fontSize: 'clamp(0.75rem, 2vw, 0.9rem)', margin: 0 }}>
-                    {siteSettings?.tagline || 'Premium Fragrances'}<br />
-                    {siteSettings?.email || 'contact@vamana.com'}<br />
-                    {siteSettings?.phone || '+91 1234567890'}<br />
-                    {siteSettings?.address || 'Mumbai, India'}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Order Info */}
-            <div className="row mb-4">
-              <div className="col-md-6 mb-3 mb-md-0">
-                <h5 style={{ color: 'var(--sand-800)', fontWeight: '600', marginBottom: '1rem', fontSize: 'clamp(1rem, 3vw, 1.1rem)' }}>Bill To:</h5>
-                <p style={{ color: 'var(--sand-700)', lineHeight: '1.8', margin: 0, fontSize: 'clamp(0.85rem, 2vw, 1rem)' }}>
-                  <strong>{order.userDetails?.name || 'Customer'}</strong><br />
-                  {order.userDetails?.email}<br />
-                  {order.userDetails?.phone}<br />
-                  {order.address?.street}, {order.address?.city}<br />
-                  {order.address?.state} - {order.address?.pincode}
-                </p>
-              </div>
-              <div className="col-md-6">
-                <h5 style={{ color: 'var(--sand-800)', fontWeight: '600', marginBottom: '1rem', fontSize: 'clamp(1rem, 3vw, 1.1rem)' }}>Order Details:</h5>
-                <div style={{ fontSize: 'clamp(0.85rem, 2vw, 1rem)' }}>
-                  <div className="d-flex justify-content-between mb-2">
-                    <span style={{ color: 'var(--sand-700)' }}>Order Date:</span>
-                    <strong style={{ color: 'var(--sand-700)' }}>{new Date(order.createdAt).toLocaleDateString('en-IN', {
-                      day: '2-digit',
-                      month: 'short',
-                      year: 'numeric'
-                    })}</strong>
+            {(() => {
+              const GST_RATE = 28;
+              const HSN_CODE = '3303';
+              const calcGST = (total) => { const base = total / (1 + GST_RATE / 100); const gst = total - base; return { base, cgst: gst / 2, sgst: gst / 2 }; };
+              const fmt = (n) => `₹${Number(n).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
+              const invoiceNo = `INV-${order._id.slice(-6).toUpperCase()}`;
+              const invoiceDate = new Date(order.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+              const { base: baseAmount, cgst, sgst } = calcGST(order.totalAmount || 0);
+              const thS = { padding: '0.65rem 0.75rem', textAlign: 'center', fontWeight: '600', fontSize: '0.82rem', whiteSpace: 'nowrap', background: 'var(--sand-800)', color: 'white' };
+              const tdS = (align='center') => ({ padding: '0.65rem 0.75rem', textAlign: align, fontSize: '0.85rem', color: 'var(--sand-800)', borderBottom: '1px solid var(--sand-200)' });
+              return (<>
+                {/* Invoice title + dates */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem', borderBottom: '3px solid var(--sand-600)', paddingBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+                  <div>
+                    <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: 'clamp(1.8rem,5vw,2.5rem)', fontWeight: '700', color: 'var(--sand-800)', marginBottom: '1rem' }}>INVOICE</h1>
+                    <table style={{ borderCollapse: 'collapse' }}>
+                      <tbody>
+                        {[['Invoice No', invoiceNo], ['Invoice Date', invoiceDate]].map(([l, v]) => (
+                          <tr key={l}><td style={{ color: 'var(--sand-600)', fontSize: '0.88rem', paddingRight: '1.5rem', paddingBottom: '0.25rem' }}>{l}</td><td style={{ fontWeight: '700', color: 'var(--sand-900)', fontSize: '0.88rem', paddingBottom: '0.25rem' }}>{v}</td></tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
-                  <div className="d-flex justify-content-between mb-2">
-                    <span style={{ color: 'var(--sand-700)' }}>Payment Method:</span>
-                    <strong style={{ color: 'var(--sand-700)' }}>{order.paymentMethod === 'cod' ? 'COD' : 'Online'}</strong>
-                  </div>
-                  <div className="d-flex justify-content-between mb-2">
-                    <span style={{ color: 'var(--sand-700)' }}>Payment Status:</span>
-                    <span style={{
-                      background: getStatusColor(order.paymentStatus),
-                      color: 'white',
-                      padding: '0.25rem 0.5rem',
-                      borderRadius: '6px',
-                      fontSize: 'clamp(0.75rem, 2vw, 0.85rem)',
-                      fontWeight: '600'
-                    }}>
-                      {order.paymentStatus.toUpperCase()}
-                    </span>
-                  </div>
-                  <div className="d-flex justify-content-between">
-                    <span style={{ color: 'var(--sand-700)' }}>Tracking:</span>
-                    <strong style={{ color: 'var(--sand-700)' }}>{getTrackingLabel(order.trackingStatus)}</strong>
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontFamily: "'Playfair Display', serif", fontSize: '1.5rem', fontWeight: '700', color: 'var(--sand-800)' }}>{siteSettings?.siteName || 'Vamana Perfumes'}</div>
+                    <div style={{ fontSize: '0.82rem', color: 'var(--sand-600)', marginTop: '0.25rem' }}>{siteSettings?.tagline || 'Premium Fragrances'}</div>
                   </div>
                 </div>
-              </div>
-            </div>
 
-            {/* Products Table */}
-            <div style={{ marginBottom: '2rem', overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '500px' }}>
-                <thead>
-                  <tr style={{ background: 'var(--sand-100)', borderBottom: '2px solid var(--sand-300)' }}>
-                    <th style={{ padding: 'clamp(0.5rem, 2vw, 1rem)', textAlign: 'left', color: 'var(--sand-800)', fontWeight: '600', fontSize: 'clamp(0.85rem, 2vw, 1rem)' }}>Product</th>
-                    <th style={{ padding: 'clamp(0.5rem, 2vw, 1rem)', textAlign: 'center', color: 'var(--sand-800)', fontWeight: '600', fontSize: 'clamp(0.85rem, 2vw, 1rem)' }}>Qty</th>
-                    <th style={{ padding: 'clamp(0.5rem, 2vw, 1rem)', textAlign: 'right', color: 'var(--sand-800)', fontWeight: '600', fontSize: 'clamp(0.85rem, 2vw, 1rem)' }}>Price</th>
-                    <th style={{ padding: 'clamp(0.5rem, 2vw, 1rem)', textAlign: 'right', color: 'var(--sand-800)', fontWeight: '600', fontSize: 'clamp(0.85rem, 2vw, 1rem)' }}>Total</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(order.products || []).map((item, index) => (
-                    <tr key={index} style={{ borderBottom: '1px solid var(--sand-200)' }}>
-                      <td style={{ padding: 'clamp(0.5rem, 2vw, 1rem)' }}>
-                        <div style={{ color: 'var(--sand-800)', fontWeight: '500', fontSize: 'clamp(0.85rem, 2vw, 1rem)' }}>
-                          {item.productDetails?.name || 'Product'}
-                        </div>
-                      </td>
-                      <td style={{ padding: 'clamp(0.5rem, 2vw, 1rem)', textAlign: 'center', color: 'var(--sand-700)', fontSize: 'clamp(0.85rem, 2vw, 1rem)' }}>
-                        {item.quantity}
-                      </td>
-                      <td style={{ padding: 'clamp(0.5rem, 2vw, 1rem)', textAlign: 'right', color: 'var(--sand-700)', fontSize: 'clamp(0.85rem, 2vw, 1rem)' }}>
-                        ₹{item.price.toLocaleString()}
-                      </td>
-                      <td style={{ padding: 'clamp(0.5rem, 2vw, 1rem)', textAlign: 'right', color: 'var(--sand-800)', fontWeight: '600', fontSize: 'clamp(0.85rem, 2vw, 1rem)' }}>
-                        ₹{(item.price * item.quantity).toLocaleString()}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Total */}
-            <div style={{ borderTop: '2px solid var(--sand-300)', paddingTop: '1.5rem' }}>
-              <div className="row">
-                <div className="col-md-6"></div>
-                <div className="col-md-6">
-                  <div style={{ fontSize: 'clamp(0.9rem, 2vw, 1rem)' }}>
-                    <div className="d-flex justify-content-between mb-2">
-                      <span style={{ color: 'var(--sand-700)' }}>Subtotal:</span>
-                      <span style={{ color: 'var(--sand-700)' }}>₹{order.totalAmount.toLocaleString()}</span>
+                {/* Billed By / Billed To */}
+                <div className="row mb-3">
+                  <div className="col-md-6 mb-3 mb-md-0">
+                    <div style={{ background: 'var(--sand-100)', borderRadius: '10px', padding: '1rem', borderLeft: '4px solid var(--sand-600)' }}>
+                      <p style={{ color: 'var(--sand-700)', fontWeight: '700', fontSize: '0.88rem', marginBottom: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Billed By</p>
+                      <p style={{ fontWeight: '700', color: 'var(--sand-900)', marginBottom: '0.2rem', fontSize: '0.9rem' }}>{siteSettings?.siteName || 'Vamana Perfumes'}</p>
+                      <p style={{ color: 'var(--sand-700)', fontSize: '0.84rem', marginBottom: '0.15rem' }}>{siteSettings?.address || 'Madhya Pradesh, India'}</p>
+                      <p style={{ color: 'var(--sand-700)', fontSize: '0.84rem', marginBottom: '0.15rem' }}><strong>GSTIN:</strong> {siteSettings?.gstin || '23DUQPG5822R1ZY'}</p>
+                      <p style={{ color: 'var(--sand-700)', fontSize: '0.84rem', marginBottom: 0 }}><strong>PAN:</strong> {siteSettings?.pan || 'DUQPG5822R'}</p>
                     </div>
-                    <div className="d-flex justify-content-between pt-3" style={{ borderTop: '2px solid var(--sand-600)' }}>
-                      <span style={{ color: 'var(--sand-800)', fontSize: 'clamp(1.1rem, 3vw, 1.3rem)', fontWeight: '700' }}>Total:</span>
-                      <span style={{ color: 'var(--sand-800)', fontSize: 'clamp(1.1rem, 3vw, 1.3rem)', fontWeight: '700' }}>₹{order.totalAmount.toLocaleString()}</span>
+                  </div>
+                  <div className="col-md-6">
+                    <div style={{ background: 'var(--sand-100)', borderRadius: '10px', padding: '1rem', borderLeft: '4px solid var(--sand-500)' }}>
+                      <p style={{ color: 'var(--sand-700)', fontWeight: '700', fontSize: '0.88rem', marginBottom: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Billed To</p>
+                      <p style={{ fontWeight: '700', color: 'var(--sand-900)', marginBottom: '0.2rem', fontSize: '0.9rem' }}>{order.userDetails?.name || ((order.address?.firstName || '') + ' ' + (order.address?.lastName || '')).trim()}</p>
+                      <p style={{ color: 'var(--sand-700)', fontSize: '0.84rem', marginBottom: '0.15rem' }}>{order.address?.address || order.address?.street}</p>
+                      <p style={{ color: 'var(--sand-700)', fontSize: '0.84rem', marginBottom: '0.15rem' }}>{order.address?.city}, {order.address?.state}, India - {order.address?.pincode}</p>
                     </div>
                   </div>
                 </div>
-              </div>
-            </div>
 
-            {/* Footer */}
-            <div style={{
-              marginTop: '3rem',
-              paddingTop: '2rem',
-              borderTop: '1px solid var(--sand-200)',
-              textAlign: 'center',
-              color: 'var(--sand-600)',
-              fontSize: 'clamp(0.8rem, 2vw, 0.9rem)'
-            }}>
-              <p style={{ margin: 0 }}>Thank you for your purchase!</p>
-              <p style={{ margin: '0.5rem 0 0 0' }}>
-                For any queries, contact us at {siteSettings?.email || 'support@vamana.com'} or call {siteSettings?.phone || '+91 1234567890'}
-              </p>
-            </div>
+                {/* Supply info */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', fontSize: '0.84rem', color: 'var(--sand-700)', borderBottom: '1px solid var(--sand-200)', paddingBottom: '0.75rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                  <span><strong>Country of Supply:</strong> India</span>
+                  <span><strong>Place of Supply:</strong> {order.address?.state || 'India'}</span>
+                </div>
+
+                {/* Items table */}
+                <div style={{ overflowX: 'auto', marginBottom: '1.5rem' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '560px' }}>
+                    <thead>
+                      <tr>
+                        <th style={{ ...thS, textAlign: 'left' }}>Item</th>
+                        {['GST Rate','Qty','Rate','Amount','CGST','SGST','Total'].map(h => <th key={h} style={thS}>{h}</th>)}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(order.products || []).map((item, idx) => {
+                        const lineTotal = item.price * item.quantity;
+                        const { base: lb, cgst: lc, sgst: ls } = calcGST(lineTotal);
+                        return (
+                          <tr key={idx} style={{ background: idx % 2 === 0 ? 'white' : 'var(--sand-50)' }}>
+                            <td style={{ ...tdS('left') }}>
+                              <div style={{ fontWeight: '600', color: 'var(--sand-900)' }}>{item.productDetails?.name || 'Product'}</div>
+                              <div style={{ fontSize: '0.75rem', color: 'var(--sand-500)' }}>HSN/SAC: {HSN_CODE}</div>
+                            </td>
+                            <td style={tdS()}>{GST_RATE}%</td>
+                            <td style={tdS()}>{item.quantity}</td>
+                            <td style={tdS()}>₹{item.price?.toLocaleString()}</td>
+                            <td style={tdS()}>{fmt(lb)}</td>
+                            <td style={tdS()}>{fmt(lc)}</td>
+                            <td style={tdS()}>{fmt(ls)}</td>
+                            <td style={{ ...tdS(), fontWeight: '700', color: 'var(--sand-900)' }}>{fmt(lineTotal)}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Summary */}
+                <div className="row">
+                  <div className="col-md-6"></div>
+                  <div className="col-md-6">
+                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                      <tbody>
+                        {[['Amount', fmt(baseAmount)], ['CGST', fmt(cgst)], ['SGST', fmt(sgst)]].map(([l, v]) => (
+                          <tr key={l}><td style={{ padding: '0.5rem 0.75rem', color: 'var(--sand-700)', fontSize: '0.9rem', borderBottom: '1px solid var(--sand-200)' }}>{l}</td><td style={{ padding: '0.5rem 0.75rem', textAlign: 'right', color: 'var(--sand-700)', fontSize: '0.9rem', borderBottom: '1px solid var(--sand-200)' }}>{v}</td></tr>
+                        ))}
+                        <tr>
+                          <td style={{ padding: '0.85rem 0.75rem', fontWeight: '800', fontSize: '1.1rem', color: 'var(--sand-900)', borderTop: '3px solid var(--sand-600)' }}>Total (INR)</td>
+                          <td style={{ padding: '0.85rem 0.75rem', textAlign: 'right', fontWeight: '800', fontSize: '1.1rem', color: 'var(--sand-900)', borderTop: '3px solid var(--sand-600)' }}>{fmt(order.totalAmount || 0)}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Footer */}
+                <div style={{ marginTop: '2rem', paddingTop: '1.25rem', borderTop: '1px solid var(--sand-200)', textAlign: 'center', color: 'var(--sand-500)', fontSize: '0.8rem' }}>
+                  This is an electronically generated document, no signature is required.
+                </div>
+              </>);
+            })()}
           </div>
         </div>
       </div>
