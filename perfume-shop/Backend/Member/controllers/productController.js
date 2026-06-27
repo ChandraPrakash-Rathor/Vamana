@@ -13,7 +13,7 @@ const mapProduct = (req, product) => ({
   volume: product.volume || '',
   subLine: product.subLine || '',
   mainImage: buildImageUrl(req, product.mainImage),
-  subImages: (product.subImages || []).filter(Boolean).map(img => buildImageUrl(req, img))
+  subImages: [...new Set((product.subImages || []).filter(Boolean))].map(img => buildImageUrl(req, img))
 });
 
 // @desc    Get all active products for customers

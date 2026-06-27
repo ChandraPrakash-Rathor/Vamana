@@ -10,11 +10,11 @@ export default function ViewProductModal({ isOpen, onClose, product, onEdit }) {
 
   if (!isOpen || !product) return null;
 
-  // Combine main image with sub images
+  // Combine main image with sub images — deduplicate by URL
   const images = [
     product.image,
     ...(product.subImages || [])
-  ].filter(Boolean);
+  ].filter(Boolean).filter((img, idx, arr) => arr.indexOf(img) === idx);
 
   const nextImage = () => {
     setCurrentImageIndex((prev) => (prev + 1) % images.length);

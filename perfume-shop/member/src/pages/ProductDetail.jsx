@@ -71,8 +71,10 @@ export default function ProductDetail() {
 
   const product = currentProduct;
 
-  // Prepare product images (main + sub images)
-  const productImages = [product.mainImage, ...(product.subImages || [])].filter(Boolean);
+  // Prepare product images (main + sub images) — deduplicate by URL
+  const productImages = [product.mainImage, ...(product.subImages || [])]
+    .filter(Boolean)
+    .filter((img, idx, arr) => arr.indexOf(img) === idx);
 
   // Get related products (same category, exclude current product)
   const relatedProducts = (Array.isArray(products) ? products : [])

@@ -167,7 +167,7 @@ export default function Orders() {
             }}>
               <div>
                 <div style={{ fontSize: '0.85rem', opacity: '0.9', marginBottom: '0.5rem' }}>Total Revenue</div>
-                <div style={{ fontSize: '2rem', fontWeight: '700' }}>₹{stats.totalRevenue.toLocaleString()}</div>
+                <div style={{ fontSize: '2rem', fontWeight: '700' }}>₹{(stats.totalRevenue || 0).toLocaleString()}</div>
               </div>
             </div>
           </div>
@@ -276,7 +276,7 @@ export default function Orders() {
                   </td>
                   <td style={{ padding: '1rem' }}>
                     <span style={{ fontWeight: '600', color: 'var(--sand-800)', fontSize: '1rem' }}>
-                      ₹{order.totalAmount.toLocaleString()}
+                      ₹{(order.totalAmount || 0).toLocaleString()}
                     </span>
                   </td>
                   <td style={{ padding: '1rem' }}>

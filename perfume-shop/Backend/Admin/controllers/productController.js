@@ -41,7 +41,7 @@ exports.getAllProducts = async (req, res) => {
       volume: product.volume || '',
       subLine: product.subLine || '',
       mainImage: buildImageUrl(req, product.mainImage),
-      subImages: (product.subImages || []).filter(Boolean).map(img => buildImageUrl(req, img))
+      subImages: [...new Set((product.subImages || []).filter(Boolean))].map(img => buildImageUrl(req, img))
     }));
 
     return success(res, data, 'Products fetched successfully');
@@ -61,7 +61,7 @@ exports.getProductById = async (req, res) => {
       volume: product.volume || '',
       subLine: product.subLine || '',
       mainImage: buildImageUrl(req, product.mainImage),
-      subImages: (product.subImages || []).filter(Boolean).map(img => buildImageUrl(req, img))
+      subImages: [...new Set((product.subImages || []).filter(Boolean))].map(img => buildImageUrl(req, img))
     };
 
     return success(res, data, 'Product fetched successfully');
@@ -129,6 +129,8 @@ exports.createProduct = async (req, res) => {
     }
 
     const subImagesFiles = files.filter(f => f.fieldname === 'subImages').map(f => f.filename);
+    // Deduplicate — remove any duplicate filenames
+    const uniqueSubImages = [...new Set(subImagesFiles)];
     const finalPrice = parsedPrice - (parsedPrice * parsedDiscount) / 100;
 
     const product = await Product.create({
@@ -143,7 +145,7 @@ exports.createProduct = async (req, res) => {
       description: description.trim(),
       subLine: subLine?.trim() || '',
       mainImage: mainImageFile.filename,
-      subImages: subImagesFiles,
+      subImages: uniqueSubImages,
       status: parsedStock > 0 ? 'active' : 'out-of-stock'
     });
 
@@ -222,7 +224,13 @@ exports.updateProduct = async (req, res) => {
     const subImagesFiles = files.filter(f => f.fieldname === 'subImages');
     if (subImagesFiles.length > 0) {
       (product.subImages || []).forEach(img => safeDeleteFile(img));
-      updateData.subImages = subImagesFiles.map(f => f.filename);
+      // Deduplicate filenames before saving
+      updateData.subImages = [...new Set(subImagesFiles.map(f => f.filename))];
+    }
+
+    // Deduplicate existing subImages in updateData if passed from frontend
+    if (Array.isArray(updateData.subImages)) {
+      updateData.subImages = [...new Set(updateData.subImages.map(stripToFilename).filter(Boolean))];
     }
 
     // Issue 5 fix: only recalculate finalPrice if price or discount actually changed
