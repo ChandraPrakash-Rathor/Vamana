@@ -11,13 +11,16 @@ import { useDispatch } from 'react-redux';
 import { toast } from "react-toastify";
 
 export default function EditProductModal({ isOpen, onClose, product }) {
-  const [mainImage, setMainImage] = useState(null);
-  const [mainImagePreview, setMainImagePreview] = useState(null);
-  const [subImages, setSubImages] = useState([]);
-  const [subImagePreviews, setSubImagePreviews] = useState([]);
+  const [mainImage, setMainImage] = useState(null);           // new File object for main
+  const [mainImagePreview, setMainImagePreview] = useState(null); // URL or base64 for display
+
+  // Single unified list of sub image entries
+  // Each entry: { type: 'existing', url: '...' } or { type: 'new', file: File, preview: base64 }
+  const [subImageList, setSubImageList] = useState([]);
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [finalPrice, setFinalPrice] = useState(0);
-  const originalCategory = useRef(null); // store product's original category
+  const originalCategory = useRef(null);
   const dispatch = useDispatch();
 
   const {
@@ -79,12 +82,16 @@ export default function EditProductModal({ isOpen, onClose, product }) {
       setValue('subLine', product.subLine || '');
       setValue('status', statusOptions.find(opt => opt.value === product.status));
 
-      setMainImagePreview(product.image);
-      setSubImagePreviews(product.subImages || []);
+      setMainImage(null);
+      setMainImagePreview(product.image || null);
+
+      // Load existing sub images as 'existing' type entries — deduplicated by URL
+      const existingUrls = [...new Set((product.subImages || []).filter(Boolean))];
+      setSubImageList(existingUrls.map(url => ({ type: 'existing', url })));
+
       setFinalPrice(product.price);
     }
 
-    // Reset when modal closes
     if (!isOpen) {
       lastPrefilledId.current = null;
     }
@@ -133,112 +140,115 @@ export default function EditProductModal({ isOpen, onClose, product }) {
 
   const handleMainImageChange = (e) => {
     const file = e.target.files[0];
-    if (file) {
-      setMainImage(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setMainImagePreview(reader.result);
-      };
-      reader.readAsDataURL(file);
-    }
+    if (!file) return;
+    setMainImage(file);
+    const reader = new FileReader();
+    reader.onloadend = () => setMainImagePreview(reader.result);
+    reader.readAsDataURL(file);
   };
 
   const handleSubImagesChange = (e) => {
     const files = Array.from(e.target.files);
-    if (files.length + subImages.length > 5) {
-      alert('You can upload maximum 5 sub images');
+    const currentCount = subImageList.length;
+
+    if (currentCount >= 5) {
+      toast.warn('Maximum 5 sub images allowed');
+      e.target.value = '';
       return;
     }
 
-    setSubImages([...subImages, ...files]);
+    const allowedCount = 5 - currentCount;
+    const filesToAdd = files.slice(0, allowedCount);
 
-    files.forEach(file => {
+    if (files.length > allowedCount) {
+      toast.warn(`Only ${allowedCount} more image(s) can be added (max 5 total)`);
+    }
+
+    filesToAdd.forEach(file => {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setSubImagePreviews(prev => [...prev, reader.result]);
+        setSubImageList(prev => {
+          // Deduplicate by file name — prevent same file added twice
+          const alreadyAdded = prev.some(
+            item => item.type === 'new' && item.file.name === file.name && item.file.size === file.size
+          );
+          if (alreadyAdded) return prev;
+          return [...prev, { type: 'new', file, preview: reader.result }];
+        });
       };
       reader.readAsDataURL(file);
     });
+
+    // Reset input so same file can be re-selected if needed
+    e.target.value = '';
   };
 
   const removeSubImage = (index) => {
-    setSubImages(subImages.filter((_, i) => i !== index));
-    setSubImagePreviews(subImagePreviews.filter((_, i) => i !== index));
+    setSubImageList(prev => prev.filter((_, i) => i !== index));
   };
 
   const onSubmit = async (data) => {
     setIsSubmitting(true);
 
     try {
-      // Check if we have new images to upload
-      const hasNewImages = mainImage || subImages.length > 0;
-      
-      let requestData;
-      
-      if (hasNewImages) {
-        // Use FormData if we have new images
-        const formData = new FormData();
-        
-        // Create data object
-        const productData = {
-          name: data.name,
-          sku: data.sku,
-          category: data.category.value,
-          actualPrice: data.actualPrice,
-          discount: data.discount || 0,
-          finalPrice: finalPrice,
-          stock: data.stock,
-          volume: data.volume,
-          description: data.description,
-          subLine: data.subLine || '',
-          status: data.status.value
-        };
+      const hasNewMainImage = !!mainImage;
+      const newSubImages = subImageList.filter(item => item.type === 'new');
+      const existingSubImages = subImageList.filter(item => item.type === 'existing');
+      const hasNewSubImages = newSubImages.length > 0;
 
+      const productData = {
+        name: data.name,
+        sku: data.sku,
+        category: data.category.value,
+        actualPrice: data.actualPrice,
+        discount: data.discount || 0,
+        finalPrice: finalPrice,
+        stock: data.stock,
+        volume: data.volume,
+        description: data.description,
+        subLine: data.subLine || '',
+        status: data.status.value,
+      };
+
+      let requestData;
+
+      if (hasNewMainImage || hasNewSubImages) {
+        // Use FormData when there are new files
+        const formData = new FormData();
+
+        // Always pass existing sub image URLs so backend knows to keep them
+        productData.subImages = existingSubImages.map(item => item.url);
         formData.append('data', JSON.stringify(productData));
-        
-        // Add main image if new one selected
-        if (mainImage) {
+
+        if (hasNewMainImage) {
           formData.append('mainImage', mainImage);
         }
-        
-        // Add sub images if new ones selected
-        subImages.forEach((image) => {
-          formData.append(`subImages`, image);
+
+        // Append each new sub image file
+        newSubImages.forEach(item => {
+          formData.append('subImages', item.file);
         });
-        
+
         requestData = formData;
       } else {
-        // Use JSON if no new images
-        requestData = {
-          name: data.name,
-          sku: data.sku,
-          category: data.category.value,
-          actualPrice: data.actualPrice,
-          discount: data.discount || 0,
-          finalPrice: finalPrice,
-          stock: data.stock,
-          volume: data.volume,
-          description: data.description,
-          subLine: data.subLine || '',
-          status: data.status.value
-        };
+        // No new files — send JSON with existing sub image URLs
+        productData.subImages = existingSubImages.map(item => item.url);
+        requestData = productData;
       }
 
       const res = await dispatch(UpdateProduct({ id: product.id, data: requestData }));
-      
+
       if (res?.payload?.success === true) {
-        toast.success("Product updated successfully!");
+        toast.success('Product updated successfully!');
         dispatch(GetProduct());
         handleClose();
       } else {
         toast.error(res?.payload?.message || 'Failed to update product');
       }
-      
-      setIsSubmitting(false);
-
-    } catch (error) {
-      console.error('Error updating product:', error);
+    } catch (err) {
+      console.error('Error updating product:', err);
       toast.error('Failed to update product');
+    } finally {
       setIsSubmitting(false);
     }
   };
@@ -247,8 +257,7 @@ export default function EditProductModal({ isOpen, onClose, product }) {
     reset();
     setMainImage(null);
     setMainImagePreview(null);
-    setSubImages([]);
-    setSubImagePreviews([]);
+    setSubImageList([]);
     setFinalPrice(0);
     onClose();
   };
@@ -754,7 +763,7 @@ export default function EditProductModal({ isOpen, onClose, product }) {
             {/* Sub Images */}
             <div className="col-12">
               <label className="form-label fw-semibold" style={{ color: 'var(--sand-900)' }}>
-                Additional Images (Max 5)
+                Additional Images ({subImageList.length}/5)
               </label>
               <div style={{
                 border: '2px dashed var(--sand-300)',
@@ -763,17 +772,18 @@ export default function EditProductModal({ isOpen, onClose, product }) {
                 backgroundColor: 'var(--sand-50)'
               }}>
                 <div className="row g-3 mb-3">
-                  {subImagePreviews.map((preview, index) => (
+                  {subImageList.map((item, index) => (
                     <div key={index} className="col-4 col-md-2">
                       <div style={{ position: 'relative' }}>
                         <img
-                          src={preview}
+                          src={item.type === 'existing' ? item.url : item.preview}
                           alt={`Sub ${index + 1}`}
                           style={{
                             width: '100%',
                             height: '100px',
                             objectFit: 'cover',
-                            borderRadius: '8px'
+                            borderRadius: '8px',
+                            border: item.type === 'new' ? '2px solid var(--sand-600)' : '1px solid var(--sand-200)'
                           }}
                         />
                         <button
@@ -790,16 +800,32 @@ export default function EditProductModal({ isOpen, onClose, product }) {
                             width: '24px',
                             height: '24px',
                             cursor: 'pointer',
-                            fontSize: '0.7rem'
+                            fontSize: '0.7rem',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
                           }}
                         >
                           <FontAwesomeIcon icon={faTrash} />
                         </button>
+                        {item.type === 'new' && (
+                          <div style={{
+                            position: 'absolute',
+                            bottom: '2px',
+                            left: '2px',
+                            background: 'var(--sand-600)',
+                            color: 'white',
+                            fontSize: '9px',
+                            fontWeight: '700',
+                            padding: '1px 5px',
+                            borderRadius: '4px'
+                          }}>NEW</div>
+                        )}
                       </div>
                     </div>
                   ))}
                 </div>
-                <div style={{ textAlign: 'center' }}>
+                <divtyle={{ textAlign: 'center' }}>
                   <input
                     type="file"
                     accept="image/*"

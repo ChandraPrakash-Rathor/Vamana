@@ -7,11 +7,15 @@ const {
   createProduct,
   updateProduct,
   deleteProduct,
-  getProductStats
+  getProductStats,
+  cleanupOrphanedImages
 } = require('../controllers/productController');
 
 // Product statistics route (must be before /:id route)
 router.get('/stats', getProductStats);
+
+// Cleanup orphaned images — must be before /:id route
+router.delete('/cleanup-images', cleanupOrphanedImages);
 
 // Get all products & Create new product
 router.route('/')

@@ -205,35 +205,41 @@ exports.updateProduct = async (req, res) => {
       }
     }
 
-    // Strip full URLs to bare filenames before saving — prevents double-URL on re-fetch
+    // Strip full URLs to bare filenames before saving
     if (updateData.mainImage) {
       updateData.mainImage = stripToFilename(updateData.mainImage);
     }
-    if (Array.isArray(updateData.subImages)) {
-      updateData.subImages = updateData.subImages.map(stripToFilename).filter(Boolean);
-    }
 
-    // Handle main image replacement
+    // Handle main image replacement — delete old file if replaced
     const mainImageFile = files.find(f => f.fieldname === 'mainImage');
     if (mainImageFile) {
-      safeDeleteFile(product.mainImage); // only deletes bare filenames
+      safeDeleteFile(product.mainImage);
       updateData.mainImage = mainImageFile.filename;
     }
 
-    // Handle sub images replacement
+    // Handle sub images
     const subImagesFiles = files.filter(f => f.fieldname === 'subImages');
     if (subImagesFiles.length > 0) {
+      // New files uploaded — replace all sub images, delete old ones from disk
       (product.subImages || []).forEach(img => safeDeleteFile(img));
-      // Deduplicate filenames before saving
       updateData.subImages = [...new Set(subImagesFiles.map(f => f.filename))];
+    } else if (Array.isArray(updateData.subImages)) {
+      // No new files — but frontend sent existing sub image URLs
+      // Strip to filenames and deduplicate
+      const incomingFilenames = [...new Set(updateData.subImages.map(stripToFilename).filter(Boolean))];
+
+      // Delete any old sub images that were REMOVED by the user (not in incoming list)
+      const oldFilenames = (product.subImages || []).filter(Boolean);
+      oldFilenames.forEach(oldFile => {
+        if (!incomingFilenames.includes(oldFile)) {
+          safeDeleteFile(oldFile); // file was deselected — delete from disk
+        }
+      });
+
+      updateData.subImages = incomingFilenames;
     }
 
-    // Deduplicate existing subImages in updateData if passed from frontend
-    if (Array.isArray(updateData.subImages)) {
-      updateData.subImages = [...new Set(updateData.subImages.map(stripToFilename).filter(Boolean))];
-    }
-
-    // Issue 5 fix: only recalculate finalPrice if price or discount actually changed
+    // Recalculate finalPrice if price or discount changed
     if (updateData.actualPrice !== undefined || updateData.discount !== undefined) {
       const newPrice = Number(updateData.actualPrice) || product.actualPrice;
       const newDiscount = updateData.discount !== undefined ? Number(updateData.discount) : product.discount;
@@ -269,6 +275,56 @@ exports.deleteProduct = async (req, res) => {
   } catch (err) {
     if (isInvalidObjectId(err)) return notFound(res, 'Product not found');
     return error(res, 'Failed to delete product', 500, err);
+  }
+};
+
+// DELETE /api/admin/products/cleanup-images — delete orphaned upload files
+exports.cleanupOrphanedImages = async (req, res) => {
+  try {
+    const uploadsDir = path.join(__dirname, '../../uploads');
+
+    // Get all files in uploads folder
+    const allFiles = fs.readdirSync(uploadsDir).filter(f => {
+      const ext = path.extname(f).toLowerCase();
+      return ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg'].includes(ext);
+    });
+
+    // Get all image filenames used in DB
+    const products = await Product.find().select('mainImage subImages').lean();
+    const usedFiles = new Set();
+    products.forEach(p => {
+      if (p.mainImage) usedFiles.add(stripToFilename(p.mainImage));
+      (p.subImages || []).forEach(img => { if (img) usedFiles.add(stripToFilename(img)); });
+    });
+
+    // Also check banner and site settings images
+    try {
+      const Banner = require('../models/Banner');
+      const banners = await Banner.find().select('image').lean();
+      banners.forEach(b => { if (b.image) usedFiles.add(stripToFilename(b.image)); });
+    } catch {}
+
+    try {
+      const SiteSettings = require('../models/SiteSettings');
+      const settings = await SiteSettings.findOne().select('logo').lean();
+      if (settings?.logo) usedFiles.add(stripToFilename(settings.logo));
+    } catch {}
+
+    // Find orphaned files (in folder but not in DB)
+    const orphaned = allFiles.filter(f => !usedFiles.has(f));
+
+    // Delete them
+    let deleted = 0;
+    orphaned.forEach(f => {
+      try {
+        fs.unlinkSync(path.join(uploadsDir, f));
+        deleted++;
+      } catch {}
+    });
+
+    return success(res, { deleted, orphanedFiles: orphaned }, `Cleaned up ${deleted} orphaned images`);
+  } catch (err) {
+    return error(res, 'Cleanup failed', 500, err);
   }
 };
 

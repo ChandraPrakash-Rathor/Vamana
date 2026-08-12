@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>E-Waste ERP — Software Proposal</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:#e8e8e8;color:#1a1a1a}
+.page{width:210mm;min-height:297mm;margin:20px auto;background:#fff;position:relative;overflow:hidden;page-break-after:always}
+@media print{
+  body{background:#fff;margin:0}
+  .page{margin:0;page-break-after:always;box-shadow:none}
+  .no-print{display:none!important}
+}
+h1,h2,h3,h4{font-weight:700;line-height:1.2}
+p{line-height:1.6}
+.section-label{font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:#1a5276;margin-bottom:6px}
+.divider{height:1px;background:#dde;margin:18px 0}
+.tag{display:inline-block;padding:3px 10px;border:1px solid #1a5276;color:#1a5276;font-size:10px;font-weight:600;border-radius:2px;letter-spacing:0.5px}
+</style>
+</head>
+<body>
+<div class="no-print" style="position:fixed;top:16px;right:16px;z-index:999">
+  <button onclick="window.print()" style="background:#1a5276;color:#fff;border:none;padding:10px 24px;font-size:14px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif">Save as PDF</button>
+</div>
+
+<!-- COVER PAGE -->
+<div class="page" style="display:flex;flex-direction:column;background:#fff">
+  <!-- Top accent bar -->
+  <div style="height:6px;background:#1a5276"></div>
+  <!-- Header strip -->
+  <div style="padding:32px 48px;border-bottom:1px solid #dde;display:flex;justify-content:space-between;align-items:center">
+    <div>
+      <div style="font-size:11px;font-weight:700;letter-spacing:2px;color:#1a5276;text-transform:uppercase">Software Proposal</div>
+    </div>
+    <div style="font-size:11px;color:#888">Confidential — Enterprise Proposal 2026</div>
+  </div>
+  <!-- Main content -->
+  <div style="flex:1;display:flex;flex-direction:column;justify-content:center;padding:60px 48px">
+    <div style="max-width:480px">
+      <div style="width:48px;height:4px;background:#1a5276;margin-bottom:32px"></div>
+      <h1 style="font-size:38px;font-weight:800;color:#0d1b2a;line-height:1.15;margin-bottom:16px">E-Waste ERP &<br>AI Automation<br>System</h1>
+      <p style="font-size:15px;color:#444;line-height:1.7;margin-bottom:36px;max-width:420px">A comprehensive software platform for end-to-end e-waste management — covering purchase, processing, metal recovery, employee management, and intelligent reporting.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:48px">
+        <span class="tag">Phase I — Core ERP</span>
+        <span class="tag">Phase II — Processing</span>
+        <span class="tag">Phase III — AI</span>
+        <span class="tag">Phase IV — Automation</span>
+      </div>
+    </div>
+  </div>
+  <!-- Footer -->
+  <div style="padding:24px 48px;border-top:1px solid #dde">
+    <div style="font-size:11px;color:#888">Confidential — Enterprise Proposal 2026</div>
+  </div>
+  <div style="height:6px;background:#1a5276"></div>
+</div>
+
+<!-- PAGE 2: PHASE I — E-WASTE PURCHASE -->
+<div class="page" style="padding:48px">
+  <div class="section-label">Phase I</div>
+  <h2 style="font-size:26px;color:#0d1b2a;margin-bottom:6px">E-Waste Purchase Management</h2>
+  <p style="font-size:13px;color:#555;margin-bottom:28px">Software for Industry Document Management — Three purchase channels</p>
+  <div style="height:2px;background:#1a5276;margin-bottom:28px"></div>
+
+  <!-- Three columns -->
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:24px">
+
+    <!-- Institute -->
+    <div>
+      <div style="background:#0d1b2a;padding:12px 16px;margin-bottom:0">
+        <p style="color:#fff;font-weight:700;font-size:13px;letter-spacing:0.5px">Institute</p>
+      </div>
+      <div style="border:1px solid #dde;border-top:none">
+        <div style="display:flex;border-bottom:1px solid #eee">
+          <div style="width:28px;background:#f0f4f8;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#1a5276;flex-shrink:0">1</div>
+          <div style="padding:10px 12px;font-size:12px;color:#333">Name</div>
+        </div>
+        <div style="display:flex;border-bottom:1px solid #eee">
+          <div style="width:28px;background:#f0f4f8;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#1a5276;flex-shrink:0">2</div>
+          <div style="padding:10px 12px;font-size:12px;color:#333">Quantity</div>
+        </div>
+        <div style="display:flex;border-bottom:1px solid #eee">
+          <div style="width:28px;background:#f0f4f8;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#1a5276;flex-shrink:0">3</div>
+          <div style="padding:10px 12px;font-size:12px;color:#333">Vehicle Details</div>
+        </div>
+        <div style="display:flex;border-bottom:1px solid #eee">
+          <div style="width:28px;background:#f0f4f8;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#1a5276;flex-shrink:0">4</div>
+          <div style="padding:10px 12px;font-size:12px;color:#333">E-Waste Detail</div>
+        </div>
+        <div style="display:flex;border-bottom:1px solid #eee">
+          <div style="width:28px;background:#f0f4f8;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#1a5276;flex-shrink:0">5</div>
+          <div style="padding:10px 12px;font-size:12px;color:#333">Entry</div>
+        </div>
+        <div style="display:flex;border-bottom:1px solid #eee">
+          <div style="width:28px;background:#f0f4f8;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#1a5276;flex-shrink:0">6</div>
+          <div style="padding:10px 12px;font-size:12px;color:#333">Photo Upload</div>
+        </div>
+        <div style="display:flex;background:#1a5276">
+          <div style="width:28px;background:rgba(0,0,0,0.2);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0">7</div>
+          <div style="padding:10px 12px;font-size:12px;color:#fff;font-weight:600">Dispatch Document</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tender -->
+    <div>
+      <div style="background:#0d1b2a;padding:12px 16px;margin-bottom:0">
+        <p style="color:#fff;font-weight:700;font-size:13px;letter-spacing:0.5px">Tender</p>
+      </div>
+      <div style="border:1px solid #dde;border-top:none">
+        <div style="display:flex;border-bottom:1px solid #eee">
+          <div style="width:28px;background:#f0f4f8;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#1a5276;flex-shrink:0">1</div>
+          <div style="padding:10px 12px;font-size:12px;color:#333">Name</div>
+        </div>
+        <div style="display:flex;border-bottom:1px solid #eee">
+          <div style="width:28px;background:#f0f4f8;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#1a5276;flex-shrink:0">2</div>
+          <div style="padding:10px 12px;font-size:12px;color:#333">Quantity</div>
+        </div>
+        <div style="display:flex;border-bottom:1px solid #eee">
+          <div style="width:28px;background:#f0f4f8;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#1a5276;flex-shrink:0">3</div>
+          <div style="padding:10px 12px;font-size:12px;color:#333">Vehicle Details</div>
+        </div>
+        <div style="display:flex;border-bottom:1px solid #eee">
+          <div style="width:28px;background:#f0f4f8;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#1a5276;flex-shrink:0">4</div>
+          <div style="padding:10px 12px;font-size:12px;color:#333">E-Waste Detail</div>
+        </div>
+        <div style="display:flex;border-bottom:1px solid #eee">
+          <div style="width:28px;background:#f0f4f8;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#1a5276;flex-shrink:0">5</div>
+          <div style="padding:10px 12px;font-size:12px;color:#333">Entry</div>
+        </div>
+        <div style="display:flex;border-bottom:1px solid #eee">
+          <div style="width:28px;background:#f0f4f8;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#1a5276;flex-shrink:0">6</div>
+          <div style="padding:10px 12px;font-size:12px;color:#333">Photo Upload</div>
+        </div>
+        <div style="display:flex;background:#1a5276">
+          <div style="width:28px;background:rgba(0,0,0,0.2);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0">7</div>
+          <div style="padding:10px 12px;font-size:12px;color:#fff;font-weight:600">Invoice + E-Way Bill + Challan</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Kabadiwala -->
+    <div>
+      <div style="background:#0d1b2a;padding:12px 16px;margin-bottom:0">
+        <p style="color:#fff;font-weight:700;font-size:13px;letter-spacing:0.5px">Kabadiwala</p>
+      </div>
+      <div style="border:1px solid #dde;border-top:none;padding:16px">
+        <p style="font-size:12px;color:#555;margin-bottom:12px">As per requirement — vendor-wise purchase entry with complete material and payment tracking.</p>
+        <div class="divider"></div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="padding:9px 12px;background:#f7f9fc;border-left:3px solid #1a5276;font-size:12px;color:#333">Vendor Management</div>
+          <div style="padding:9px 12px;background:#f7f9fc;border-left:3px solid #1a5276;font-size:12px;color:#333">Material & Quantity Entry</div>
+          <div style="padding:9px 12px;background:#f7f9fc;border-left:3px solid #1a5276;font-size:12px;color:#333">Vehicle Details</div>
+          <div style="padding:9px 12px;background:#f7f9fc;border-left:3px solid #1a5276;font-size:12px;color:#333">Payment Tracking</div>
+          <div style="padding:9px 12px;background:#f7f9fc;border-left:3px solid #1a5276;font-size:12px;color:#333">Photo Upload</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Page footer -->
+  <div style="position:absolute;bottom:24px;left:48px;right:48px;display:flex;justify-content:space-between;align-items:center;border-top:1px solid #dde;padding-top:10px">
+    <span style="font-size:10px;color:#aaa">E-Waste ERP & AI Automation System</span>
+    <span style="font-size:10px;color:#aaa">Phase I — E-Waste Purchase</span>
+  </div>
+</div>
+
+<!-- PAGE 3: PHASE I — PROCESSING & SELLING -->
+<div class="page" style="padding:48px">
+  <div class="section-label">Phase I — Processing</div>
+  <h2 style="font-size:26px;color:#0d1b2a;margin-bottom:6px">E-Waste Processing & Selling</h2>
+  <p style="font-size:13px;color:#555;margin-bottom:28px">Sorting — Dismantling — MIS Report (Metal Recovery) — By-Product — Selling of Recovered Material</p>
+  <div style="height:2px;background:#1a5276;margin-bottom:32px"></div>
+
+  <!-- Process flow table -->
+  <table style="width:100%;border-collapse:collapse;margin-bottom:32px">
+    <thead>
+      <tr style="background:#0d1b2a">
+        <th style="padding:11px 16px;text-align:left;color:#fff;font-size:11px;font-weight:600;letter-spacing:0.5px;width:40px">Step</th>
+        <th style="padding:11px 16px;text-align:left;color:#fff;font-size:11px;font-weight:600;letter-spacing:0.5px">Module</th>
+        <th style="padding:11px 16px;text-align:left;color:#fff;font-size:11px;font-weight:600;letter-spacing:0.5px">Details</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr style="border-bottom:1px solid #eee">
+        <td style="padding:13px 16px;font-size:12px;font-weight:700;color:#1a5276">01</td>
+        <td style="padding:13px 16px;font-size:13px;font-weight:600;color:#0d1b2a">Sorting of E-Waste</td>
+        <td style="padding:13px 16px;font-size:12px;color:#555">Category-wise segregation, barcode tagging, weight recording, worker assignment</td>
+      </tr>
+      <tr style="border-bottom:1px solid #eee;background:#f7f9fc">
+        <td style="padding:13px 16px;font-size:12px;font-weight:700;color:#1a5276">02</td>
+        <td style="padding:13px 16px;font-size:13px;font-weight:600;color:#0d1b2a">Dismantling of E-Waste</td>
+        <td style="padding:13px 16px;font-size:12px;color:#555">Disassembly tracking, component logging, output quantity recording, damage assessment</td>
+      </tr>
+      <tr style="border-bottom:1px solid #eee">
+        <td style="padding:13px 16px;font-size:12px;font-weight:700;color:#1a5276">03</td>
+        <td style="padding:13px 16px;font-size:13px;font-weight:600;color:#0d1b2a">MIS Report — Metal Recovery</td>
+        <td style="padding:13px 16px;font-size:12px;color:#555">Copper, Aluminium, Gold, Silver, PCB — recovery yield reports, market price integration</td>
+      </tr>
+      <tr style="border-bottom:1px solid #eee;background:#f7f9fc">
+        <td style="padding:13px 16px;font-size:12px;font-weight:700;color:#1a5276">04</td>
+        <td style="padding:13px 16px;font-size:13px;font-weight:600;color:#0d1b2a">By-Product Details</td>
+        <td style="padding:13px 16px;font-size:12px;color:#555">Plastic granules, rubber, glass, hazardous waste logging, stock allocation per product type</td>
+      </tr>
+      <tr style="background:#0d1b2a">
+        <td style="padding:13px 16px;font-size:12px;font-weight:700;color:#adc8e0">05</td>
+        <td style="padding:13px 16px;font-size:13px;font-weight:600;color:#fff">Selling of Recovered Material</td>
+        <td style="padding:13px 16px;font-size:12px;color:#ccc">Metal &rarr; E-Invoice &rarr; Quantity &rarr; E-Way Bill &rarr; Delivery Challan</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Selling detail -->
+  <div style="border:1px solid #1a5276;padding:20px;margin-bottom:32px">
+    <p style="font-size:11px;font-weight:700;letter-spacing:2px;color:#1a5276;text-transform:uppercase;margin-bottom:14px">Selling Module — Document Flow</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:1px;background:#dde">
+      <div style="background:#fff;padding:14px;text-align:center">
+        <p style="font-size:11px;font-weight:700;color:#0d1b2a;margin-bottom:4px">Metal</p>
+        <p style="font-size:10px;color:#888">Recovered material stock ready for sale</p>
+      </div>
+      <div style="background:#fff;padding:14px;text-align:center">
+        <p style="font-size:11px;font-weight:700;color:#0d1b2a;margin-bottom:4px">E-Invoice</p>
+        <p style="font-size:10px;color:#888">GST compliant electronic invoice generation</p>
+      </div>
+      <div style="background:#fff;padding:14px;text-align:center">
+        <p style="font-size:11px;font-weight:700;color:#0d1b2a;margin-bottom:4px">Quantity</p>
+        <p style="font-size:10px;color:#888">Weight & unit-wise quantity dispatch entry</p>
+      </div>
+      <div style="background:#fff;padding:14px;text-align:center">
+        <p style="font-size:11px;font-weight:700;color:#0d1b2a;margin-bottom:4px">E-Way Bill</p>
+        <p style="font-size:10px;color:#888">Auto-generated e-way bill for transport</p>
+      </div>
+      <div style="background:#0d1b2a;padding:14px;text-align:center">
+        <p style="font-size:11px;font-weight:700;color:#fff;margin-bottom:4px">Delivery Challan</p>
+        <p style="font-size:10px;color:#aaa">Dhon-Kota dispatch challan document</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Page footer -->
+  <div style="position:absolute;bottom:24px;left:48px;right:48px;display:flex;justify-content:space-between;align-items:center;border-top:1px solid #dde;padding-top:10px">
+    <span style="font-size:10px;color:#aaa">E-Waste ERP & AI Automation System</span>
+    <span style="font-size:10px;color:#aaa">Phase I — Processing & Selling</span>
+  </div>
+</div>
+
+<!-- PAGE 4: EMPLOYEE MANAGEMENT -->
+<div class="page" style="padding:48px">
+  <div class="section-label">Phase I — HR</div>
+  <h2 style="font-size:26px;color:#0d1b2a;margin-bottom:6px">Employee Management</h2>
+  <p style="font-size:13px;color:#555;margin-bottom:28px">Complete HR lifecycle — from onboarding to payroll</p>
+  <div style="height:2px;background:#1a5276;margin-bottom:32px"></div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
+
+    <!-- Onboarding -->
+    <div style="border:1px solid #dde">
+      <div style="background:#0d1b2a;padding:12px 16px">
+        <p style="color:#fff;font-weight:700;font-size:13px">Onboarding Process</p>
+      </div>
+      <div style="padding:16px;display:flex;flex-direction:column;gap:8px">
+        <div style="padding:9px 12px;background:#f7f9fc;border-left:3px solid #1a5276;font-size:12px;color:#333">Personal Information & ID Proof</div>
+        <div style="padding:9px 12px;background:#f7f9fc;border-left:3px solid #1a5276;font-size:12px;color:#333">Document Collection & Verification</div>
+        <div style="padding:9px 12px;background:#f7f9fc;border-left:3px solid #1a5276;font-size:12px;color:#333">Department & Designation Assignment</div>
+        <div style="padding:9px 12px;background:#f7f9fc;border-left:3px solid #1a5276;font-size:12px;color:#333">Bank Account & PF Details</div>
+        <div style="padding:9px 12px;background:#f7f9fc;border-left:3px solid #1a5276;font-size:12px;color:#333">Joining Date & Confirmation</div>
+      </div>
+    </div>
+
+    <!-- Attendance -->
+    <div style="border:1px solid #dde">
+      <div style="background:#0d1b2a;padding:12px 16px">
+        <p style="color:#fff;font-weight:700;font-size:13px">Attendance</p>
+      </div>
+      <div style="padding:16px;display:flex;flex-direction:column;gap:8px">
+        <div style="padding:9px 12px;background:#f7f9fc;border-left:3px solid #1a5276;font-size:12px;color:#333">Daily In / Out Tracking</div>
+        <div style="padding:9px 12px;background:#f7f9fc;border-left:3px solid #1a5276;font-size:12px;color:#333">Monthly Attendance Summary</div>
+        <div style="padding:9px 12px;background:#f7f9fc;border-left:3px solid #1a5276;font-size:12px;color:#333">Present / Absent / Half Day</div>
+        <div style="padding:9px 12px;background:#f7f9fc;border-left:3px solid #1a5276;font-size:12px;color:#333">Holiday & Working Days Calendar</div>
+        <div style="padding:9px 12px;background:#f7f9fc;border-left:3px solid #1a5276;font-size:12px;color:#333">Attendance Report Export</div>
+      </div>
+    </div>
+
+    <!-- Leave -->
+    <div style="border:1px solid #dde">
+      <div style="background:#0d1b2a;padding:12px 16px">
+        <p style="color:#fff;font-weight:700;font-size:13px">Leave Management</p>
+      </div>
+      <div style="padding:16px;display:flex;flex-direction:column;gap:8px">
+        <div style="padding:9px 12px;background:#f7f9fc;border-left:3px solid #1a5276;font-size:12px;color:#333">Leave Application by Employee</div>
+        <div style="padding:9px 12px;background:#f7f9fc;border-left:3px solid #1a5276;font-size:12px;color:#333">Manager Approval / Rejection</div>
+        <div style="padding:9px 12px;background:#f7f9fc;border-left:3px solid #1a5276;font-size:12px;color:#333">Leave Balance Tracking</div>
+        <div style="padding:9px 12px;background:#f7f9fc;border-left:3px solid #1a5276;font-size:12px;color:#333">Sick Leave / Casual / Annual</div>
+        <div style="padding:9px 12px;background:#f7f9fc;border-left:3px solid #1a5276;font-size:12px;color:#333">Leave History Report</div>
+      </div>
+    </div>
+
+    <!-- Salary -->
+    <div style="border:1px solid #dde">
+      <div style="background:#0d1b2a;padding:12px 16px">
+        <p style="color:#fff;font-weight:700;font-size:13px">Salary / Payroll</p>
+      </div>
+      <div style="padding:16px;display:flex;flex-direction:column;gap:8px">
+        <div style="padding:9px 12px;background:#f7f9fc;border-left:3px solid #1a5276;font-size:12px;color:#333">Salary Structure Setup</div>
+        <div style="padding:9px 12px;background:#f7f9fc;border-left:3px solid #1a5276;font-size:12px;color:#333">Attendance-Based Calculation</div>
+        <div style="padding:9px 12px;background:#f7f9fc;border-left:3px solid #1a5276;font-size:12px;color:#333">Deductions — PF, ESI, TDS</div>
+        <div style="padding:9px 12px;background:#f7f9fc;border-left:3px solid #1a5276;font-size:12px;color:#333">Monthly Salary Slip Generation</div>
+        <div style="padding:9px 12px;background:#f7f9fc;border-left:3px solid #1a5276;font-size:12px;color:#333">Payroll Summary Report</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Page footer -->
+  <div style="position:absolute;bottom:24px;left:48px;right:48px;display:flex;justify-content:space-between;align-items:center;border-top:1px solid #dde;padding-top:10px">
+    <span style="font-size:10px;color:#aaa">E-Waste ERP & AI Automation System</span>
+    <span style="font-size:10px;color:#aaa">Phase I — Employee Management</span>
+  </div>
+</div>
+
+<!-- PAGE 5: PHASE II III IV + TECH -->
+<div class="page" style="padding:48px">
+  <div class="section-label">Phase II · III · IV</div>
+  <h2 style="font-size:26px;color:#0d1b2a;margin-bottom:6px">Advanced Modules Overview</h2>
+  <p style="font-size:13px;color:#555;margin-bottom:28px">Processing — AI Automation — Smart Automation</p>
+  <div style="height:2px;background:#1a5276;margin-bottom:28px"></div>
+
+  <!-- Phase II -->
+  <div style="margin-bottom:28px">
+    <div style="background:#0d1b2a;padding:10px 16px;margin-bottom:0">
+        <p style="color:#fff;font-weight:700;font-size:12px;letter-spacing:1px;text-transform:uppercase">Phase II — Processing Module</p>
+      </div>
+    <div style="border:1px solid #dde;border-top:none;display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:0">
+      <div style="padding:14px 16px;border-right:1px solid #eee"><p style="font-size:12px;font-weight:600;color:#0d1b2a;margin-bottom:4px">Sorting</p><p style="font-size:11px;color:#777">Category segregation, barcode, weight</p></div>
+      <div style="padding:14px 16px;border-right:1px solid #eee"><p style="font-size:12px;font-weight:600;color:#0d1b2a;margin-bottom:4px">Dismantling</p><p style="font-size:11px;color:#777">Component tracking, output log</p></div>
+      <div style="padding:14px 16px;border-right:1px solid #eee"><p style="font-size:12px;font-weight:600;color:#0d1b2a;margin-bottom:4px">Metal Recovery</p><p style="font-size:11px;color:#777">MIS report, yield analysis</p></div>
+      <div style="padding:14px 16px"><p style="font-size:12px;font-weight:600;color:#0d1b2a;margin-bottom:4px">By-Products</p><p style="font-size:11px;color:#777">Plastic, rubber, hazardous log</p></div>
+    </div>
+  </div>
+
+  <!-- Phase III -->
+  <div style="margin-bottom:28px">
+    <div style="background:#0d1b2a;padding:10px 16px">
+      <p style="color:#fff;font-weight:700;font-size:12px;letter-spacing:1px;text-transform:uppercase">Phase III — AI Automation</p>
+    </div>
+    <div style="border:1px solid #dde;border-top:none;display:grid;grid-template-columns:1fr 1fr 1fr;gap:0">
+      <div style="padding:14px 16px;border-right:1px solid #eee"><p style="font-size:12px;font-weight:600;color:#0d1b2a;margin-bottom:4px">AI Chat Assistant</p><p style="font-size:11px;color:#777">Ask ERP questions in plain language — stock, purchases, reports</p></div>
+      <div style="padding:14px 16px;border-right:1px solid #eee"><p style="font-size:12px;font-weight:600;color:#0d1b2a;margin-bottom:4px">AI OCR — Invoice Reader</p><p style="font-size:11px;color:#777">Upload invoice, auto-extract vendor, GST, weight, amount</p></div>
+      <div style="padding:14px 16px"><p style="font-size:12px;font-weight:600;color:#0d1b2a;margin-bottom:4px">AI Report Generator</p><p style="font-size:11px;color:#777">Daily, weekly, monthly, yearly auto reports</p></div>
+      <div style="padding:14px 16px;border-right:1px solid #eee;border-top:1px solid #eee"><p style="font-size:12px;font-weight:600;color:#0d1b2a;margin-bottom:4px">Smart Search</p><p style="font-size:11px;color:#777">Natural language search across all ERP data</p></div>
+      <div style="padding:14px 16px;border-right:1px solid #eee;border-top:1px solid #eee"><p style="font-size:12px;font-weight:600;color:#0d1b2a;margin-bottom:4px">AI Dashboard</p><p style="font-size:11px;color:#777">Sales, recovery, stock & profit analytics</p></div>
+      <div style="padding:14px 16px;border-top:1px solid #eee"><p style="font-size:12px;font-weight:600;color:#0d1b2a;margin-bottom:4px">Recommendation Engine</p><p style="font-size:11px;color:#777">Best vendor, best price, demand prediction</p></div>
+    </div>
+  </div>
+
+  <!-- Phase IV -->
+  <div style="margin-bottom:28px">
+    <div style="background:#0d1b2a;padding:10px 16px">
+      <p style="color:#fff;font-weight:700;font-size:12px;letter-spacing:1px;text-transform:uppercase">Phase IV — Smart Automation</p>
+    </div>
+    <div style="border:1px solid #dde;border-top:none;display:grid;grid-template-columns:1fr 1fr 1fr;gap:0">
+      <div style="padding:14px 16px;border-right:1px solid #eee"><p style="font-size:12px;font-weight:600;color:#0d1b2a;margin-bottom:4px">WhatsApp Automation</p><p style="font-size:11px;color:#777">Purchase updates, dispatch alerts, invoices</p></div>
+      <div style="padding:14px 16px;border-right:1px solid #eee"><p style="font-size:12px;font-weight:600;color:#0d1b2a;margin-bottom:4px">Tender Web Scraping</p><p style="font-size:11px;color:#777">GeM, MSTC, CPCB — auto fetch on dashboard</p></div>
+      <div style="padding:14px 16px"><p style="font-size:12px;font-weight:600;color:#0d1b2a;margin-bottom:4px">GPS Vehicle Tracking</p><p style="font-size:11px;color:#777">Live tracking, ETA, route history</p></div>
+      <div style="padding:14px 16px;border-right:1px solid #eee;border-top:1px solid #eee"><p style="font-size:12px;font-weight:600;color:#0d1b2a;margin-bottom:4px">QR & Barcode</p><p style="font-size:11px;color:#777">Material, warehouse & dispatch tracking</p></div>
+      <div style="padding:14px 16px;border-right:1px solid #eee;border-top:1px solid #eee"><p style="font-size:12px;font-weight:600;color:#0d1b2a;margin-bottom:4px">Email Automation</p><p style="font-size:11px;color:#777">Quotation, invoice, reminders, follow-up</p></div>
+      <div style="padding:14px 16px;border-top:1px solid #eee"><p style="font-size:12px;font-weight:600;color:#0d1b2a;margin-bottom:4px">Cloud Backup</p><p style="font-size:11px;color:#777">Auto backup, restore, version history</p></div>
+    </div>
+  </div>
+
+  <!-- Page footer -->
+  <div style="position:absolute;bottom:24px;left:48px;right:48px;display:flex;justify-content:space-between;align-items:center;border-top:1px solid #dde;padding-top:10px">
+    <span style="font-size:10px;color:#aaa">E-Waste ERP & AI Automation System</span>
+    <span style="font-size:10px;color:#aaa">Phase II · III · IV</span>
+  </div>
+</div>
+
+<!-- PAGE 6: TECHNOLOGY + TIMELINE -->
+<div class="page" style="padding:48px">
+  <div class="section-label">Architecture & Delivery</div>
+  <h2 style="font-size:26px;color:#0d1b2a;margin-bottom:6px">Technology Stack & Timeline</h2>
+  <p style="font-size:13px;color:#555;margin-bottom:28px">Modern, scalable, cloud-native — delivered in 4 phases over 12 months</p>
+  <div style="height:2px;background:#1a5276;margin-bottom:28px"></div>
+
+  <!-- Tech stack table -->
+  <div style="margin-bottom:32px">
+    <p style="font-size:11px;font-weight:700;letter-spacing:2px;color:#1a5276;text-transform:uppercase;margin-bottom:12px">Technology Stack</p>
+    <table style="width:100%;border-collapse:collapse">
+      <thead>
+        <tr style="background:#f0f4f8;border-bottom:2px solid #1a5276">
+          <th style="padding:10px 14px;text-align:left;font-size:11px;font-weight:700;color:#1a5276;letter-spacing:0.5px">Layer</th>
+          <th style="padding:10px 14px;text-align:left;font-size:11px;font-weight:700;color:#1a5276;letter-spacing:0.5px">Technology</th>
+          <th style="padding:10px 14px;text-align:left;font-size:11px;font-weight:700;color:#1a5276;letter-spacing:0.5px">Purpose</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="border-bottom:1px solid #eee"><td style="padding:10px 14px;font-size:12px;font-weight:600;color:#0d1b2a">Frontend</td><td style="padding:10px 14px;font-size:12px;color:#333">React.js</td><td style="padding:10px 14px;font-size:12px;color:#777">Web application, dashboards, forms</td></tr>
+        <tr style="border-bottom:1px solid #eee;background:#f7f9fc"><td style="padding:10px 14px;font-size:12px;font-weight:600;color:#0d1b2a">Backend</td><td style="padding:10px 14px;font-size:12px;color:#333">FastAPI (Python)</td><td style="padding:10px 14px;font-size:12px;color:#777">REST APIs, business logic, integrations</td></tr>
+        <tr style="border-bottom:1px solid #eee"><td style="padding:10px 14px;font-size:12px;font-weight:600;color:#0d1b2a">Database</td><td style="padding:10px 14px;font-size:12px;color:#333">PostgreSQL + Redis</td><td style="padding:10px 14px;font-size:12px;color:#777">Relational data storage and caching</td></tr>
+        <tr style="border-bottom:1px solid #eee;background:#f7f9fc"><td style="padding:10px 14px;font-size:12px;font-weight:600;color:#0d1b2a">AI Layer</td><td style="padding:10px 14px;font-size:12px;color:#333">OpenAI + LangChain + OCR</td><td style="padding:10px 14px;font-size:12px;color:#777">Chat, document extraction, recommendations</td></tr>
+        <tr style="border-bottom:1px solid #eee"><td style="padding:10px 14px;font-size:12px;font-weight:600;color:#0d1b2a">Infrastructure</td><td style="padding:10px 14px;font-size:12px;color:#333">AWS + Docker</td><td style="padding:10px 14px;font-size:12px;color:#777">Cloud hosting, containerization, auto-scale</td></tr>
+        <tr style="background:#f7f9fc"><td style="padding:10px 14px;font-size:12px;font-weight:600;color:#0d1b2a">Security</td><td style="padding:10px 14px;font-size:12px;color:#333">JWT + OAuth 2.0 + HTTPS</td><td style="padding:10px 14px;font-size:12px;color:#777">Role-based access, encryption, compliance</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Timeline table -->
+  <div>
+    <p style="font-size:11px;font-weight:700;letter-spacing:2px;color:#1a5276;text-transform:uppercase;margin-bottom:12px">Delivery Timeline</p>
+    <table style="width:100%;border-collapse:collapse">
+      <thead>
+        <tr style="background:#0d1b2a">
+          <th style="padding:11px 14px;text-align:left;color:#fff;font-size:11px;font-weight:600;letter-spacing:0.5px">Phase</th>
+          <th style="padding:11px 14px;text-align:left;color:#fff;font-size:11px;font-weight:600;letter-spacing:0.5px">Deliverables</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="border-bottom:1px solid #eee">
+          <td style="padding:12px 14px;font-size:12px;font-weight:600;color:#1a5276">Phase I — Core ERP</td>
+          <td style="padding:12px 14px;font-size:12px;color:#555">E-waste purchase (Institute, Tender, Kabadiwala), Employee Management, Base Reports</td>
+        </tr>
+        <tr style="border-bottom:1px solid #eee;background:#f7f9fc">
+          <td style="padding:12px 14px;font-size:12px;font-weight:600;color:#1a5276">Phase II — Processing</td>
+          <td style="padding:12px 14px;font-size:12px;color:#555">Sorting, Dismantling, Metal Recovery MIS, By-Products, Selling module</td>
+        </tr>
+        <tr style="border-bottom:1px solid #eee">
+          <td style="padding:12px 14px;font-size:12px;font-weight:600;color:#1a5276">Phase III — AI</td>
+          <td style="padding:12px 14px;font-size:12px;color:#555">AI Chat, OCR Invoice Reader, Smart Search, Dashboard Analytics, Report Generator</td>
+        </tr>
+        <tr>
+          <td style="padding:12px 14px;font-size:12px;font-weight:600;color:#1a5276">Phase IV — Automation</td>
+          <td style="padding:12px 14px;font-size:12px;color:#555">WhatsApp, Email, GPS, QR/Barcode, Tender Scraping, Cloud Backup, Go-Live</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Page footer -->
+  <div style="position:absolute;bottom:24px;left:48px;right:48px;display:flex;justify-content:space-between;align-items:center;border-top:1px solid #dde;padding-top:10px">
+    <span style="font-size:10px;color:#aaa">E-Waste ERP & AI Automation System</span>
+    <span style="font-size:10px;color:#aaa">Technology & Timeline</span>
+  </div>
+</div>
+
+</body>
+</html>
