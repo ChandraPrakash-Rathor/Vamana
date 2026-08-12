@@ -62,7 +62,7 @@ export default function EditProductModal({ isOpen, onClose, product }) {
     }
   }, [watchActualPrice, watchDiscount]);
 
-  // Prefill form ONCE per product open — track which product ID was last prefilled
+  // Prefill form ONCE per product open
   const lastPrefilledId = useRef(null);
 
   useEffect(() => {
@@ -71,8 +71,9 @@ export default function EditProductModal({ isOpen, onClose, product }) {
     if (product && isOpen && lastPrefilledId.current !== currentId) {
       lastPrefilledId.current = currentId;
       originalCategory.current = product.category;
+
       setValue('name', product.name);
-      setValue('sku', `PRF-${String(product.id).padStart(4, '0')}`);
+      setValue('sku', `PRF-${String(product.id || product._id).padStart(4, '0')}`);
       setValue('category', categoryOptions.find(opt => opt.value === product.category));
       setValue('actualPrice', product.actualPrice);
       setValue('discount', product.discount || 0);
@@ -83,13 +84,14 @@ export default function EditProductModal({ isOpen, onClose, product }) {
       setValue('status', statusOptions.find(opt => opt.value === product.status));
 
       setMainImage(null);
-      setMainImagePreview(product.image || null);
+      // support both product.image and product.mainImage
+      setMainImagePreview(product.mainImage || product.image || null);
 
-      // Load existing sub images as 'existing' type entries — deduplicated by URL
+      // Load existing sub images
       const existingUrls = [...new Set((product.subImages || []).filter(Boolean))];
       setSubImageList(existingUrls.map(url => ({ type: 'existing', url })));
 
-      setFinalPrice(product.price);
+      setFinalPrice(product.finalPrice || product.price || 0);
     }
 
     if (!isOpen) {
@@ -101,7 +103,6 @@ export default function EditProductModal({ isOpen, onClose, product }) {
   const watchCategory = watch('category');
   useEffect(() => {
     if (!watchCategory?.value) return;
-    // If it matches the original product category, it's just the prefill — don't reset
     if (watchCategory.value === originalCategory.current) return;
     setValue('volume', '');
   }, [watchCategory?.value]);
@@ -149,8 +150,9 @@ export default function EditProductModal({ isOpen, onClose, product }) {
 
   const handleSubImagesChange = (e) => {
     const files = Array.from(e.target.files);
-    const currentCount = subImageList.length;
+    if (!files.length) return;
 
+    const currentCount = subImageList.length;
     if (currentCount >= 5) {
       toast.warn('Maximum 5 sub images allowed');
       e.target.value = '';
@@ -164,22 +166,25 @@ export default function EditProductModal({ isOpen, onClose, product }) {
       toast.warn(`Only ${allowedCount} more image(s) can be added (max 5 total)`);
     }
 
-    filesToAdd.forEach(file => {
+    const readPromises = filesToAdd.map(file => new Promise((resolve) => {
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setSubImageList(prev => {
-          // Deduplicate by file name — prevent same file added twice
-          const alreadyAdded = prev.some(
-            item => item.type === 'new' && item.file.name === file.name && item.file.size === file.size
-          );
-          if (alreadyAdded) return prev;
-          return [...prev, { type: 'new', file, preview: reader.result }];
-        });
-      };
+      reader.onloadend = () => resolve({ type: 'new', file, preview: reader.result });
       reader.readAsDataURL(file);
+    }));
+
+    Promise.all(readPromises).then(newEntries => {
+      setSubImageList(prev => {
+        const filtered = newEntries.filter(entry =>
+          !prev.some(
+            existing => existing.type === 'new' &&
+            existing.file.name === entry.file.name &&
+            existing.file.size === entry.file.size
+          )
+        );
+        return [...prev, ...filtered];
+      });
     });
 
-    // Reset input so same file can be re-selected if needed
     e.target.value = '';
   };
 
@@ -236,7 +241,7 @@ export default function EditProductModal({ isOpen, onClose, product }) {
         requestData = productData;
       }
 
-      const res = await dispatch(UpdateProduct({ id: product.id, data: requestData }));
+      const res = await dispatch(UpdateProduct({ id: product.id || product._id, data: requestData }));
 
       if (res?.payload?.success === true) {
         toast.success('Product updated successfully!');
@@ -559,7 +564,7 @@ export default function EditProductModal({ isOpen, onClose, product }) {
               />
             </div>
 
-            {/* Volume — options depend on category */}
+            {/* Volume */}
             <div className="col-12 col-md-6">
               <label className="form-label fw-semibold" style={{ color: 'var(--sand-900)' }}>
                 Volume
@@ -646,7 +651,7 @@ export default function EditProductModal({ isOpen, onClose, product }) {
               )}
             </div>
 
-            {/* Sub Line (e.g. Perfume for Men / Women / Unisex) */}
+            {/* Sub Line */}
             <div className="col-12">
               <label className="form-label fw-semibold" style={{ color: 'var(--sand-900)' }}>
                 Sub Line <span style={{ color: 'var(--sand-600)', fontWeight: '400', fontSize: '0.85rem' }}>(e.g. Perfume for Men, For Women, Unisex)</span>
@@ -825,7 +830,9 @@ export default function EditProductModal({ isOpen, onClose, product }) {
                     </div>
                   ))}
                 </div>
-                <divtyle={{ textAlign: 'center' }}>
+
+                {/* Fixed: was <divtyle= ...> and subImagePreviews */}
+                <div style={{ textAlign: 'center' }}>
                   <input
                     type="file"
                     accept="image/*"
@@ -854,16 +861,17 @@ export default function EditProductModal({ isOpen, onClose, product }) {
                     }}
                   >
                     <FontAwesomeIcon icon={faImage} className="me-2" />
-                    {subImagePreviews.length > 0 ? 'Change Images' : 'Add Images'}
+                    {subImageList.length > 0 ? 'Add More Images' : 'Add Images'}
                   </label>
-                  {subImagePreviews.length > 0 && (
+
+                  {subImageList.length > 0 && (
                     <p style={{ 
                       marginTop: '0.5rem', 
                       marginBottom: 0, 
                       fontSize: '0.85rem', 
                       color: 'var(--sand-600)' 
                     }}>
-                      {subImagePreviews.length} image{subImagePreviews.length !== 1 ? 's' : ''} selected (Max 5)
+                      {subImageList.length} image{subImageList.length !== 1 ? 's' : ''} selected (Max 5)
                     </p>
                   )}
                 </div>
