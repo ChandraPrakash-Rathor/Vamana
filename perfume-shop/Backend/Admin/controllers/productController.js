@@ -169,6 +169,7 @@ exports.updateProduct = async (req, res) => {
     const files = req.files || [];
     let updateData = {};
 
+    // Parse body data
     if (req.body.data) {
       try {
         updateData = JSON.parse(req.body.data);
@@ -205,47 +206,73 @@ exports.updateProduct = async (req, res) => {
       }
     }
 
-    // Strip full URLs to bare filenames before saving
-    if (updateData.mainImage) {
-      updateData.mainImage = stripToFilename(updateData.mainImage);
-    }
-
-    // Handle main image replacement — delete old file if replaced
+    // ────────────────────────────────────────────────
+    // MAIN IMAGE
+    // ────────────────────────────────────────────────
     const mainImageFile = files.find(f => f.fieldname === 'mainImage');
+
     if (mainImageFile) {
+      // New main image uploaded → delete old one
       safeDeleteFile(product.mainImage);
       updateData.mainImage = mainImageFile.filename;
+    } else if (updateData.mainImage) {
+      // Frontend sent existing image (URL or filename)
+      updateData.mainImage = stripToFilename(updateData.mainImage);
     }
+    // Optional: allow removing main image
+    // else if (updateData.mainImage === null || updateData.mainImage === '') {
+    //   safeDeleteFile(product.mainImage);
+    //   updateData.mainImage = null;
+    // }
 
-    // Handle sub images
+    // ────────────────────────────────────────────────
+    // SUB IMAGES
+    // ────────────────────────────────────────────────
     const subImagesFiles = files.filter(f => f.fieldname === 'subImages');
-    if (subImagesFiles.length > 0) {
-      // New files uploaded — replace all sub images, delete old ones from disk
-      (product.subImages || []).forEach(img => safeDeleteFile(img));
-      updateData.subImages = [...new Set(subImagesFiles.map(f => f.filename))];
-    } else if (Array.isArray(updateData.subImages)) {
-      // No new files — but frontend sent existing sub image URLs
-      // Strip to filenames and deduplicate
-      const incomingFilenames = [...new Set(updateData.subImages.map(stripToFilename).filter(Boolean))];
 
-      // Delete any old sub images that were REMOVED by the user (not in incoming list)
-      const oldFilenames = (product.subImages || []).filter(Boolean);
-      oldFilenames.forEach(oldFile => {
-        if (!incomingFilenames.includes(oldFile)) {
-          safeDeleteFile(oldFile); // file was deselected — delete from disk
-        }
-      });
+    // 1. Start with images the frontend wants to keep
+    let finalSubImages = [];
 
-      updateData.subImages = incomingFilenames;
+    if (Array.isArray(updateData.subImages)) {
+      finalSubImages = [...new Set(
+        updateData.subImages
+          .map(stripToFilename)
+          .filter(Boolean)
+      )];
+    } else {
+      // Frontend didn't send subImages list → keep current ones
+      finalSubImages = [...(product.subImages || [])];
     }
 
-    // Recalculate finalPrice if price or discount changed
+    // 2. Add newly uploaded files
+    if (subImagesFiles.length > 0) {
+      const newFilenames = subImagesFiles.map(f => f.filename);
+      finalSubImages = [...new Set([...finalSubImages, ...newFilenames])];
+    }
+
+    // 3. Delete files that were removed by the user
+    const oldFilenames = product.subImages || [];
+    oldFilenames.forEach(oldFile => {
+      if (!finalSubImages.includes(oldFile)) {
+        safeDeleteFile(oldFile);
+      }
+    });
+
+    updateData.subImages = finalSubImages;
+
+    // ────────────────────────────────────────────────
+    // RECALCULATE finalPrice
+    // ────────────────────────────────────────────────
     if (updateData.actualPrice !== undefined || updateData.discount !== undefined) {
-      const newPrice = Number(updateData.actualPrice) || product.actualPrice;
-      const newDiscount = updateData.discount !== undefined ? Number(updateData.discount) : product.discount;
+      const newPrice = Number(updateData.actualPrice) ?? product.actualPrice;
+      const newDiscount = updateData.discount !== undefined
+        ? Number(updateData.discount)
+        : product.discount;
+
       updateData.finalPrice = Math.round((newPrice - (newPrice * newDiscount) / 100) * 100) / 100;
     }
 
+    // Update product
     product = await Product.findByIdAndUpdate(req.params.id, updateData, {
       new: true,
       runValidators: true
@@ -254,7 +281,9 @@ exports.updateProduct = async (req, res) => {
     return success(res, product, 'Product updated successfully');
   } catch (err) {
     if (isInvalidObjectId(err)) return notFound(res, 'Product not found');
-    if (err.name === 'ValidationError') return validationError(res, 'Validation failed', getValidationMessages(err));
+    if (err.name === 'ValidationError') {
+      return validationError(res, 'Validation failed', getValidationMessages(err));
+    }
     return error(res, 'Failed to update product', 500, err);
   }
 };
