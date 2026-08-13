@@ -152,18 +152,27 @@ export default function EditProductModal({ isOpen, onClose, product }) {
     const files = Array.from(e.target.files);
     if (!files.length) return;
 
-    const currentCount = subImageList.length;
-    if (currentCount >= 5) {
-      toast.warn('Maximum 5 sub images allowed');
-      e.target.value = '';
-      return;
-    }
+    // If user selects 4 or 5 files at once, treat as full replacement of sub-images
+    const isBulkUpload = files.length >= 4;
+    const shouldReplace = isBulkUpload || subImageList.length === 0;
 
-    const allowedCount = 5 - currentCount;
-    const filesToAdd = files.slice(0, allowedCount);
-
-    if (files.length > allowedCount) {
-      toast.warn(`Only ${allowedCount} more image(s) can be added (max 5 total)`);
+    let filesToAdd = [];
+    if (shouldReplace) {
+      filesToAdd = files.slice(0, 5);
+      if (subImageList.length > 0) {
+        toast.info(`Updated sub images with ${filesToAdd.length} newly selected image(s)`);
+      }
+    } else {
+      const remainingCapacity = 5 - subImageList.length;
+      if (remainingCapacity <= 0) {
+        filesToAdd = files.slice(0, 5);
+        toast.info(`Updated sub images with ${filesToAdd.length} newly selected image(s)`);
+      } else {
+        filesToAdd = files.slice(0, remainingCapacity);
+        if (files.length > remainingCapacity) {
+          toast.warn(`Added ${remainingCapacity} image(s) (maximum 5 total)`);
+        }
+      }
     }
 
     const readPromises = filesToAdd.map(file => new Promise((resolve) => {
@@ -179,8 +188,10 @@ export default function EditProductModal({ isOpen, onClose, product }) {
 
     Promise.all(readPromises).then(newEntries => {
       setSubImageList(prev => {
-        const combined = [...prev, ...newEntries];
-        return combined.slice(0, 5);
+        if (shouldReplace || (prev.length + newEntries.length > 5 && filesToAdd.length === newEntries.length)) {
+          return newEntries;
+        }
+        return [...prev, ...newEntries].slice(0, 5);
       });
     });
 
@@ -189,6 +200,10 @@ export default function EditProductModal({ isOpen, onClose, product }) {
 
   const removeSubImage = (index) => {
     setSubImageList(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleClearAllSubImages = () => {
+    setSubImageList([]);
   };
 
   const onSubmit = async (data) => {
@@ -765,9 +780,30 @@ export default function EditProductModal({ isOpen, onClose, product }) {
 
             {/* Sub Images */}
             <div className="col-12">
-              <label className="form-label fw-semibold" style={{ color: 'var(--sand-900)' }}>
-                Additional Images ({subImageList.length}/5)
-              </label>
+              <div className="d-flex justify-content-between align-items-center mb-2">
+                <label className="form-label fw-semibold mb-0" style={{ color: 'var(--sand-900)' }}>
+                  Additional Images ({subImageList.length}/5)
+                </label>
+                {subImageList.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={handleClearAllSubImages}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#dc3545',
+                      fontSize: '0.85rem',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      padding: '0.2rem 0.5rem',
+                      borderRadius: '4px',
+                      textDecoration: 'underline'
+                    }}
+                  >
+                    Clear All Sub Images
+                  </button>
+                )}
+              </div>
               <div style={{
                 border: '2px dashed var(--sand-300)',
                 borderRadius: '12px',
