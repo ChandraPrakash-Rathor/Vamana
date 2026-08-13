@@ -1,4 +1,5 @@
 const express = require("express");
+const path = require("path");
 const dotenv = require("dotenv");
 const cors = require("cors");
 const rateLimit = require("express-rate-limit");
@@ -89,7 +90,7 @@ app.use('/api/member/create-order', tokenVerifyLimiter);
 app.use('/api/member/verify-payment', tokenVerifyLimiter);
 app.use('/api/member/coupons/validate', tokenVerifyLimiter);
 
-app.use('/uploads', express.static('uploads'));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.use('/api/admin', require('./Admin/routes/adminRoutes'));
 app.use('/api/member', require('./Member/routes/memberRoutes'));

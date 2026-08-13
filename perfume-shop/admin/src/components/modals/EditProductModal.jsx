@@ -89,7 +89,7 @@ export default function EditProductModal({ isOpen, onClose, product }) {
 
       // Load existing sub images
       const existingUrls = [...new Set((product.subImages || []).filter(Boolean))];
-      setSubImageList(existingUrls.map(url => ({ type: 'existing', url })));
+      setSubImageList(existingUrls.map(url => ({ id: `existing-${url}`, type: 'existing', url })));
 
       setFinalPrice(product.finalPrice || product.price || 0);
     }
@@ -168,20 +168,19 @@ export default function EditProductModal({ isOpen, onClose, product }) {
 
     const readPromises = filesToAdd.map(file => new Promise((resolve) => {
       const reader = new FileReader();
-      reader.onloadend = () => resolve({ type: 'new', file, preview: reader.result });
+      reader.onloadend = () => resolve({
+        id: `new-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+        type: 'new',
+        file,
+        preview: reader.result
+      });
       reader.readAsDataURL(file);
     }));
 
     Promise.all(readPromises).then(newEntries => {
       setSubImageList(prev => {
-        const filtered = newEntries.filter(entry =>
-          !prev.some(
-            existing => existing.type === 'new' &&
-            existing.file.name === entry.file.name &&
-            existing.file.size === entry.file.size
-          )
-        );
-        return [...prev, ...filtered];
+        const combined = [...prev, ...newEntries];
+        return combined.slice(0, 5);
       });
     });
 
@@ -213,6 +212,7 @@ export default function EditProductModal({ isOpen, onClose, product }) {
         description: data.description,
         subLine: data.subLine || '',
         status: data.status.value,
+        subImages: existingSubImages.map(item => item.url)
       };
 
       let requestData;
@@ -221,8 +221,7 @@ export default function EditProductModal({ isOpen, onClose, product }) {
         // Use FormData when there are new files
         const formData = new FormData();
 
-        // Always pass existing sub image URLs so backend knows to keep them
-        productData.subImages = existingSubImages.map(item => item.url);
+        // Pass existing sub image URLs so backend knows to keep them
         formData.append('data', JSON.stringify(productData));
 
         if (hasNewMainImage) {
@@ -237,7 +236,6 @@ export default function EditProductModal({ isOpen, onClose, product }) {
         requestData = formData;
       } else {
         // No new files — send JSON with existing sub image URLs
-        productData.subImages = existingSubImages.map(item => item.url);
         requestData = productData;
       }
 
@@ -778,7 +776,7 @@ export default function EditProductModal({ isOpen, onClose, product }) {
               }}>
                 <div className="row g-3 mb-3">
                   {subImageList.map((item, index) => (
-                    <div key={index} className="col-4 col-md-2">
+                    <div key={item.id || index} className="col-4 col-md-2">
                       <div style={{ position: 'relative' }}>
                         <img
                           src={item.type === 'existing' ? item.url : item.preview}

@@ -7,24 +7,36 @@ const { success, created, error, validationError, notFound, isInvalidObjectId, g
 const buildImageUrl = (req, filename) => {
   if (!filename) return null;
   if (filename.startsWith('http://') || filename.startsWith('https://')) return filename;
-  return `${req.protocol}://${req.get('host')}/uploads/${filename}`;
+  const cleanFilename = stripToFilename(filename);
+  return `${req.protocol}://${req.get('host')}/uploads/${cleanFilename}`;
 };
 
-// Strip full URL back to bare filename for storage — prevents double-URL on re-fetch
+// Strip full URL or path back to bare filename for storage — prevents double-URL on re-fetch
 const stripToFilename = (urlOrFilename) => {
-  if (!urlOrFilename) return urlOrFilename;
-  if (urlOrFilename.startsWith('http://') || urlOrFilename.startsWith('https://')) {
-    return urlOrFilename.split('/uploads/').pop();
+  if (!urlOrFilename || typeof urlOrFilename !== 'string') return urlOrFilename;
+  if (urlOrFilename.includes('/uploads/')) {
+    return urlOrFilename.split('/uploads/').pop().split('?')[0];
   }
-  return urlOrFilename;
+  if (urlOrFilename.startsWith('http://') || urlOrFilename.startsWith('https://')) {
+    return urlOrFilename.split('/').pop().split('?')[0];
+  }
+  return urlOrFilename.split('?')[0];
 };
 
-// Safe file deletion — only delete bare filenames, not full URLs
+// Safe file deletion — only delete bare filenames, not full URLs, and prevent directory traversal
 const safeDeleteFile = (filename) => {
-  if (!filename || filename.startsWith('http')) return;
-  const filePath = path.join(__dirname, '../../uploads', filename);
-  if (fs.existsSync(filePath)) {
-    fs.unlinkSync(filePath);
+  if (!filename) return;
+  const bareFilename = stripToFilename(filename);
+  if (!bareFilename || bareFilename.includes('..') || bareFilename.includes('/') || bareFilename.includes('\\')) {
+    return;
+  }
+  const filePath = path.join(__dirname, '../../uploads', bareFilename);
+  try {
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
+  } catch (err) {
+    console.error(`Failed to delete file ${bareFilename}:`, err.message);
   }
 };
 
@@ -129,8 +141,8 @@ exports.createProduct = async (req, res) => {
     }
 
     const subImagesFiles = files.filter(f => f.fieldname === 'subImages').map(f => f.filename);
-    // Deduplicate — remove any duplicate filenames
-    const uniqueSubImages = [...new Set(subImagesFiles)];
+    // Limit to max 5 sub-images
+    const uniqueSubImages = [...new Set(subImagesFiles)].slice(0, 5);
     const finalPrice = parsedPrice - (parsedPrice * parsedDiscount) / 100;
 
     const product = await Product.create({
@@ -149,7 +161,15 @@ exports.createProduct = async (req, res) => {
       status: parsedStock > 0 ? 'active' : 'out-of-stock'
     });
 
-    return created(res, product, 'Product created successfully');
+    const responseData = {
+      ...product._doc,
+      volume: product.volume || '',
+      subLine: product.subLine || '',
+      mainImage: buildImageUrl(req, product.mainImage),
+      subImages: (product.subImages || []).map(img => buildImageUrl(req, img))
+    };
+
+    return created(res, responseData, 'Product created successfully');
   } catch (err) {
     // Clean up any uploaded files on unexpected error
     (req.files || []).forEach(f => safeDeleteFile(f.filename));
@@ -219,11 +239,6 @@ exports.updateProduct = async (req, res) => {
       // Frontend sent existing image (URL or filename)
       updateData.mainImage = stripToFilename(updateData.mainImage);
     }
-    // Optional: allow removing main image
-    // else if (updateData.mainImage === null || updateData.mainImage === '') {
-    //   safeDeleteFile(product.mainImage);
-    //   updateData.mainImage = null;
-    // }
 
     // ────────────────────────────────────────────────
     // SUB IMAGES
@@ -234,14 +249,16 @@ exports.updateProduct = async (req, res) => {
     let finalSubImages = [];
 
     if (Array.isArray(updateData.subImages)) {
-      finalSubImages = [...new Set(
-        updateData.subImages
-          .map(stripToFilename)
-          .filter(Boolean)
-      )];
+      finalSubImages = [
+        ...new Set(
+          updateData.subImages
+            .map(stripToFilename)
+            .filter(Boolean)
+        )
+      ];
     } else {
       // Frontend didn't send subImages list → keep current ones
-      finalSubImages = [...(product.subImages || [])];
+      finalSubImages = [...(product.subImages || []).map(stripToFilename).filter(Boolean)];
     }
 
     // 2. Add newly uploaded files
@@ -250,8 +267,13 @@ exports.updateProduct = async (req, res) => {
       finalSubImages = [...new Set([...finalSubImages, ...newFilenames])];
     }
 
+    // Enforce max 5 sub-images
+    if (finalSubImages.length > 5) {
+      finalSubImages = finalSubImages.slice(0, 5);
+    }
+
     // 3. Delete files that were removed by the user
-    const oldFilenames = product.subImages || [];
+    const oldFilenames = (product.subImages || []).map(stripToFilename).filter(Boolean);
     oldFilenames.forEach(oldFile => {
       if (!finalSubImages.includes(oldFile)) {
         safeDeleteFile(oldFile);
@@ -278,7 +300,15 @@ exports.updateProduct = async (req, res) => {
       runValidators: true
     });
 
-    return success(res, product, 'Product updated successfully');
+    const responseData = {
+      ...product._doc,
+      volume: product.volume || '',
+      subLine: product.subLine || '',
+      mainImage: buildImageUrl(req, product.mainImage),
+      subImages: (product.subImages || []).map(img => buildImageUrl(req, img))
+    };
+
+    return success(res, responseData, 'Product updated successfully');
   } catch (err) {
     if (isInvalidObjectId(err)) return notFound(res, 'Product not found');
     if (err.name === 'ValidationError') {
